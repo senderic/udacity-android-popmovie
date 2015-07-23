@@ -1,0 +1,20 @@
+[core]
+	repositoryformatversion = 0
+	filemode = false
+	bare = false
+	logallrefupdates = true
+	symlinks = false
+	ignorecase = false
+	hideDotFiles = dotGitOnly
+[http]
+	proxy = http://westproxy.northgrum.com:80
+[remote "origin"]
+	url = https://esend7881@github.com/esend7881/udacity-android-nanodegree--july2015-project1.git
+	fetch = +refs/heads/*:refs/remotes/origin/*
+[remote "bitbucket"]
+	url = https://esend7881@bitbucket.org/esend7881/udacity-android-nanodegree-july2015-project1.git
+	fetch = +refs/heads/*:refs/remotes/origin/*
+[remote "all"]
+	pushurl = https://esend7881@bitbucket.org/esend7881/udacity-android-nanodegree-july2015-project1.git
+	pushurl = https://esend7881@github.com/esend7881/udacity-android-nanodegree--july2015-project1.git
+	fetch = +refs/heads/*:refs/remotes/origin/*
