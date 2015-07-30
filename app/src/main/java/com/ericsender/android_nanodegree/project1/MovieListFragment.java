@@ -25,11 +25,11 @@ import java.net.URL;
 /**
  * A placeholder fragment containing a simple view.
  */
-public class MovieFragment extends Fragment {
+public class MovieListFragment extends Fragment {
 
     private ArrayAdapter<String> mMovieAdapter;
 
-    public MovieFragment() {
+    public MovieListFragment() {
     }
 
     @Override
@@ -43,7 +43,7 @@ public class MovieFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.movie_fragment, container, false);
+        return inflater.inflate(R.layout.movie_list_fragment, container, false);
     }
 
     @Override
