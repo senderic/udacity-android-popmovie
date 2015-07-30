@@ -13,6 +13,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 
+import com.google.gson.Gson;
+
 import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.IOException;
@@ -107,6 +109,8 @@ public class MovieListFragment extends Fragment {
                     // buffer for debugging.
                     buffer.append(line + "\n");
                 }
+
+
             } catch (IOException e) {
                 Log.e(LOG_TAG, e.getMessage(), e);
             } finally {

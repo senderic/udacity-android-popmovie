@@ -1,0 +1,109 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.ericsender.android_nanodegree.project1.MovieDetailsFragment">
+
+    <!-- TODO: Update blank fragment layout -->
+
+    <TextView
+        android:layout_width="fill_parent"
+        android:layout_height="100dp"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="Movie-Title"
+        android:id="@+id/movie_title"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:background="#009788"
+        android:padding="30dp"
+        android:textColor="#ffffff"
+        android:textSize="30dp"
+        android:typeface="sans"
+        android:elevation="10dp" />
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/movie_thumb"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginLeft="30dp"
+        android:layout_marginStart="33dp"
+        android:src="@mipmap/ic_launcher"
+        android:layout_below="@+id/movie_title" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="year"
+        android:id="@+id/movie_year"
+        android:layout_alignTop="@+id/movie_thumb"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="10dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Duration"
+        android:id="@+id/movie_duration"
+        android:layout_below="@+id/movie_year"
+        android:layout_alignLeft="@+id/movie_year"
+        android:layout_alignStart="@+id/movie_year" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="rating"
+        android:id="@+id/movie_rating"
+        android:layout_below="@+id/movie_duration"
+        android:layout_alignLeft="@+id/movie_duration"
+        android:layout_alignStart="@+id/movie_duration" />
+
+    <Button
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Mark as Favorite"
+        android:id="@+id/button_mark_fav"
+        android:layout_below="@+id/movie_rating"
+        android:layout_alignLeft="@+id/movie_rating"
+        android:layout_alignStart="@+id/movie_rating" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Lorum ipson is cool! Lorum ipson is cool! a b c d"
+        android:id="@+id/textView"
+        android:paddingLeft="30dp"
+        android:paddingRight="30dp"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/button_mark_fav" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="@string/const_trailer"
+        android:id="@+id/const_trailers"
+        android:layout_below="@+id/textView"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:paddingLeft="30dp"
+        android:paddingRight="30dp"  />
+
+    <ListView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/list_trailers"
+        android:layout_centerHorizontal="true"
+        android:divider="@android:color/darker_gray"
+        android:dividerHeight="1dp"
+        android:layout_below="@+id/const_trailers" />
+
+</RelativeLayout>
