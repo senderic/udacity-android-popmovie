@@ -46,7 +46,6 @@ import java.util.Map;
 public class MovieListFragment extends Fragment {
 
     private ArrayAdapter<String> mMovieAdapter;
-    private GridView movieGrid;
 
     public MovieListFragment() {
     }
@@ -63,11 +62,13 @@ public class MovieListFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        movieGrid = (GridView) getActivity().findViewById(R.id.movie_grid);
-        movieGrid.setAdapter(new ImageAdapter(getActivity().getApplicationContext()));
+        GridView movieGrid = (GridView) getActivity().findViewById(R.id.movie_grid);
+        movieGrid.setAdapter(new ImageAdapter(getActivity()));
         // mMovieAdapter = new ArrayAdapter<String>(getActivity(), R.layout.grid_movie_posters, )
 
-        return inflater.inflate(R.layout.movie_list_fragment, container, false);
+        View rootView = inflater.inflate(R.layout.movie_list_fragment, container, false);
+
+        return rootView;
     }
 
     @Override

@@ -3,5 +3,4 @@
     android:id="@+id/container"
     android:name="com.ericsender.android_nanodegree.project1.MovieListFragment"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:layout="@layout/movie_list_fragment" />
+    android:layout_height="match_parent" />
