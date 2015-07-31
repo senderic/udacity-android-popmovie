@@ -63,11 +63,9 @@ public class MovieListFragment extends Fragment {
                              Bundle savedInstanceState) {
 
         View rootView = inflater.inflate(R.layout.movie_list_fragment, container, false);
-
-        GridView movieGrid = (GridView) getActivity().findViewById(R.id.movie_grid);
+        GridView movieGrid = (GridView) rootView.findViewById(R.id.movie_grid);
         movieGrid.setAdapter(new ImageAdapter(getActivity()));
         // mMovieAdapter = new ArrayAdapter<String>(getActivity(), R.layout.grid_movie_posters,
-
         return rootView;
     }
 
