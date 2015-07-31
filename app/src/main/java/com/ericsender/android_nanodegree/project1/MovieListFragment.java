@@ -13,15 +13,28 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 
+import com.ericsender.android_nanodegree.project1.utils.NaturalDeserializer;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.reflect.TypeToken;
 
 import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Type;
+import java.math.BigDecimal;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 
 
 /**
@@ -102,6 +115,14 @@ public class MovieListFragment extends Fragment {
 
             try {
                 reader = new BufferedReader(new InputStreamReader(inputStream));
+                //Type type = new TypeToken<Map<String, String>>(){}.getType();
+                //Object json = new Gson().fromJson(reader, type);
+
+                GsonBuilder gsonBuilder = new GsonBuilder();
+                gsonBuilder.registerTypeAdapter(Object.class, new NaturalDeserializer());
+                Gson gson = gsonBuilder.create();
+                Object o = gson.fromJson(reader, Object.class);
+
                 String line;
                 while ((line = reader.readLine()) != null) {
                     // Since it's JSON, adding a newline isn't necessary (it won't affect parsing)
@@ -134,3 +155,4 @@ public class MovieListFragment extends Fragment {
             }
     }
 }
+
