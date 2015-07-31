@@ -22,6 +22,7 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import com.google.gson.internal.LinkedTreeMap;
 import com.google.gson.reflect.TypeToken;
 
 import java.io.BufferedReader;
@@ -91,6 +92,7 @@ public class MovieListFragment extends Fragment {
         protected String[] doInBackground(String... params) {
             InputStream inputStream = null;
             BufferedReader reader = null;
+            LinkedTreeMap map;
             Uri builtUri = Uri.parse(getString(R.string.tmdb_api_base_url)).buildUpon()
                     .appendQueryParameter(getString(R.string.tmdb_param_sortby), sort)
                     .appendQueryParameter(getString(R.string.tmdb_param_api), getString(R.string.private_tmdb_api))
@@ -115,34 +117,20 @@ public class MovieListFragment extends Fragment {
 
             try {
                 reader = new BufferedReader(new InputStreamReader(inputStream));
-                //Type type = new TypeToken<Map<String, String>>(){}.getType();
-                //Object json = new Gson().fromJson(reader, type);
 
                 GsonBuilder gsonBuilder = new GsonBuilder();
                 gsonBuilder.registerTypeAdapter(Object.class, new NaturalDeserializer());
                 Gson gson = gsonBuilder.create();
-                Object o = gson.fromJson(reader, Object.class);
-
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    // Since it's JSON, adding a newline isn't necessary (it won't affect parsing)
-                    // But it does make debugging a *lot* easier if you print out the completed
-                    // buffer for debugging.
-                    buffer.append(line + "\n");
-                }
-
-
-            } catch (IOException e) {
-                Log.e(LOG_TAG, e.getMessage(), e);
+                map = gson.fromJson(reader, LinkedTreeMap.class);
             } finally {
                 closeQuietly(inputStream, reader);
             }
 
-            if (buffer.length() == 0) {
+            if (map == null) {
                 // Stream was empty.  No point in parsing.
                 return null;
             }
-            Log.i(LOG_TAG, buffer.toString());
+            Log.d(LOG_TAG, new GsonBuilder().setPrettyPrinting().create().toJson(map));
             return new String[0];
         }
     }
