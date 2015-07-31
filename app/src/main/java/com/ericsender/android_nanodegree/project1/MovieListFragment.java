@@ -12,7 +12,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.GridView;
 
+import com.ericsender.android_nanodegree.project1.adapters.ImageAdapter;
 import com.ericsender.android_nanodegree.project1.utils.NaturalDeserializer;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -44,6 +46,7 @@ import java.util.Map;
 public class MovieListFragment extends Fragment {
 
     private ArrayAdapter<String> mMovieAdapter;
+    private GridView movieGrid;
 
     public MovieListFragment() {
     }
@@ -59,6 +62,11 @@ public class MovieListFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
+        movieGrid = (GridView) getActivity().findViewById(R.id.movie_grid);
+        movieGrid.setAdapter(new ImageAdapter(getActivity().getApplicationContext()));
+        // mMovieAdapter = new ArrayAdapter<String>(getActivity(), R.layout.grid_movie_posters, )
+
         return inflater.inflate(R.layout.movie_list_fragment, container, false);
     }
 
