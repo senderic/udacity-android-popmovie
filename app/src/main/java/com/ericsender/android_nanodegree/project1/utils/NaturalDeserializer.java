@@ -12,6 +12,10 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 
+/*
+ *
+ * Credit to: @Kevin\ Dolan http://stackoverflow.com/a/4799594/1582712
+ */
 public class NaturalDeserializer implements JsonDeserializer<Object> {
     public Object deserialize(JsonElement json, Type typeOfT,
                               JsonDeserializationContext context) {
