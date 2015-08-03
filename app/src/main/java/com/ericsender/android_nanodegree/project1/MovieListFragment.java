@@ -1,5 +1,6 @@
 package com.ericsender.android_nanodegree.project1;
 
+import android.app.DownloadManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -13,7 +14,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
+import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.ericsender.android_nanodegree.project1.adapters.ImageAdapter;
 import com.ericsender.android_nanodegree.project1.utils.NaturalDeserializer;
 import com.google.gson.Gson;
@@ -27,6 +35,8 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.internal.LinkedTreeMap;
 import com.google.gson.reflect.TypeToken;
 
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.IOException;
@@ -35,10 +45,10 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
-
 
 /**
  * A placeholder fragment containing a simple view.
@@ -46,6 +56,7 @@ import java.util.Map;
 public class MovieListFragment extends Fragment {
 
     private ArrayAdapter<String> mMovieAdapter;
+    private final Gson gson = new GsonBuilder().registerTypeAdapter(Object.class, new NaturalDeserializer()).create();
 
     public MovieListFragment() {
     }
@@ -79,7 +90,9 @@ public class MovieListFragment extends Fragment {
 
         switch (item.getItemId()) {
             case R.id.action_refresh:
-                updateMovieList();
+                Log.d(getClass().getSimpleName(), "Refreshing!");
+                updateMovieListVolley();
+                //updateMovieList();
                 return true;
         }
         return super.onOptionsItemSelected(item);
@@ -90,6 +103,43 @@ public class MovieListFragment extends Fragment {
         fmt.execute("");
     }
 
+    private void updateMovieListVolley() {
+        RequestQueue queue = Volley.newRequestQueue(getActivity());
+        Uri builtUri = Uri.parse(getString(R.string.tmdb_api_base_url)).buildUpon()
+                .appendQueryParameter(getString(R.string.tmdb_param_sortby), getString(R.string.tmdb_arg_popularity))
+                .appendQueryParameter(getString(R.string.tmdb_param_api), getString(R.string.private_tmdb_api))
+                .build();
+        String url = "";
+        try {
+            url = new URL(builtUri.toString()).toString();
+        } catch (MalformedURLException e) {
+            Log.e(getClass().getSimpleName(), e.getMessage(), e);
+            // Toast.makeText(getActivity(), "Malformed URL " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        JsonObjectRequest jsObjRequest = new JsonObjectRequest
+                (Request.Method.GET, url, (String) null,  new Response.Listener<JSONObject>() {
+
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        LinkedTreeMap map = gson.fromJson(response.toString(), LinkedTreeMap.class);
+                        Log.d(getClass().getSimpleName(), new GsonBuilder().setPrettyPrinting().create().toJson(map));
+                    }
+                }, new Response.ErrorListener() {
+
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.e(getClass().getSimpleName(), error.getMessage(), error);
+                    }
+                });
+
+        queue.add(jsObjRequest);
+    }
+
+    /*
+    TODO: This Async may be able to be deleted. Replaced with Volley above.
+     */
     public class FetchMoviesTask extends AsyncTask<String, Void, String[]> {
 
         private final String LOG_TAG = getClass().getSimpleName();

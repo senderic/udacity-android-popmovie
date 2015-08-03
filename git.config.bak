@@ -15,9 +15,10 @@
 	url = https://esend7881@bitbucket.org/esend7881/udacity-android-nanodegree-july2015-project1.git
 	fetch = +refs/heads/*:refs/remotes/origin/*
 [remote "all"]
+	url = https://esend7881@github.com/esend7881/udacity-android-nanodegree--july2015-project1.git
 	pushurl = https://esend7881@github.com/esend7881/udacity-android-nanodegree--july2015-project1.git
 	pushurl = https://esend7881@bitbucket.org/esend7881/udacity-android-nanodegree-july2015-project1.git
 	fetch = +refs/heads/*:refs/remotes/origin/*
 [branch "master"]
-	remote = origin
+	remote = all
 	merge = refs/heads/master
