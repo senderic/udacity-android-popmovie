@@ -6,8 +6,8 @@
 
     <ImageView
         android:id="@+id/movie_thumb"
-        android:layout_width="50px"
-        android:layout_height="50px"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
         android:layout_marginRight="10px"
         android:src="@mipmap/ic_launcher" >
     </ImageView>

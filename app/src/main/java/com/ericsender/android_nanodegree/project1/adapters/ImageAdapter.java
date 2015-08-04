@@ -42,7 +42,8 @@ public class ImageAdapter extends BaseAdapter {
         }
 
         imageView.setImageResource(mThumbIds[position]);
-        return imageView;
+        return (ImageView) parent.view
+        // return imageView;
     }
 
     // references to our images
