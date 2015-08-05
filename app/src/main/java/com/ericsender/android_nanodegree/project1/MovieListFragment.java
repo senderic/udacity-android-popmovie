@@ -1,6 +1,5 @@
 package com.ericsender.android_nanodegree.project1;
 
-import android.app.DownloadManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -14,7 +13,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
-import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -23,17 +21,11 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.ericsender.android_nanodegree.project1.adapters.ImageAdapter;
+import com.ericsender.android_nanodegree.project1.adapters.MovieObj;
 import com.ericsender.android_nanodegree.project1.utils.NaturalDeserializer;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
 import com.google.gson.internal.LinkedTreeMap;
-import com.google.gson.reflect.TypeToken;
 
 import org.json.JSONObject;
 
@@ -42,21 +34,21 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.lang.reflect.Type;
-import java.math.BigDecimal;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A placeholder fragment containing a simple view.
  */
 public class MovieListFragment extends Fragment {
 
-    private ArrayAdapter<String> mMovieAdapter;
+    private ArrayAdapter<MovieObj> mMovieAdapter;
+    private List<MovieObj> mMovieList = new ArrayList<>();
     private final Gson gson = new GsonBuilder().registerTypeAdapter(Object.class, new NaturalDeserializer()).create();
+    private ImageAdapter mImageAdapter;
 
     public MovieListFragment() {
     }
@@ -75,7 +67,8 @@ public class MovieListFragment extends Fragment {
 
         View rootView = inflater.inflate(R.layout.movie_list_fragment, container, false);
         GridView movieGrid = (GridView) rootView.findViewById(R.id.movie_grid);
-        movieGrid.setAdapter(new ImageAdapter(getActivity()));
+        mImageAdapter = new ImageAdapter(getActivity(), R.layout.movie_list_fragment, mMovieList);
+        movieGrid.setAdapter(mImageAdapter);
         // mMovieAdapter = new ArrayAdapter<String>(getActivity(), R.layout.grid_movie_posters,
         return rootView;
     }
@@ -124,7 +117,8 @@ public class MovieListFragment extends Fragment {
                     @Override
                     public void onResponse(JSONObject response) {
                         LinkedTreeMap map = gson.fromJson(response.toString(), LinkedTreeMap.class);
-                        Log.d(getClass().getSimpleName(), new GsonBuilder().setPrettyPrinting().create().toJson(map));
+
+                        // Log.d(getClass().getSimpleName(), new GsonBuilder().setPrettyPrinting().create().toJson(map));
                     }
                 }, new Response.ErrorListener() {
 
