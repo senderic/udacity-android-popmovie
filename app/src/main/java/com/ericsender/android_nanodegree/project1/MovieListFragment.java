@@ -1,5 +1,6 @@
 package com.ericsender.android_nanodegree.project1;
 
+import android.graphics.Movie;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -39,6 +40,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * A placeholder fragment containing a simple view.
@@ -67,7 +71,7 @@ public class MovieListFragment extends Fragment {
 
         View rootView = inflater.inflate(R.layout.movie_list_fragment, container, false);
         GridView movieGrid = (GridView) rootView.findViewById(R.id.movie_grid);
-        mImageAdapter = new ImageAdapter(getActivity(), R.layout.movie_list_fragment, mMovieList);
+        mImageAdapter = new ImageAdapter(getActivity(), R.layout.movie_cell, mMovieList);
         movieGrid.setAdapter(mImageAdapter);
         // mMovieAdapter = new ArrayAdapter<String>(getActivity(), R.layout.grid_movie_posters,
         return rootView;
@@ -112,14 +116,93 @@ public class MovieListFragment extends Fragment {
         }
 
         JsonObjectRequest jsObjRequest = new JsonObjectRequest
-                (Request.Method.GET, url, (String) null,  new Response.Listener<JSONObject>() {
+                (Request.Method.GET, url, (String) null, new Response.Listener<JSONObject>() {
 
                     @Override
                     public void onResponse(JSONObject response) {
-                        LinkedTreeMap map = gson.fromJson(response.toString(), LinkedTreeMap.class);
-
-                        // Log.d(getClass().getSimpleName(), new GsonBuilder().setPrettyPrinting().create().toJson(map));
+                        LinkedTreeMap<String, Object> map = gson.fromJson(response.toString(), LinkedTreeMap.class);
+                        List<MovieObj> movies = covertMapToMovieObjList(map);
+                        mMovieList.clear();
+                        mMovieList.addAll(movies);
                     }
+
+                    private List<MovieObj> covertMapToMovieObjList(LinkedTreeMap<String, Object> map) {
+                        List<MovieObj> movies = null;
+                        for (Map.Entry<String, Object> entry : map.entrySet()) {
+                            switch (entry.getKey()) {
+                                case "page":
+                                    Double page = (Double) entry.getValue();
+                                    break;
+                                case "results":
+                                    movies = handleResults((ArrayList) entry.getValue());
+                                    break;
+                                case "total_pages":
+                                    Double total_pages = (Double) entry.getValue();
+                                    break;
+                                case "total_results":
+                                    Double total_results = (Double) entry.getValue();
+                                    break;
+                                default:
+                                    Log.d(getClass().getSimpleName(), "Key/Val did not match predefined set: " + entry.getKey());
+                            }
+                        }
+                        return movies;
+                    }
+
+                    private List<MovieObj> handleResults(List<LinkedTreeMap<String, Object>> results) {
+                        List<MovieObj> movies = new ArrayList<>();
+                        for (LinkedTreeMap<String, Object> m : results) {
+                            MovieObj movie = new MovieObj();
+                            for (Map.Entry<String, Object> e : m.entrySet()) {
+                                switch (e.getKey()) {
+                                    case "adult":
+                                        movie.adult = (Boolean) e.getValue();
+                                        break;
+                                    case "backdrop_path":
+                                        movie.backdrop_path = (String) e.getValue();
+                                        break;
+                                    case "genre_ids":
+                                        movie.genre_ids = (ArrayList<Double>) e.getValue();
+                                        break;
+                                    case "id":
+                                        movie.id = (Double) e.getValue();
+                                        break;
+                                    case "original_language":
+                                        movie.original_language = (String) e.getValue();
+                                        break;
+                                    case "original_title":
+                                        movie.original_title = (String) e.getValue();
+                                        break;
+                                    case "release_date":
+                                        movie.release_date = (String) e.getValue();
+                                        break;
+                                    case "poster_path":
+                                        movie.poster_path = (String) e.getValue();
+                                        break;
+                                    case "popularity":
+                                        movie.popularity = (Double) e.getValue();
+                                        break;
+                                    case "title":
+                                        movie.title = (String) e.getValue();
+                                        break;
+                                    case "video":
+                                        movie.video = (Boolean) e.getValue();
+                                        break;
+                                    case "vote_average":
+                                        movie.vote_average = (Double) e.getValue();
+                                        break;
+                                    case "vote_count":
+                                        movie.vote_count = (Double) e.getValue();
+                                        break;
+                                }
+                            }
+                            movies.add(movie);
+                        }
+                        return movies;
+                    }
+
+                    // Log.d(getClass().getSimpleName(), new GsonBuilder().setPrettyPrinting().create().toJson(map));
+
                 }, new Response.ErrorListener() {
 
                     @Override
