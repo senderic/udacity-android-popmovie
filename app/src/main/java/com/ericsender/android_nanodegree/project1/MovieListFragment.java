@@ -122,8 +122,12 @@ public class MovieListFragment extends Fragment {
                     public void onResponse(JSONObject response) {
                         LinkedTreeMap<String, Object> map = gson.fromJson(response.toString(), LinkedTreeMap.class);
                         List<MovieObj> movies = covertMapToMovieObjList(map);
-                        mMovieList.clear();
-                        mMovieList.addAll(movies);
+                        if (!movies.isEmpty()) {
+                            mMovieList.clear();
+                            mMovieList = movies;
+                            mImageAdapter.setGridData(movies);
+                            mImageAdapter.notifyDataSetChanged();
+                        }
                     }
 
                     private List<MovieObj> covertMapToMovieObjList(LinkedTreeMap<String, Object> map) {
