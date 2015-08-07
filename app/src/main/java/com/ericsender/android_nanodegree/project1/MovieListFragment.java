@@ -72,6 +72,7 @@ public class MovieListFragment extends Fragment {
         mImageAdapter = new ImageAdapter(getActivity(), R.layout.movie_cell, mMovieList, mMovieGrid);
         mMovieGrid.setAdapter(mImageAdapter);
         // mMovieAdapter = new ArrayAdapter<String>(getActivity(), R.layout.grid_movie_posters,
+
         return rootView;
     }
 
@@ -128,8 +129,7 @@ public class MovieListFragment extends Fragment {
                         List<MovieObj> movies = covertMapToMovieObjList(map);
                         if (!movies.isEmpty()) {
                             mImageAdapter.clear();
-                            mMovieList.clear();
-                            mMovieList.addAll(movies);
+                            mMovieList = movies;
                             mImageAdapter.setGridData(mMovieList);
                         }
                     }

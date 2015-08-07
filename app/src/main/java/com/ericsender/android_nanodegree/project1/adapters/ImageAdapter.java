@@ -35,8 +35,7 @@ public class ImageAdapter extends ArrayAdapter<MovieObj> {
     private String thumbUrl;
 
     public void setGridData(List<MovieObj> gridData) {
-        mGridData.clear();
-        mGridData.addAll(gridData);
+        mGridData = gridData;
         notifyDataSetChanged();
     }
 
@@ -84,7 +83,7 @@ public class ImageAdapter extends ArrayAdapter<MovieObj> {
 
         //MovieObj item = mGridData.get(position);
         holder.titleTextView.setText("TITLE");
-        Picasso.with(getContext()).setLoggingEnabled(true);
+        // Picasso.with(getContext()).setLoggingEnabled(true);
         // Picasso.with(mContext).load(baseUrl + movie.poster_path).into(holder.imageView);
 
         String load = movie == null ? "//127.0.0.1/dev/null" : baseUrl + movie.poster_path;
