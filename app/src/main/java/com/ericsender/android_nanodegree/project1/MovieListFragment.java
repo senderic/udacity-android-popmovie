@@ -1,6 +1,5 @@
 package com.ericsender.android_nanodegree.project1;
 
-import android.graphics.Movie;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -41,8 +40,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 
 /**
  * A placeholder fragment containing a simple view.
@@ -53,6 +50,7 @@ public class MovieListFragment extends Fragment {
     private List<MovieObj> mMovieList = new ArrayList<>();
     private final Gson gson = new GsonBuilder().registerTypeAdapter(Object.class, new NaturalDeserializer()).create();
     private ImageAdapter mImageAdapter;
+    private GridView mMovieGrid;
 
     public MovieListFragment() {
     }
@@ -70,11 +68,17 @@ public class MovieListFragment extends Fragment {
                              Bundle savedInstanceState) {
 
         View rootView = inflater.inflate(R.layout.movie_list_fragment, container, false);
-        GridView movieGrid = (GridView) rootView.findViewById(R.id.movie_grid);
-        mImageAdapter = new ImageAdapter(getActivity(), R.layout.movie_cell, mMovieList);
-        movieGrid.setAdapter(mImageAdapter);
+        mMovieGrid = (GridView) rootView.findViewById(R.id.movie_grid);
+        mImageAdapter = new ImageAdapter(getActivity(), R.layout.movie_cell, mMovieList, mMovieGrid);
+        mMovieGrid.setAdapter(mImageAdapter);
         // mMovieAdapter = new ArrayAdapter<String>(getActivity(), R.layout.grid_movie_posters,
         return rootView;
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        updateMovieListVolley();
+        super.onActivityCreated(savedInstanceState);
     }
 
     @Override
@@ -123,16 +127,16 @@ public class MovieListFragment extends Fragment {
                         LinkedTreeMap<String, Object> map = gson.fromJson(response.toString(), LinkedTreeMap.class);
                         List<MovieObj> movies = covertMapToMovieObjList(map);
                         if (!movies.isEmpty()) {
+                            mImageAdapter.clear();
                             mMovieList.clear();
-                            mMovieList = movies;
-                            mImageAdapter.setGridData(movies);
-                            mImageAdapter.notifyDataSetChanged();
+                            mMovieList.addAll(movies);
+                            mImageAdapter.setGridData(mMovieList);
                         }
                     }
 
                     private List<MovieObj> covertMapToMovieObjList(LinkedTreeMap<String, Object> map) {
                         List<MovieObj> movies = null;
-                        for (Map.Entry<String, Object> entry : map.entrySet()) {
+                        for (Map.Entry<String, Object> entry : map.entrySet())
                             switch (entry.getKey()) {
                                 case "page":
                                     Double page = (Double) entry.getValue();
@@ -149,7 +153,6 @@ public class MovieListFragment extends Fragment {
                                 default:
                                     Log.d(getClass().getSimpleName(), "Key/Val did not match predefined set: " + entry.getKey());
                             }
-                        }
                         return movies;
                     }
 
@@ -157,7 +160,7 @@ public class MovieListFragment extends Fragment {
                         List<MovieObj> movies = new ArrayList<>();
                         for (LinkedTreeMap<String, Object> m : results) {
                             MovieObj movie = new MovieObj();
-                            for (Map.Entry<String, Object> e : m.entrySet()) {
+                            for (Map.Entry<String, Object> e : m.entrySet())
                                 switch (e.getKey()) {
                                     case "adult":
                                         movie.adult = (Boolean) e.getValue();
@@ -199,14 +202,10 @@ public class MovieListFragment extends Fragment {
                                         movie.vote_count = (Double) e.getValue();
                                         break;
                                 }
-                            }
                             movies.add(movie);
                         }
                         return movies;
                     }
-
-                    // Log.d(getClass().getSimpleName(), new GsonBuilder().setPrettyPrinting().create().toJson(map));
-
                 }, new Response.ErrorListener() {
 
                     @Override
