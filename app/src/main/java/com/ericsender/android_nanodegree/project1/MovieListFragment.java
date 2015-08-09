@@ -20,7 +20,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
-import com.ericsender.android_nanodegree.project1.adapters.ImageAdapter;
+import com.ericsender.android_nanodegree.project1.adapters.GridViewAdapter;
 import com.ericsender.android_nanodegree.project1.adapters.MovieObj;
 import com.ericsender.android_nanodegree.project1.utils.NaturalDeserializer;
 import com.google.gson.Gson;
@@ -49,7 +49,7 @@ public class MovieListFragment extends Fragment {
     private ArrayAdapter<MovieObj> mMovieAdapter;
     private List<MovieObj> mMovieList = new ArrayList<>();
     private final Gson gson = new GsonBuilder().registerTypeAdapter(Object.class, new NaturalDeserializer()).create();
-    private ImageAdapter mImageAdapter;
+    private GridViewAdapter mGridViewAdapter;
     private GridView mMovieGrid;
 
     public MovieListFragment() {
@@ -69,8 +69,8 @@ public class MovieListFragment extends Fragment {
 
         View rootView = inflater.inflate(R.layout.movie_list_fragment, container, false);
         mMovieGrid = (GridView) rootView.findViewById(R.id.movie_grid);
-        mImageAdapter = new ImageAdapter(getActivity(), R.layout.movie_cell, mMovieList, mMovieGrid);
-        mMovieGrid.setAdapter(mImageAdapter);
+        mGridViewAdapter = new GridViewAdapter(getActivity(), R.layout.movie_cell, mMovieList, mMovieGrid);
+        mMovieGrid.setAdapter(mGridViewAdapter);
         // mMovieAdapter = new ArrayAdapter<String>(getActivity(), R.layout.grid_movie_posters,
 
         return rootView;
@@ -128,9 +128,9 @@ public class MovieListFragment extends Fragment {
                         LinkedTreeMap<String, Object> map = gson.fromJson(response.toString(), LinkedTreeMap.class);
                         List<MovieObj> movies = covertMapToMovieObjList(map);
                         if (!movies.isEmpty()) {
-                            mImageAdapter.clear();
+                            mGridViewAdapter.clear();
                             mMovieList = movies;
-                            mImageAdapter.setGridData(mMovieList);
+                            mGridViewAdapter.setGridData(mMovieList);
                         }
                     }
 
