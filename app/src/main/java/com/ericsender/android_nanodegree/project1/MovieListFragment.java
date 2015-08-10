@@ -46,6 +46,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * A placeholder fragment containing a simple view.
@@ -58,24 +60,24 @@ public class MovieListFragment extends Fragment {
     private GridViewAdapter mGridViewAdapter;
     private GridView mMovieGridView;
     private Comparator<MovieGridObj> sortAlgo = new Comparator<MovieGridObj>() {
-            @Override
-            public int compare(MovieGridObj lhs, MovieGridObj rhs) {
-                String sort = PreferenceManager
-                        .getDefaultSharedPreferences(getActivity())
-                        .getString(getString(R.string.pref_sort_order_key),
-                                getString(R.string.most_popular_val));
+        @Override
+        public int compare(MovieGridObj lhs, MovieGridObj rhs) {
+            String sort = PreferenceManager
+                    .getDefaultSharedPreferences(getActivity())
+                    .getString(getString(R.string.pref_sort_order_key),
+                            getString(R.string.most_popular_val));
 
-                sort = sort == null ? "" : sort; // defensive-ish code
+            sort = sort == null ? "" : sort; // defensive-ish code
 
-                Log.d(getClass().getSimpleName(), f("Sorting %s and %s based on %s", lhs.title, rhs.title, sort));
+            Log.d(getClass().getSimpleName(), f("Sorting %s and %s based on %s", lhs.title, rhs.title, sort));
 
-                if (sort.equalsIgnoreCase(getString(R.string.most_popular_val)))
-                    return lhs.popularity.compareTo(rhs.popularity);
-                else if (sort.equalsIgnoreCase(getString(R.string.highest_rated_val)))
-                    return lhs.vote_average.compareTo(rhs.vote_count);
-                else throw new RuntimeException("Sort setting not valid: " + sort);
-            }
-        };
+            if (sort.equalsIgnoreCase(getString(R.string.most_popular_val)))
+                return lhs.popularity.compareTo(rhs.popularity);
+            else if (sort.equalsIgnoreCase(getString(R.string.highest_rated_val)))
+                return lhs.vote_average.compareTo(rhs.vote_count);
+            else throw new RuntimeException("Sort setting not valid: " + sort);
+        }
+    };
 
     public static final String f(String s, Object... args) {
         return String.format(s, args);
@@ -131,7 +133,7 @@ public class MovieListFragment extends Fragment {
                         putExtra("movieObj", item);
 
                 //Start details activity
-                 startActivity(intent);
+                startActivity(intent);
             }
         });
     }
@@ -195,7 +197,7 @@ public class MovieListFragment extends Fragment {
                     }
 
                     private List<MovieGridObj> covertMapToMovieObjList(LinkedTreeMap<String, Object> map) {
-                        List<MovieGridObj> movies = null;
+                        Set<MovieGridObj> movies = null;
                         for (Map.Entry<String, Object> entry : map.entrySet())
                             switch (entry.getKey()) {
                                 case "page":
@@ -216,11 +218,11 @@ public class MovieListFragment extends Fragment {
 //                        int c = 1;
 //                        for (MovieGridObj m : movies)
 //                            Log.d(getClass().getSimpleName(), f("%d>> List for %s", c++, m));
-                        return movies;
+                        return new ArrayList<>(movies);
                     }
 
-                    private List<MovieGridObj> handleResults(List<LinkedTreeMap<String, Object>> results) {
-                        List<MovieGridObj> movies = new ArrayList<>();
+                    private Set<MovieGridObj> handleResults(List<LinkedTreeMap<String, Object>> results) {
+                        Set<MovieGridObj> movies = new TreeSet<>(sortAlgo);
                         for (LinkedTreeMap<String, Object> m : results) {
                             MovieGridObj movie = new MovieGridObj();
                             for (Map.Entry<String, Object> e : m.entrySet())
@@ -267,7 +269,6 @@ public class MovieListFragment extends Fragment {
                                 }
                             movies.add(movie);
                         }
-                        Collections.sort(movies, sortAlgo);
                         return movies;
                     }
                 }, new Response.ErrorListener() {
