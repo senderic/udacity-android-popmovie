@@ -1,8 +1,10 @@
 package com.ericsender.android_nanodegree.project1;
 
+import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -11,8 +13,10 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
+import android.widget.ImageView;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -21,7 +25,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.ericsender.android_nanodegree.project1.adapters.GridViewAdapter;
-import com.ericsender.android_nanodegree.project1.adapters.MovieObj;
+import com.ericsender.android_nanodegree.project1.adapters.MovieGridObj;
 import com.ericsender.android_nanodegree.project1.utils.NaturalDeserializer;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -38,6 +42,8 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -46,11 +52,34 @@ import java.util.Map;
  */
 public class MovieListFragment extends Fragment {
 
-    private ArrayAdapter<MovieObj> mMovieAdapter;
-    private List<MovieObj> mMovieList = new ArrayList<>();
+    private ArrayAdapter<MovieGridObj> mMovieAdapter;
+    private List<MovieGridObj> mMovieList = new ArrayList<>();
     private final Gson gson = new GsonBuilder().registerTypeAdapter(Object.class, new NaturalDeserializer()).create();
     private GridViewAdapter mGridViewAdapter;
-    private GridView mMovieGrid;
+    private GridView mMovieGridView;
+    private Comparator<MovieGridObj> sortAlgo = new Comparator<MovieGridObj>() {
+            @Override
+            public int compare(MovieGridObj lhs, MovieGridObj rhs) {
+                String sort = PreferenceManager
+                        .getDefaultSharedPreferences(getActivity())
+                        .getString(getString(R.string.pref_sort_order_key),
+                                getString(R.string.most_popular_val));
+
+                sort = sort == null ? "" : sort; // defensive-ish code
+
+                Log.d(getClass().getSimpleName(), f("Sorting %s and %s based on %s", lhs.title, rhs.title, sort));
+
+                if (sort.equalsIgnoreCase(getString(R.string.most_popular_val)))
+                    return lhs.popularity.compareTo(rhs.popularity);
+                else if (sort.equalsIgnoreCase(getString(R.string.highest_rated_val)))
+                    return lhs.vote_average.compareTo(rhs.vote_count);
+                else throw new RuntimeException("Sort setting not valid: " + sort);
+            }
+        };
+
+    public static final String f(String s, Object... args) {
+        return String.format(s, args);
+    }
 
     public MovieListFragment() {
     }
@@ -68,12 +97,43 @@ public class MovieListFragment extends Fragment {
                              Bundle savedInstanceState) {
 
         View rootView = inflater.inflate(R.layout.movie_list_fragment, container, false);
-        mMovieGrid = (GridView) rootView.findViewById(R.id.movie_grid);
-        mGridViewAdapter = new GridViewAdapter(getActivity(), R.layout.movie_cell, mMovieList, mMovieGrid);
-        mMovieGrid.setAdapter(mGridViewAdapter);
+        mMovieGridView = (GridView) rootView.findViewById(R.id.movie_grid);
+        mGridViewAdapter = new GridViewAdapter(getActivity(), R.layout.movie_cell, mMovieList, mMovieGridView);
+        mMovieGridView.setAdapter(mGridViewAdapter);
         // mMovieAdapter = new ArrayAdapter<String>(getActivity(), R.layout.grid_movie_posters,
+        createGridItemClickCallbacks();
+
 
         return rootView;
+    }
+
+    private void createGridItemClickCallbacks() {
+        //Grid view click event
+        mMovieGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
+                //Get item at position
+                MovieGridObj item = (MovieGridObj) parent.getItemAtPosition(position);
+
+                Intent intent = new Intent(getActivity(), MovieDetailsActivity.class);
+                ImageView imageView = (ImageView) v.findViewById(R.id.grid_item_image);
+
+                // Interesting data to pass across are the thumbnail size/location, the
+                // resourceId of the source bitmap, the picture description, and the
+                // orientation (to avoid returning back to an obsolete configuration if
+                // the device rotates again in the meantime)
+
+                int[] screenLocation = new int[2];
+                imageView.getLocationOnScreen(screenLocation);
+
+                //Pass the image title and url to DetailsActivity
+                intent.putExtra("left", screenLocation[0]).
+                        putExtra("top", screenLocation[1]).
+                        putExtra("movieObj", item);
+
+                //Start details activity
+                 startActivity(intent);
+            }
+        });
     }
 
     @Override
@@ -126,7 +186,7 @@ public class MovieListFragment extends Fragment {
                     @Override
                     public void onResponse(JSONObject response) {
                         LinkedTreeMap<String, Object> map = gson.fromJson(response.toString(), LinkedTreeMap.class);
-                        List<MovieObj> movies = covertMapToMovieObjList(map);
+                        List<MovieGridObj> movies = covertMapToMovieObjList(map);
                         if (!movies.isEmpty()) {
                             mGridViewAdapter.clear();
                             mMovieList = movies;
@@ -134,8 +194,8 @@ public class MovieListFragment extends Fragment {
                         }
                     }
 
-                    private List<MovieObj> covertMapToMovieObjList(LinkedTreeMap<String, Object> map) {
-                        List<MovieObj> movies = null;
+                    private List<MovieGridObj> covertMapToMovieObjList(LinkedTreeMap<String, Object> map) {
+                        List<MovieGridObj> movies = null;
                         for (Map.Entry<String, Object> entry : map.entrySet())
                             switch (entry.getKey()) {
                                 case "page":
@@ -153,13 +213,16 @@ public class MovieListFragment extends Fragment {
                                 default:
                                     Log.d(getClass().getSimpleName(), "Key/Val did not match predefined set: " + entry.getKey());
                             }
+//                        int c = 1;
+//                        for (MovieGridObj m : movies)
+//                            Log.d(getClass().getSimpleName(), f("%d>> List for %s", c++, m));
                         return movies;
                     }
 
-                    private List<MovieObj> handleResults(List<LinkedTreeMap<String, Object>> results) {
-                        List<MovieObj> movies = new ArrayList<>();
+                    private List<MovieGridObj> handleResults(List<LinkedTreeMap<String, Object>> results) {
+                        List<MovieGridObj> movies = new ArrayList<>();
                         for (LinkedTreeMap<String, Object> m : results) {
-                            MovieObj movie = new MovieObj();
+                            MovieGridObj movie = new MovieGridObj();
                             for (Map.Entry<String, Object> e : m.entrySet())
                                 switch (e.getKey()) {
                                     case "adult":
@@ -204,6 +267,7 @@ public class MovieListFragment extends Fragment {
                                 }
                             movies.add(movie);
                         }
+                        Collections.sort(movies, sortAlgo);
                         return movies;
                     }
                 }, new Response.ErrorListener() {

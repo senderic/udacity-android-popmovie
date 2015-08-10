@@ -16,10 +16,10 @@ import com.squareup.picasso.Picasso;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class GridViewAdapter extends ArrayAdapter<MovieObj> {
+public class GridViewAdapter extends ArrayAdapter<MovieGridObj> {
 
     private final GridView mMovieGrid;
-    private List<MovieObj> mGridData;
+    private List<MovieGridObj> mGridData;
     private final Context mContext;
     private static final String LOG_TAG = GridViewAdapter.class.getSimpleName();
     private static final AtomicInteger count = new AtomicInteger();
@@ -36,12 +36,12 @@ public class GridViewAdapter extends ArrayAdapter<MovieObj> {
 
     private String thumbUrl;
 
-    public void setGridData(List<MovieObj> gridData) {
+    public void setGridData(List<MovieGridObj> gridData) {
         mGridData = gridData;
         notifyDataSetChanged();
     }
 
-    public GridViewAdapter(Context context, int resource, List<MovieObj> movies, GridView mMovieGrid) {
+    public GridViewAdapter(Context context, int resource, List<MovieGridObj> movies, GridView mMovieGrid) {
         super(context, resource, movies);
         mContext = context;
         mGridData = movies;
@@ -54,7 +54,7 @@ public class GridViewAdapter extends ArrayAdapter<MovieObj> {
         return 20; //mMovieGrid.getCount();
     }
 
-    public MovieObj getItem(int position) {
+    public MovieGridObj getItem(int position) {
         return mGridData.get(position);
     }
 
@@ -65,7 +65,7 @@ public class GridViewAdapter extends ArrayAdapter<MovieObj> {
     // create a new ImageView for each item referenced by the Adapter
     public View getView(int position, View convertView, ViewGroup parent) {
         View row = convertView;
-        MovieObj movie = null;
+        MovieGridObj movie = null;
         try {
             movie = getItem(position);
         } catch (IndexOutOfBoundsException e) {
@@ -83,7 +83,7 @@ public class GridViewAdapter extends ArrayAdapter<MovieObj> {
             holder = (ViewHolder) row.getTag();
         }
 
-        //MovieObj item = mGridData.get(position);
+        //MovieGridObj item = mGridData.get(position);
         holder.titleTextView.setText("TITLE");
         // Picasso.with(getContext()).setLoggingEnabled(true);
         // Picasso.with(mContext).load(baseUrl + movie.poster_path).into(holder.imageView);
