@@ -3,9 +3,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.ericsender.android_nanodegree.project1.MainActivity">
     <item
-        android:id="@+id/action_sort"
+        android:id="@+id/action_settings"
         android:orderInCategory="100"
-        android:title="@string/sort_pref_title"
+        android:title="@string/settings_pref_title"
         app:showAsAction="never" />
     <item
         android:id="@+id/action_refresh"

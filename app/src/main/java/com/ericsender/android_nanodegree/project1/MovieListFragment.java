@@ -68,12 +68,12 @@ public class MovieListFragment extends Fragment {
 
             sort = sort == null ? "" : sort; // defensive-ish code
 
-            // Log.d(getClass().getSimpleName(), f("Sorting %s and %s based on %s", lhs.title, rhs.title, sort));
+            Log.d(getClass().getSimpleName(), f("Sorting %s and %s based on %s", lhs.title, rhs.title, sort));
 
             if (sort.equalsIgnoreCase(getString(R.string.most_popular_val)))
                 return lhs.popularity.compareTo(rhs.popularity);
             else if (sort.equalsIgnoreCase(getString(R.string.highest_rated_val)))
-                return lhs.vote_average.compareTo(rhs.vote_count);
+                return lhs.vote_average.compareTo(rhs.vote_average);
             else throw new RuntimeException("Sort setting not valid: " + sort);
         }
     };
@@ -105,6 +105,7 @@ public class MovieListFragment extends Fragment {
     @Override
     public void onResume() {
         String foo = getCurrentSortPref();
+        Log.d(getClass().getSimpleName(), "onResume with Sort =  " + foo);
         if (!foo.equals(mCurrSortOrder)) {
             mCurrSortOrder = foo;
             Log.d(getClass().getSimpleName(), "Sorting on: " + mCurrSortOrder);
@@ -124,7 +125,6 @@ public class MovieListFragment extends Fragment {
         mMovieGridView.setAdapter(mGridViewAdapter);
         // mMovieAdapter = new ArrayAdapter<String>(getActivity(), R.layout.grid_movie_posters,
         createGridItemClickCallbacks();
-
 
         return rootView;
     }
@@ -164,20 +164,11 @@ public class MovieListFragment extends Fragment {
         });
     }
 
-    private static final AtomicBoolean runOnce = new AtomicBoolean();
-
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
-        if (!runOnce.getAndSet(true)) {
-            Log.d(getClass().getSimpleName(), "onActivityCreated - updateMovieList");
-            updateMovieListVolley();
-        }
+        Log.d(getClass().getSimpleName(), "onActivityCreated - updateMovieList");
+        updateMovieListVolley();
         super.onActivityCreated(savedInstanceState);
-    }
-
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.menu_main, menu);
     }
 
     @Override
@@ -188,7 +179,7 @@ public class MovieListFragment extends Fragment {
                 Log.d(getClass().getSimpleName(), "Refreshing!");
                 updateMovieListVolley();
                 //updateMovieList();
-                // return true;
+                return false;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -222,12 +213,9 @@ public class MovieListFragment extends Fragment {
                     public void onResponse(JSONObject response) {
                         Log.d(getClass().getSimpleName(), "Response received.");
                         LinkedTreeMap<String, Object> map = gson.fromJson(response.toString(), LinkedTreeMap.class);
-                        List<MovieGridObj> movies = covertMapToMovieObjList(map);
-                        if (!movies.isEmpty()) {
-                            Log.d(getClass().getSimpleName(), "Received a set of movies. Registering them.");
-                            mMovieList = movies;
-                            mGridViewAdapter.setGridData(mMovieList);
-                        }
+                        mMovieList = covertMapToMovieObjList(map);
+                        Log.d(getClass().getSimpleName(), "Received a set of movies. Registering them.");
+                        mGridViewAdapter.setGridData(mMovieList);
                     }
 
                     private List<MovieGridObj> covertMapToMovieObjList(LinkedTreeMap<String, Object> map) {

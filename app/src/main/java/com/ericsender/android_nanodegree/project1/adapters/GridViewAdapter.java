@@ -38,7 +38,6 @@ public class GridViewAdapter extends ArrayAdapter<MovieGridObj> {
     private String thumbUrl;
 
     public void setGridData(List<MovieGridObj> gridData) {
-        clear();
         mGridData = gridData;
         notifyDataSetChanged();
         // mMovieGrid.setAdapter(this);
@@ -93,8 +92,8 @@ public class GridViewAdapter extends ArrayAdapter<MovieGridObj> {
 
         Picasso.with(mContext)
                 .load(load)
-                .placeholder(R.drawable.abc_btn_rating_star_on_mtrl_alpha)
-                .error(R.drawable.abc_btn_rating_star_off_mtrl_alpha)
+                .placeholder(R.drawable.sample_0)
+                .error(R.drawable.sample_1)
                 .fit()
                 .into(holder.imageView);
 
