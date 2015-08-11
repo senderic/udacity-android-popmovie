@@ -1,9 +1,8 @@
-package com.ericsender.android_nanodegree.project1.adapters;
+package com.ericsender.android_nanodegree.project1.parcelable;
 
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -29,7 +28,7 @@ public class MovieGridObj implements Parcelable {
 
     protected MovieGridObj(Parcel in) {
         title = in.readString();
-        adult = new Boolean(in.readByte() == 1);
+        adult = Boolean.valueOf(in.readByte() == (byte) 1);
         backdrop_path = in.readString();
         genre_ids = in.readArrayList(ClassLoader.getSystemClassLoader());
         id = in.readDouble();
@@ -38,7 +37,7 @@ public class MovieGridObj implements Parcelable {
         release_date = in.readString();
         poster_path = in.readString();
         popularity = in.readDouble();
-        video = new Boolean(in.readByte() == 1);
+        video = Boolean.valueOf(in.readByte() == (byte) 1);
         vote_average = in.readDouble();
         vote_count = in.readDouble();
     }

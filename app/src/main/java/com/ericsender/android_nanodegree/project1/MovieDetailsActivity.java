@@ -1,15 +1,12 @@
 package com.ericsender.android_nanodegree.project1;
 
 import android.os.Bundle;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.ericsender.android_nanodegree.project1.adapters.MovieGridObj;
+import com.ericsender.android_nanodegree.project1.parcelable.MovieGridObj;
 import com.squareup.picasso.Picasso;
-
-import java.util.Date;
 
 
 public class MovieDetailsActivity extends ActionBarActivity {

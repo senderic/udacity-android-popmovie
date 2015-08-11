@@ -38,7 +38,7 @@ public class MainActivity extends ActionBarActivity {
 
         //noinspection SimplifiableIfStatement
         switch (id) {
-            case R.id.action_settings:
+            case R.id.action_sort:
                 startActivity(new Intent(this, SettingsActivity.class));
                 return true;
         }

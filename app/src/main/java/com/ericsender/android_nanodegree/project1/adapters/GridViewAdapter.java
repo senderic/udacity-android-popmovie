@@ -11,6 +11,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.ericsender.android_nanodegree.project1.R;
+import com.ericsender.android_nanodegree.project1.parcelable.MovieGridObj;
 import com.squareup.picasso.Picasso;
 
 import java.util.List;
@@ -37,8 +38,10 @@ public class GridViewAdapter extends ArrayAdapter<MovieGridObj> {
     private String thumbUrl;
 
     public void setGridData(List<MovieGridObj> gridData) {
+        clear();
         mGridData = gridData;
         notifyDataSetChanged();
+        // mMovieGrid.setAdapter(this);
     }
 
     public GridViewAdapter(Context context, int resource, List<MovieGridObj> movies, GridView mMovieGrid) {
@@ -51,20 +54,19 @@ public class GridViewAdapter extends ArrayAdapter<MovieGridObj> {
     }
 
     public int getCount() {
-        return 20; //mMovieGrid.getCount();
+        return mGridData.size() > 0 ? mGridData.size() : 20;
     }
 
     public MovieGridObj getItem(int position) {
         return mGridData.get(position);
     }
 
-    public long getItemId(int position) {
-        return 0; //mMovieGrid.getItemIdAtPosition(position);
-    }
+//    public long getItemId(int position) {
+//        return mMovieGrid.getItemIdAtPosition(position);
+//    }
 
     // create a new ImageView for each item referenced by the Adapter
-    public View getView(int position, View convertView, ViewGroup parent) {
-        View row = convertView;
+    public View getView(int position, View row, ViewGroup parent) {
         MovieGridObj movie = null;
         try {
             movie = getItem(position);
@@ -77,24 +79,23 @@ public class GridViewAdapter extends ArrayAdapter<MovieGridObj> {
             holder = new ViewHolder();
             holder.titleTextView = (TextView) row.findViewById(R.id.grid_item_title);
             holder.imageView = (ImageView) row.findViewById(R.id.grid_item_image);
-            holder.isSet = true;
+            holder.isSet = movie != null;
             row.setTag(holder);
+            Log.d(getClass().getSimpleName(), holder.isSet ? "Setting row for " + movie.title : "Setting row for null");
         } else {
             holder = (ViewHolder) row.getTag();
         }
 
-        //MovieGridObj item = mGridData.get(position);
-        holder.titleTextView.setText("TITLE");
         // Picasso.with(getContext()).setLoggingEnabled(true);
-        // Picasso.with(mContext).load(baseUrl + movie.poster_path).into(holder.imageView);
 
-        String load = movie == null ? "//127.0.0.1/dev/null" : baseUrl + movie.poster_path;
-        String title = movie == null ? "null" : movie.title;
+        String load = holder.isSet ? baseUrl + movie.poster_path : "null";
+        String title = holder.isSet ? movie.title : "null";
 
         Picasso.with(mContext)
                 .load(load)
-                .placeholder(R.drawable.abc_ratingbar_full_material)
-                .error(R.drawable.abc_ratingbar_full_material)
+                .placeholder(R.drawable.abc_btn_rating_star_on_mtrl_alpha)
+                .error(R.drawable.abc_btn_rating_star_off_mtrl_alpha)
+                .fit()
                 .into(holder.imageView);
 
         Log.d(getClass().getSimpleName(), String.format("%d>> Loading image: %s - %s", count.incrementAndGet(), title, load));

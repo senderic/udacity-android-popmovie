@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">Project1</string>
 
-    <string name="action_settings">Settings</string>
+    <string name="sort_pref_title">Sort</string>
     <string name="title_activity_main">Pop Movies</string>
 
 <!-- TODO: Remove or change this placeholder text -->

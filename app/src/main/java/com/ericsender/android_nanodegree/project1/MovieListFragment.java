@@ -17,6 +17,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -25,7 +26,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.ericsender.android_nanodegree.project1.adapters.GridViewAdapter;
-import com.ericsender.android_nanodegree.project1.adapters.MovieGridObj;
+import com.ericsender.android_nanodegree.project1.parcelable.MovieGridObj;
 import com.ericsender.android_nanodegree.project1.utils.NaturalDeserializer;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -48,6 +49,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * A placeholder fragment containing a simple view.
@@ -59,17 +61,14 @@ public class MovieListFragment extends Fragment {
     private final Gson gson = new GsonBuilder().registerTypeAdapter(Object.class, new NaturalDeserializer()).create();
     private GridViewAdapter mGridViewAdapter;
     private GridView mMovieGridView;
-    private Comparator<MovieGridObj> sortAlgo = new Comparator<MovieGridObj>() {
+    private final Comparator<MovieGridObj> sortAlgo = new Comparator<MovieGridObj>() {
         @Override
         public int compare(MovieGridObj lhs, MovieGridObj rhs) {
-            String sort = PreferenceManager
-                    .getDefaultSharedPreferences(getActivity())
-                    .getString(getString(R.string.pref_sort_order_key),
-                            getString(R.string.most_popular_val));
+            String sort = getCurrentSortPref();
 
             sort = sort == null ? "" : sort; // defensive-ish code
 
-            Log.d(getClass().getSimpleName(), f("Sorting %s and %s based on %s", lhs.title, rhs.title, sort));
+            // Log.d(getClass().getSimpleName(), f("Sorting %s and %s based on %s", lhs.title, rhs.title, sort));
 
             if (sort.equalsIgnoreCase(getString(R.string.most_popular_val)))
                 return lhs.popularity.compareTo(rhs.popularity);
@@ -78,6 +77,14 @@ public class MovieListFragment extends Fragment {
             else throw new RuntimeException("Sort setting not valid: " + sort);
         }
     };
+    private String mCurrSortOrder;
+
+    private String getCurrentSortPref() {
+        return PreferenceManager
+                .getDefaultSharedPreferences(getActivity())
+                .getString(getString(R.string.pref_sort_order_key),
+                        getString(R.string.most_popular_val));
+    }
 
     public static final String f(String s, Object... args) {
         return String.format(s, args);
@@ -92,6 +99,19 @@ public class MovieListFragment extends Fragment {
 
         // Add this line in order for this fragment to handle menu events.
         setHasOptionsMenu(true);
+        mCurrSortOrder = getCurrentSortPref();
+    }
+
+    @Override
+    public void onResume() {
+        String foo = getCurrentSortPref();
+        if (!foo.equals(mCurrSortOrder)) {
+            mCurrSortOrder = foo;
+            Log.d(getClass().getSimpleName(), "Sorting on: " + mCurrSortOrder);
+            Collections.sort(mMovieList, sortAlgo);
+            mGridViewAdapter.setGridData(mMovieList);
+        }
+        super.onResume();
     }
 
     @Override
@@ -114,33 +134,44 @@ public class MovieListFragment extends Fragment {
         mMovieGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
                 //Get item at position
-                MovieGridObj item = (MovieGridObj) parent.getItemAtPosition(position);
+                MovieGridObj item = null;
+                try {
+                    item = (MovieGridObj) parent.getItemAtPosition(position);
+                } catch (IndexOutOfBoundsException e) {
+                }
+                if (item != null) {
+                    Intent intent = new Intent(getActivity(), MovieDetailsActivity.class);
+                    ImageView imageView = (ImageView) v.findViewById(R.id.grid_item_image);
 
-                Intent intent = new Intent(getActivity(), MovieDetailsActivity.class);
-                ImageView imageView = (ImageView) v.findViewById(R.id.grid_item_image);
+                    // Interesting data to pass across are the thumbnail size/location, the
+                    // resourceId of the source bitmap, the picture description, and the
+                    // orientation (to avoid returning back to an obsolete configuration if
+                    // the device rotates again in the meantime)
 
-                // Interesting data to pass across are the thumbnail size/location, the
-                // resourceId of the source bitmap, the picture description, and the
-                // orientation (to avoid returning back to an obsolete configuration if
-                // the device rotates again in the meantime)
+                    int[] screenLocation = new int[2];
+                    imageView.getLocationOnScreen(screenLocation);
 
-                int[] screenLocation = new int[2];
-                imageView.getLocationOnScreen(screenLocation);
+                    //Pass the image title and url to DetailsActivity
+                    intent.putExtra("left", screenLocation[0]).
+                            putExtra("top", screenLocation[1]).
+                            putExtra("movieObj", item);
 
-                //Pass the image title and url to DetailsActivity
-                intent.putExtra("left", screenLocation[0]).
-                        putExtra("top", screenLocation[1]).
-                        putExtra("movieObj", item);
-
-                //Start details activity
-                startActivity(intent);
+                    //Start details activity
+                    startActivity(intent);
+                } else
+                    Toast.makeText(getActivity(), "No Movie Selected!", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
+    private static final AtomicBoolean runOnce = new AtomicBoolean();
+
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
-        updateMovieListVolley();
+        if (!runOnce.getAndSet(true)) {
+            Log.d(getClass().getSimpleName(), "onActivityCreated - updateMovieList");
+            updateMovieListVolley();
+        }
         super.onActivityCreated(savedInstanceState);
     }
 
@@ -157,7 +188,7 @@ public class MovieListFragment extends Fragment {
                 Log.d(getClass().getSimpleName(), "Refreshing!");
                 updateMovieListVolley();
                 //updateMovieList();
-                return true;
+                // return true;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -182,35 +213,39 @@ public class MovieListFragment extends Fragment {
             return;
         }
 
+        Log.d(getClass().getSimpleName(), "updateMovieListVolley()");
+
         JsonObjectRequest jsObjRequest = new JsonObjectRequest
                 (Request.Method.GET, url, (String) null, new Response.Listener<JSONObject>() {
 
                     @Override
                     public void onResponse(JSONObject response) {
+                        Log.d(getClass().getSimpleName(), "Response received.");
                         LinkedTreeMap<String, Object> map = gson.fromJson(response.toString(), LinkedTreeMap.class);
                         List<MovieGridObj> movies = covertMapToMovieObjList(map);
                         if (!movies.isEmpty()) {
-                            mGridViewAdapter.clear();
+                            Log.d(getClass().getSimpleName(), "Received a set of movies. Registering them.");
                             mMovieList = movies;
                             mGridViewAdapter.setGridData(mMovieList);
                         }
                     }
 
                     private List<MovieGridObj> covertMapToMovieObjList(LinkedTreeMap<String, Object> map) {
-                        Set<MovieGridObj> movies = null;
+                        List<MovieGridObj> movies = null;
+                        Double page, total_pages, total_results;
                         for (Map.Entry<String, Object> entry : map.entrySet())
                             switch (entry.getKey()) {
                                 case "page":
-                                    Double page = (Double) entry.getValue();
+                                    page = (Double) entry.getValue();
                                     break;
                                 case "results":
                                     movies = handleResults((ArrayList) entry.getValue());
                                     break;
                                 case "total_pages":
-                                    Double total_pages = (Double) entry.getValue();
+                                    total_pages = (Double) entry.getValue();
                                     break;
                                 case "total_results":
-                                    Double total_results = (Double) entry.getValue();
+                                    total_results = (Double) entry.getValue();
                                     break;
                                 default:
                                     Log.d(getClass().getSimpleName(), "Key/Val did not match predefined set: " + entry.getKey());
@@ -218,10 +253,12 @@ public class MovieListFragment extends Fragment {
 //                        int c = 1;
 //                        for (MovieGridObj m : movies)
 //                            Log.d(getClass().getSimpleName(), f("%d>> List for %s", c++, m));
-                        return new ArrayList<>(movies);
+
+                        return movies;
                     }
 
-                    private Set<MovieGridObj> handleResults(List<LinkedTreeMap<String, Object>> results) {
+                    private List<MovieGridObj> handleResults(Object resultsObj) {
+                        List<LinkedTreeMap<String, Object>> results = (List<LinkedTreeMap<String, Object>>) resultsObj;
                         Set<MovieGridObj> movies = new TreeSet<>(sortAlgo);
                         for (LinkedTreeMap<String, Object> m : results) {
                             MovieGridObj movie = new MovieGridObj();
@@ -269,13 +306,14 @@ public class MovieListFragment extends Fragment {
                                 }
                             movies.add(movie);
                         }
-                        return movies;
+                        return new ArrayList<>(movies);
                     }
                 }, new Response.ErrorListener() {
 
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         Log.e(getClass().getSimpleName(), error.getMessage(), error);
+                        Toast.makeText(getActivity(), "Error connecting to server.", Toast.LENGTH_SHORT).show();
                     }
                 });
 
