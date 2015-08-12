@@ -34,3 +34,4 @@ proguard/
 /captures
 
 private_*
+temp.diff
