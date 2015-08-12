@@ -67,6 +67,11 @@ public class MovieListFragment extends Fragment {
     private final Comparator<MovieGridObj> sortAlgo = new Comparator<MovieGridObj>() {
         @Override
         public int compare(MovieGridObj lhs, MovieGridObj rhs) {
+            // Not sorting now, using API calls for each new sort.
+            return 1; //performSort(lhs, rhs);
+        }
+
+        private int performSort(MovieGridObj lhs, MovieGridObj rhs) {
             String sort = getCurrentSortPref();
 
             sort = sort == null ? "" : sort; // defensive-ish code
@@ -89,6 +94,20 @@ public class MovieListFragment extends Fragment {
                         getString(R.string.most_popular_val));
     }
 
+    private String getApiSortPref() {
+        String sort = getCurrentSortPref();
+
+        if (sort.equals(getString(R.string.most_popular_val)))
+            return getString(R.string.tmdb_arg_popularity);
+        else //if (sort.equals(getString(R.string.highest_rated_val))) {
+            return getString(R.string.tmdb_arg_highestrating);
+        // else throw new RuntimeException("Sort order value is not known: " + sort);
+    }
+
+    private void setTitle() {
+        getActivity().setTitle(getString(R.string.title_activity_main) + " - " + getCurrentSortPref());
+    }
+
     public static final String f(String s, Object... args) {
         return String.format(s, args);
     }
@@ -102,7 +121,6 @@ public class MovieListFragment extends Fragment {
 
         // Add this line in order for this fragment to handle menu events.
         setHasOptionsMenu(true);
-        mCurrSortOrder = getCurrentSortPref();
     }
 
 
@@ -110,13 +128,20 @@ public class MovieListFragment extends Fragment {
     public void onResume() {
         String foo = getCurrentSortPref();
         Log.d(getClass().getSimpleName(), "onResume with Sort =  " + foo);
-        if (!foo.equals(mCurrSortOrder)) {
+        // If a change to the sort order is seen, resort the gridview and redistplay
+        if (!foo.equals(mCurrSortOrder)) { // This will also be true on inital loading.
             mCurrSortOrder = foo;
             Log.d(getClass().getSimpleName(), "Sorting on: " + mCurrSortOrder);
-            Collections.sort(mMovieList, sortAlgo);
-            mGridViewAdapter.setGridData(mMovieList);
+            // sortMovieList();
+            updateMovieListVolley();
+            setTitle();
         }
         super.onResume();
+    }
+
+    private void sortMovieList() {
+        Collections.sort(mMovieList, sortAlgo);
+        mGridViewAdapter.setGridData(mMovieList);
     }
 
     @Override
@@ -169,13 +194,6 @@ public class MovieListFragment extends Fragment {
     }
 
     @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        Log.d(getClass().getSimpleName(), "onActivityCreated - updateMovieList");
-        updateMovieListVolley();
-        super.onActivityCreated(savedInstanceState);
-    }
-
-    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
         switch (item.getItemId()) {
@@ -194,9 +212,11 @@ public class MovieListFragment extends Fragment {
     }
 
     private void updateMovieListVolley() {
+        String sort = getApiSortPref();
+
         RequestQueue queue = Volley.newRequestQueue(getActivity());
         Uri builtUri = Uri.parse(getString(R.string.tmdb_api_base_url)).buildUpon()
-                .appendQueryParameter(getString(R.string.tmdb_param_sortby), getString(R.string.tmdb_arg_popularity))
+                .appendQueryParameter(getString(R.string.tmdb_param_sortby), sort)
                 .appendQueryParameter(getString(R.string.tmdb_param_api), getString(R.string.private_tmdb_api))
                 .build();
         String url = "";
@@ -208,7 +228,7 @@ public class MovieListFragment extends Fragment {
             return;
         }
 
-        Log.d(getClass().getSimpleName(), "updateMovieListVolley()");
+        Log.d(getClass().getSimpleName(), "updateMovieListVolley() - url = " + url);// .substring(0, url.length() - 16));
 
         JsonObjectRequest jsObjRequest = new JsonObjectRequest
                 (Request.Method.GET, url, (String) null, new Response.Listener<JSONObject>() {
@@ -242,10 +262,8 @@ public class MovieListFragment extends Fragment {
                                 default:
                                     Log.d(getClass().getSimpleName(), "Key/Val did not match predefined set: " + entry.getKey());
                             }
-//                        int c = 1;
-//                        for (MovieGridObj m : movies)
-//                            Log.d(getClass().getSimpleName(), f("%d>> List for %s", c++, m));
-
+//                        for (int c = 0; c < movies.size(); c++)
+//                            Log.d(getClass().getSimpleName(), f("%d>> List for %s", c + 1, movies.get(c)));
                         return movies;
                     }
 
@@ -274,6 +292,9 @@ public class MovieListFragment extends Fragment {
                                     case "original_title":
                                         movie.original_title = (String) e.getValue();
                                         break;
+                                    case "overview":
+                                        movie.overview = (String) e.getValue();
+                                        break;
                                     case "release_date":
                                         movie.release_date = (String) e.getValue();
                                         break;
@@ -293,9 +314,10 @@ public class MovieListFragment extends Fragment {
                                         movie.vote_average = (Double) e.getValue();
                                         break;
                                     case "vote_count":
-                                        movie.vote_count = (Double) e.getValue();
+                                        movie.vote_count = ((Double) e.getValue()).intValue();
                                         break;
                                 }
+                            // Log.d(getClass().getSimpleName(), "Just received " + movie.title + " from API.");
                             movies.add(movie);
                         }
                         return new ArrayList<>(movies);

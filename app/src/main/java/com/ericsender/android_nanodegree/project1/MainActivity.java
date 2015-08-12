@@ -9,17 +9,17 @@ import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 
-public class MainActivity extends ActionBarActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
+public class MainActivity extends ActionBarActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-//        if (savedInstanceState == null) {
-//            getSupportFragmentManager().beginTransaction()
-//                    .add(R.id.main_activity_container, new MovieListFragment())
-//                    .commit();
-//        }
+        if (savedInstanceState == null) {
+            getSupportFragmentManager().beginTransaction()
+                    .add(R.id.main_activity_container, new MovieListFragment())
+                    .commit();
+        }
     }
 
     @Override
@@ -37,12 +37,5 @@ public class MainActivity extends ActionBarActivity implements SharedPreferences
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
-    }
-
-    @Override
-    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        String pref = sharedPreferences.getString(key, "");
-
-        setTitle(getString(R.string.title_activity_main) + " - " + pref);
     }
 }

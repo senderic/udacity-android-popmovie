@@ -17,12 +17,13 @@ public class MovieGridObj implements Parcelable {
     public Double id;
     public String original_language;
     public String original_title;
+    public String overview;
     public String release_date;
     public String poster_path;
     public Double popularity;
     public Boolean video;
     public Double vote_average;
-    public Double vote_count;
+    public Integer vote_count;
 
     public MovieGridObj() {}
 
@@ -34,12 +35,13 @@ public class MovieGridObj implements Parcelable {
         id = in.readDouble();
         original_language = in.readString();
         original_title = in.readString();
+        overview = in.readString();
         release_date = in.readString();
         poster_path = in.readString();
         popularity = in.readDouble();
         video = Boolean.valueOf(in.readByte() == (byte) 1);
         vote_average = in.readDouble();
-        vote_count = in.readDouble();
+        vote_count = in.readInt();
     }
 
     @Override
@@ -51,12 +53,13 @@ public class MovieGridObj implements Parcelable {
         dest.writeDouble(id);
         dest.writeString(original_language);
         dest.writeString(original_title);
+        dest.writeString(overview);
         dest.writeString(release_date);
         dest.writeString(poster_path);
         dest.writeDouble(popularity);
         dest.writeByte((byte) (video ?  1 : 0));
         dest.writeDouble(vote_average);
-        dest.writeDouble(vote_count);
+        dest.writeInt(vote_count);
     }
 
     public static final Creator<MovieGridObj> CREATOR = new Creator<MovieGridObj>() {
@@ -73,21 +76,7 @@ public class MovieGridObj implements Parcelable {
 
     @Override
     public String toString() {
-        return "MovieGridObj{" +
-                "title='" + title + '\'' +
-                ", adult=" + adult +
-                ", backdrop_path='" + backdrop_path + '\'' +
-                ", genre_ids=" + genre_ids +
-                ", id=" + id +
-                ", original_language='" + original_language + '\'' +
-                ", original_title='" + original_title + '\'' +
-                ", release_date='" + release_date + '\'' +
-                ", poster_path='" + poster_path + '\'' +
-                ", popularity=" + popularity +
-                ", video=" + video +
-                ", vote_average=" + vote_average +
-                ", vote_count=" + vote_count +
-                '}';
+        return "MovieGridObj{" + "title='" + title + "'";
     }
 
     @Override

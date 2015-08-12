@@ -90,15 +90,14 @@ public class GridViewAdapter extends ArrayAdapter<MovieGridObj> {
         String load = holder.isSet ? baseUrl + movie.poster_path : "null";
         String title = holder.isSet ? movie.title : "null";
 
-        Picasso.with(getContext()).setLoggingEnabled(true);
+        // Picasso.with(getContext()).setLoggingEnabled(true);
         // Log.d(getClass().getSimpleName(), String.format("%d>> Loading image: %s - %s", count.incrementAndGet(), title, load));
 
         Picasso.with(mContext)
                 .load(load)
                 .placeholder(R.drawable.abc_btn_rating_star_on_mtrl_alpha)
                 .error(R.drawable.abc_btn_rating_star_off_mtrl_alpha)
-                .fit()
-                // .resize(550, 775)
+                .resize(550, 775)
                 .into(holder.imageView);
 
         // imageView.setImageResource(mThumbIds[position]);
