@@ -12,6 +12,7 @@ import android.widget.TextView;
 
 import com.ericsender.android_nanodegree.project1.R;
 import com.ericsender.android_nanodegree.project1.parcelable.MovieGridObj;
+import com.ericsender.android_nanodegree.project1.utils.Utils;
 import com.squareup.picasso.Picasso;
 
 import java.util.List;
@@ -78,26 +79,27 @@ public class GridViewAdapter extends ArrayAdapter<MovieGridObj> {
             holder = new ViewHolder();
             holder.titleTextView = (TextView) row.findViewById(R.id.grid_item_title);
             holder.imageView = (ImageView) row.findViewById(R.id.grid_item_image);
+            if (Utils.isTablet(mContext)) holder.imageView.setAdjustViewBounds(true);
             holder.isSet = movie != null;
             row.setTag(holder);
-            Log.d(getClass().getSimpleName(), holder.isSet ? "Setting row for " + movie.title : "Setting row for null");
+            // Log.d(getClass().getSimpleName(), holder.isSet ? "Setting row for " + movie.title : "Setting row for null");
         } else {
             holder = (ViewHolder) row.getTag();
         }
 
-        // Picasso.with(getContext()).setLoggingEnabled(true);
-
         String load = holder.isSet ? baseUrl + movie.poster_path : "null";
         String title = holder.isSet ? movie.title : "null";
 
+        Picasso.with(getContext()).setLoggingEnabled(true);
+        // Log.d(getClass().getSimpleName(), String.format("%d>> Loading image: %s - %s", count.incrementAndGet(), title, load));
+
         Picasso.with(mContext)
                 .load(load)
-                .placeholder(R.drawable.sample_0)
-                .error(R.drawable.sample_1)
+                .placeholder(R.drawable.abc_btn_rating_star_on_mtrl_alpha)
+                .error(R.drawable.abc_btn_rating_star_off_mtrl_alpha)
                 .fit()
+                // .resize(550, 775)
                 .into(holder.imageView);
-
-        Log.d(getClass().getSimpleName(), String.format("%d>> Loading image: %s - %s", count.incrementAndGet(), title, load));
 
         // imageView.setImageResource(mThumbIds[position]);
         // return (ImageView) parent.view

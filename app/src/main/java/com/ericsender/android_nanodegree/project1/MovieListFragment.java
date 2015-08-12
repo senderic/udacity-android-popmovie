@@ -1,9 +1,12 @@
 package com.ericsender.android_nanodegree.project1;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.ListPreference;
+import android.preference.Preference;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -68,7 +71,7 @@ public class MovieListFragment extends Fragment {
 
             sort = sort == null ? "" : sort; // defensive-ish code
 
-            Log.d(getClass().getSimpleName(), f("Sorting %s and %s based on %s", lhs.title, rhs.title, sort));
+            // Log.d(getClass().getSimpleName(), f("Sorting %s and %s based on %s", lhs.title, rhs.title, sort));
 
             if (sort.equalsIgnoreCase(getString(R.string.most_popular_val)))
                 return lhs.popularity.compareTo(rhs.popularity);
@@ -101,6 +104,7 @@ public class MovieListFragment extends Fragment {
         setHasOptionsMenu(true);
         mCurrSortOrder = getCurrentSortPref();
     }
+
 
     @Override
     public void onResume() {
@@ -179,7 +183,7 @@ public class MovieListFragment extends Fragment {
                 Log.d(getClass().getSimpleName(), "Refreshing!");
                 updateMovieListVolley();
                 //updateMovieList();
-                return false;
+                return true;
         }
         return super.onOptionsItemSelected(item);
     }

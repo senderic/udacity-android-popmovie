@@ -4,6 +4,6 @@
 
     <header
         android:fragment="com.ericsender.android_nanodegree.project1.SettingsActivity$GeneralPreferenceFragment"
-        android:title="@string/pref_header_general" />
+        android:title="@string/settings_pref_title" />
 
 </preference-headers>
