@@ -77,7 +77,6 @@ public class GridViewAdapter extends ArrayAdapter<MovieGridObj> {
         if (row == null || !((ViewHolder) row.getTag()).isSet) {
             row = ((Activity) mContext).getLayoutInflater().inflate(mResource, parent, false);
             holder = new ViewHolder();
-            holder.titleTextView = (TextView) row.findViewById(R.id.grid_item_title);
             holder.imageView = (ImageView) row.findViewById(R.id.grid_item_image);
             if (Utils.isTablet(mContext)) holder.imageView.setAdjustViewBounds(true);
             holder.isSet = movie != null;
@@ -107,7 +106,6 @@ public class GridViewAdapter extends ArrayAdapter<MovieGridObj> {
     }
 
     static class ViewHolder {
-        TextView titleTextView;
         ImageView imageView;
         boolean isSet = false;
     }
