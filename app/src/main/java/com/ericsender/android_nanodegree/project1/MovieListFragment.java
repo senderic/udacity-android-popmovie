@@ -99,7 +99,7 @@ public class MovieListFragment extends Fragment {
     }
 
     private void setTitle() {
-        getActivity().setTitle(getString(R.string.title_activity_main) + " - " + getCurrentSortPref());
+        // getActivity().setTitle(getString(R.string.title_activity_main) + " - " + getCurrentSortPref());
     }
 
     public static final String f(String s, Object... args) {
