@@ -5,7 +5,8 @@
     <string name="title_activity_main">Pop Movies</string>
 
 <!-- TODO: Remove or change this placeholder text -->
-    <string name="tmdb_api_base_url">http://api.themoviedb.org/3/discover/movie?</string>
+    <string name="tmdb_api_base_discover_url">http://api.themoviedb.org/3/discover/movie?</string>
+    <string name="tmdb_api_base_movie_url">http://api.themoviedb.org/3/movie/</string>
     <string name="tmdb_image_base_url">http://image.tmdb.org/t/p/</string>
     <string name="tmdb_image_size">w185</string>
     <string name="tmdb_param_sortby">sort_by</string>

@@ -1,18 +1,13 @@
 package com.ericsender.android_nanodegree.project1;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.preference.ListPreference;
-import android.preference.Preference;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -31,6 +26,7 @@ import com.android.volley.toolbox.Volley;
 import com.ericsender.android_nanodegree.project1.adapters.GridViewAdapter;
 import com.ericsender.android_nanodegree.project1.parcelable.MovieGridObj;
 import com.ericsender.android_nanodegree.project1.utils.NaturalDeserializer;
+import com.ericsender.android_nanodegree.project1.utils.Utils;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.internal.LinkedTreeMap;
@@ -52,7 +48,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * A placeholder fragment containing a simple view.
@@ -61,7 +56,6 @@ public class MovieListFragment extends Fragment {
 
     private ArrayAdapter<MovieGridObj> mMovieAdapter;
     private List<MovieGridObj> mMovieList = new ArrayList<>();
-    private final Gson gson = new GsonBuilder().registerTypeAdapter(Object.class, new NaturalDeserializer()).create();
     private GridViewAdapter mGridViewAdapter;
     private GridView mMovieGridView;
     private final Comparator<MovieGridObj> sortAlgo = new Comparator<MovieGridObj>() {
@@ -215,7 +209,7 @@ public class MovieListFragment extends Fragment {
         String sort = getApiSortPref();
 
         RequestQueue queue = Volley.newRequestQueue(getActivity());
-        Uri builtUri = Uri.parse(getString(R.string.tmdb_api_base_url)).buildUpon()
+        Uri builtUri = Uri.parse(getString(R.string.tmdb_api_base_discover_url)).buildUpon()
                 .appendQueryParameter(getString(R.string.tmdb_param_sortby), sort)
                 .appendQueryParameter(getString(R.string.tmdb_param_api), getString(R.string.private_tmdb_api))
                 .build();
@@ -236,7 +230,7 @@ public class MovieListFragment extends Fragment {
                     @Override
                     public void onResponse(JSONObject response) {
                         Log.d(getClass().getSimpleName(), "Response received.");
-                        LinkedTreeMap<String, Object> map = gson.fromJson(response.toString(), LinkedTreeMap.class);
+                        LinkedTreeMap<String, Object> map = Utils.getGson().fromJson(response.toString(), LinkedTreeMap.class);
                         mMovieList = covertMapToMovieObjList(map);
                         Log.d(getClass().getSimpleName(), "Received a set of movies. Registering them.");
                         mGridViewAdapter.setGridData(mMovieList);
@@ -347,7 +341,7 @@ public class MovieListFragment extends Fragment {
             InputStream inputStream = null;
             BufferedReader reader = null;
             LinkedTreeMap map;
-            Uri builtUri = Uri.parse(getString(R.string.tmdb_api_base_url)).buildUpon()
+            Uri builtUri = Uri.parse(getString(R.string.tmdb_api_base_discover_url)).buildUpon()
                     .appendQueryParameter(getString(R.string.tmdb_param_sortby), sort)
                     .appendQueryParameter(getString(R.string.tmdb_param_api), getString(R.string.private_tmdb_api))
                     .build();
