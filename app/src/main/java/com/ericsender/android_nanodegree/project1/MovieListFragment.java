@@ -163,7 +163,7 @@ public class MovieListFragment extends Fragment {
                 } catch (IndexOutOfBoundsException e) {
                 }
                 if (item != null) {
-                    Intent intent = new Intent(getActivity(), MovieDetailsActivity.class);
+                    Intent intent = new Intent(getActivity(), DetailsActivity.class);
                     ImageView imageView = (ImageView) v.findViewById(R.id.grid_item_image);
 
                     // Interesting data to pass across are the thumbnail size/location, the

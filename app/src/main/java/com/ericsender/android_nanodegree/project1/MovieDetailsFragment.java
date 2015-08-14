@@ -2,9 +2,11 @@ package com.ericsender.android_nanodegree.project1;
 
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v4.app.Fragment;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -16,6 +18,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+import com.ericsender.android_nanodegree.project1.R;
 import com.ericsender.android_nanodegree.project1.parcelable.MovieGridObj;
 import com.ericsender.android_nanodegree.project1.utils.Utils;
 import com.google.gson.internal.LinkedTreeMap;
@@ -26,8 +29,7 @@ import org.json.JSONObject;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-
-public class MovieDetailsActivity extends ActionBarActivity {
+public class MovieDetailsFragment extends Fragment {
     private TextView titleTextView;
     private ImageView imageView;
     private TextView yearTextView;
@@ -39,15 +41,29 @@ public class MovieDetailsActivity extends ActionBarActivity {
     private ProgressBar mDurationProgress;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.fragment_movie_details);
-        getSupportActionBar().hide();
+
+        // Add this line in order for this fragment to handle menu events.
+        setHasOptionsMenu(false);
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+
+        View rootView = inflater.inflate(R.layout.fragment_movie_details, container, false);
+
         boolean success = handleFirst();
         if (success) {
             handleOffThread();
             handleLast();
         } else throw new RuntimeException("handleFirst() returned false.");
+
+        return rootView;
+    }
+
+    public MovieDetailsFragment() {
     }
 
     private void handleOffThread() {
@@ -56,7 +72,7 @@ public class MovieDetailsActivity extends ActionBarActivity {
 
     private void getMoreMovieDetails() {
         int id = mMovieObj.id.intValue();
-        RequestQueue queue = Volley.newRequestQueue(this);
+        RequestQueue queue = Volley.newRequestQueue(getActivity());
         Uri builtUri = Uri.parse(getString(R.string.tmdb_api_base_movie_url) + id).buildUpon()
                 .appendQueryParameter(getString(R.string.tmdb_param_api), getString(R.string.private_tmdb_api))
                 .build();
@@ -86,7 +102,7 @@ public class MovieDetailsActivity extends ActionBarActivity {
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         Log.e(getClass().getSimpleName(), error.getMessage(), error);
-                        Toast.makeText(getApplicationContext(), "Error connecting to server.", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getActivity(), "Error connecting to server.", Toast.LENGTH_SHORT).show();
                     }
                 });
         queue.add(jsObjRequest);
@@ -94,12 +110,12 @@ public class MovieDetailsActivity extends ActionBarActivity {
     }
 
     private boolean handleFirst() {
-        mMovieObj = getIntent().getParcelableExtra("movieObj");
-        imageView = (ImageView) findViewById(R.id.movie_thumb);
-        mDurationTextView = (TextView) findViewById(R.id.movie_duration);
-        mDurationProgress = (ProgressBar) findViewById(R.id.movie_duration_progressBar);
-        if (Utils.isTablet(this)) imageView.setAdjustViewBounds(true);
-        Picasso.with(this).load(getString(R.string.tmdb_image_base_url) + getString(R.string.tmdb_image_size) + mMovieObj.poster_path)
+        mMovieObj = getActivity().getIntent().getParcelableExtra("movieObj");
+        imageView = (ImageView) getActivity().findViewById(R.id.movie_thumb);
+        mDurationTextView = (TextView)getActivity().findViewById(R.id.movie_duration);
+        mDurationProgress = (ProgressBar) getActivity().findViewById(R.id.movie_duration_progressBar);
+        if (Utils.isTablet(getActivity())) imageView.setAdjustViewBounds(true);
+        Picasso.with(getActivity()).load(getString(R.string.tmdb_image_base_url) + getString(R.string.tmdb_image_size) + mMovieObj.poster_path)
                 .placeholder(R.drawable.blank)
                 .error(R.drawable.blank)
                 .resize(366, 516)
@@ -108,11 +124,11 @@ public class MovieDetailsActivity extends ActionBarActivity {
     }
 
     private void handleLast() {
-        titleTextView = (TextView) findViewById(R.id.movie_title);
+        titleTextView = (TextView) getActivity().findViewById(R.id.movie_title);
 
-        yearTextView = (TextView) findViewById(R.id.movie_year);
-        ratingTextView = (TextView) findViewById(R.id.movie_rating);
-        overviewTextView = (TextView) findViewById(R.id.movie_overview);
+        yearTextView = (TextView) getActivity().findViewById(R.id.movie_year);
+        ratingTextView = (TextView) getActivity().findViewById(R.id.movie_rating);
+        overviewTextView = (TextView) getActivity().findViewById(R.id.movie_overview);
 
         titleTextView.setText(mMovieObj.title);
         yearTextView.setText(mMovieObj.release_date.substring(0, 4));
