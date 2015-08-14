@@ -61,8 +61,8 @@ public class MovieListFragment extends Fragment {
     private final Comparator<MovieGridObj> sortAlgo = new Comparator<MovieGridObj>() {
         @Override
         public int compare(MovieGridObj lhs, MovieGridObj rhs) {
-            // Not sorting now, using API calls for each new sort.
-            return 1; //performSort(lhs, rhs);
+            // Not sorting now, using API calls for each new sort. Returning 1 essentially does nothing
+            return 1; //return performSort(lhs, rhs);
         }
 
         private int performSort(MovieGridObj lhs, MovieGridObj rhs) {

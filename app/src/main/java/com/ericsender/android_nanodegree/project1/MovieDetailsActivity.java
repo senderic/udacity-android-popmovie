@@ -76,7 +76,7 @@ public class MovieDetailsActivity extends ActionBarActivity {
                         LinkedTreeMap<String, Object> map = Utils.getGson().fromJson(response.toString(), LinkedTreeMap.class);
                         try {
                             String rt = map.get("runtime").toString().trim();
-                            durationTextView.setText(Double.valueOf(rt).intValue() + "");
+                            durationTextView.setText(Double.valueOf(rt).intValue() + " mins");
                         } catch (NumberFormatException | NullPointerException x) {
                         }
                     }
