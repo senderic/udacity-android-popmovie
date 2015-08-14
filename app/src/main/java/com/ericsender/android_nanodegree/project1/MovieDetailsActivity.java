@@ -4,7 +4,9 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
+import android.view.View;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -29,11 +31,12 @@ public class MovieDetailsActivity extends ActionBarActivity {
     private TextView titleTextView;
     private ImageView imageView;
     private TextView yearTextView;
-    private TextView durationTextView;
+    private TextView mDurationTextView;
     private TextView ratingTextView;
     private TextView overviewTextView;
 
     private MovieGridObj mMovieObj;
+    private ProgressBar mDurationProgress;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,9 +51,6 @@ public class MovieDetailsActivity extends ActionBarActivity {
     }
 
     private void handleOffThread() {
-        durationTextView = (TextView) findViewById(R.id.movie_duration);
-        durationTextView.setText("");
-
         getMoreMovieDetails();
     }
 
@@ -76,7 +76,8 @@ public class MovieDetailsActivity extends ActionBarActivity {
                         LinkedTreeMap<String, Object> map = Utils.getGson().fromJson(response.toString(), LinkedTreeMap.class);
                         try {
                             String rt = map.get("runtime").toString().trim();
-                            durationTextView.setText(Double.valueOf(rt).intValue() + " mins");
+                            mDurationProgress.setVisibility(View.GONE);
+                            mDurationTextView.setText(Double.valueOf(rt).intValue() + " mins");
                         } catch (NumberFormatException | NullPointerException x) {
                         }
                     }
@@ -95,6 +96,8 @@ public class MovieDetailsActivity extends ActionBarActivity {
     private boolean handleFirst() {
         mMovieObj = getIntent().getParcelableExtra("movieObj");
         imageView = (ImageView) findViewById(R.id.movie_thumb);
+        mDurationTextView = (TextView) findViewById(R.id.movie_duration);
+        mDurationProgress = (ProgressBar) findViewById(R.id.movie_duration_progressBar);
         if (Utils.isTablet(this)) imageView.setAdjustViewBounds(true);
         Picasso.with(this).load(getString(R.string.tmdb_image_base_url) + getString(R.string.tmdb_image_size) + mMovieObj.poster_path)
                 .placeholder(R.drawable.blank)
@@ -114,7 +117,14 @@ public class MovieDetailsActivity extends ActionBarActivity {
         titleTextView.setText(mMovieObj.title);
         yearTextView.setText(mMovieObj.release_date.substring(0, 4));
         overviewTextView.setText(mMovieObj.overview);
-        ratingTextView.setText(String.format("%.1f/10", mMovieObj.vote_average.doubleValue()));
+        // TODO is there a String.format that will do %.1f and strip trailing zeros?
+        double va = mMovieObj.vote_average.doubleValue();
+        String roundRating = va == (long) va
+                ?
+                String.format("%d", (long) va)
+                :
+                String.format("%.1f", va);
+        ratingTextView.setText(roundRating + "/10");
     }
 
 

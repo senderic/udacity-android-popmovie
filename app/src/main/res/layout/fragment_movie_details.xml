@@ -52,8 +52,18 @@
             android:layout_alignLeft="@+id/movie_year"
             android:layout_alignStart="@+id/movie_year"
             android:layout_below="@+id/movie_year"
-            android:text="Duration"
+            android:text=" "
             android:textAppearance="?android:attr/textAppearanceMedium" />
+
+        <ProgressBar
+            android:id="@+id/movie_duration_progressBar"
+            style="?android:attr/progressBarStyleSmall"
+            android:visibility="visible"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignLeft="@+id/movie_year"
+            android:layout_alignStart="@+id/movie_year"
+            android:layout_above="@+id/movie_rating" />
 
         <TextView
             android:id="@+id/movie_rating"
