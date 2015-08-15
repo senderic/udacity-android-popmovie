@@ -18,7 +18,6 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
-import com.ericsender.android_nanodegree.project1.R;
 import com.ericsender.android_nanodegree.project1.parcelable.MovieGridObj;
 import com.ericsender.android_nanodegree.project1.utils.Utils;
 import com.google.gson.internal.LinkedTreeMap;
@@ -39,6 +38,7 @@ public class MovieDetailsFragment extends Fragment {
 
     private MovieGridObj mMovieObj;
     private ProgressBar mDurationProgress;
+    private View mRootView;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -52,7 +52,7 @@ public class MovieDetailsFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        View rootView = inflater.inflate(R.layout.fragment_movie_details, container, false);
+        mRootView = inflater.inflate(R.layout.fragment_movie_details, container, false);
 
         boolean success = handleFirst();
         if (success) {
@@ -60,7 +60,7 @@ public class MovieDetailsFragment extends Fragment {
             handleLast();
         } else throw new RuntimeException("handleFirst() returned false.");
 
-        return rootView;
+        return mRootView;
     }
 
     public MovieDetailsFragment() {
@@ -111,9 +111,9 @@ public class MovieDetailsFragment extends Fragment {
 
     private boolean handleFirst() {
         mMovieObj = getActivity().getIntent().getParcelableExtra("movieObj");
-        imageView = (ImageView) getActivity().findViewById(R.id.movie_thumb);
-        mDurationTextView = (TextView)getActivity().findViewById(R.id.movie_duration);
-        mDurationProgress = (ProgressBar) getActivity().findViewById(R.id.movie_duration_progressBar);
+        imageView = (ImageView) mRootView.findViewById(R.id.movie_thumb);
+        mDurationTextView = (TextView) mRootView.findViewById(R.id.movie_duration);
+        mDurationProgress = (ProgressBar) mRootView.findViewById(R.id.movie_duration_progressBar);
         if (Utils.isTablet(getActivity())) imageView.setAdjustViewBounds(true);
         Picasso.with(getActivity()).load(getString(R.string.tmdb_image_base_url) + getString(R.string.tmdb_image_size) + mMovieObj.poster_path)
                 .placeholder(R.drawable.blank)
@@ -124,11 +124,11 @@ public class MovieDetailsFragment extends Fragment {
     }
 
     private void handleLast() {
-        titleTextView = (TextView) getActivity().findViewById(R.id.movie_title);
+        titleTextView = (TextView) mRootView.findViewById(R.id.movie_title);
 
-        yearTextView = (TextView) getActivity().findViewById(R.id.movie_year);
-        ratingTextView = (TextView) getActivity().findViewById(R.id.movie_rating);
-        overviewTextView = (TextView) getActivity().findViewById(R.id.movie_overview);
+        yearTextView = (TextView) mRootView.findViewById(R.id.movie_year);
+        ratingTextView = (TextView) mRootView.findViewById(R.id.movie_rating);
+        overviewTextView = (TextView) mRootView.findViewById(R.id.movie_overview);
 
         titleTextView.setText(mMovieObj.title);
         yearTextView.setText(mMovieObj.release_date.substring(0, 4));
