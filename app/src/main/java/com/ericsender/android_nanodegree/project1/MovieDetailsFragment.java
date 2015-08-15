@@ -71,9 +71,8 @@ public class MovieDetailsFragment extends Fragment {
     }
 
     private void getMoreMovieDetails() {
-        int id = mMovieObj.id.intValue();
         RequestQueue queue = Volley.newRequestQueue(getActivity());
-        Uri builtUri = Uri.parse(getString(R.string.tmdb_api_base_movie_url) + id).buildUpon()
+        Uri builtUri = Uri.parse(getString(R.string.tmdb_api_base_movie_url) + mMovieObj.id).buildUpon()
                 .appendQueryParameter(getString(R.string.tmdb_param_api), getString(R.string.private_tmdb_api))
                 .build();
         String url = "";

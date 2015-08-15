@@ -9,6 +9,8 @@ import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.ericsender.android_nanodegree.project1.utils.Utils;
+
 public class MainActivity extends ActionBarActivity {
 
     @Override
@@ -16,9 +18,16 @@ public class MainActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         if (savedInstanceState == null) {
-            getSupportFragmentManager().beginTransaction()
-                    .add(R.id.main_activity_container, new MovieListFragment())
-                    .commit();
+            if (false || Utils.isTablet(this)) {
+                getSupportFragmentManager().beginTransaction()
+                        .add(R.id.main_activity_container, new MovieListFragment())
+                        .add(R.id.details_activity_container, new MovieDetailsFragment())
+                        .commit();
+            } else {
+                getSupportFragmentManager().beginTransaction()
+                        .add(R.id.main_activity_container, new MovieListFragment())
+                        .commit();
+            }
         }
     }
 
