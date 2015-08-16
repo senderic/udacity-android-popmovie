@@ -1,4 +1,4 @@
-package com.ericsender.android_nanodegree.project1;
+package com.ericsender.android_nanodegree.project1.activities;
 
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -18,6 +18,8 @@ import android.preference.RingtonePreference;
 import android.text.TextUtils;
 import android.util.Log;
 
+
+import com.ericsender.android_nanodegree.project1.R;
 
 import java.util.Collections;
 import java.util.List;

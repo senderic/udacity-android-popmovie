@@ -1,4 +1,4 @@
-package com.ericsender.android_nanodegree.project1;
+package com.ericsender.android_nanodegree.project1.fragments;
 
 import android.net.Uri;
 import android.os.Bundle;
@@ -7,6 +7,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -18,6 +19,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+import com.ericsender.android_nanodegree.project1.R;
 import com.ericsender.android_nanodegree.project1.parcelable.MovieGridObj;
 import com.ericsender.android_nanodegree.project1.utils.Utils;
 import com.google.gson.internal.LinkedTreeMap;
@@ -43,7 +45,6 @@ public class MovieDetailsFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         // Add this line in order for this fragment to handle menu events.
         setHasOptionsMenu(false);
     }

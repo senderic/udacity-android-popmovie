@@ -1,4 +1,4 @@
-package com.ericsender.android_nanodegree.project1;
+package com.ericsender.android_nanodegree.project1.fragments;
 
 import android.content.Intent;
 import android.net.Uri;
@@ -23,6 +23,8 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+import com.ericsender.android_nanodegree.project1.R;
+import com.ericsender.android_nanodegree.project1.activities.DetailsActivity;
 import com.ericsender.android_nanodegree.project1.adapters.GridViewAdapter;
 import com.ericsender.android_nanodegree.project1.parcelable.MovieGridObj;
 import com.ericsender.android_nanodegree.project1.utils.NaturalDeserializer;

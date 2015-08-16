@@ -1,33 +1,14 @@
-package com.ericsender.android_nanodegree.project1;
+package com.ericsender.android_nanodegree.project1.activities;
 
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.ImageView;
-import android.widget.ProgressBar;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.view.Window;
 
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
-import com.ericsender.android_nanodegree.project1.parcelable.MovieGridObj;
-import com.ericsender.android_nanodegree.project1.utils.Utils;
-import com.google.gson.internal.LinkedTreeMap;
-import com.squareup.picasso.Picasso;
-
-import org.json.JSONObject;
-
-import java.net.MalformedURLException;
-import java.net.URL;
+import com.ericsender.android_nanodegree.project1.fragments.MovieDetailsFragment;
+import com.ericsender.android_nanodegree.project1.R;
 
 
 public class DetailsActivity extends ActionBarActivity {
@@ -36,6 +17,7 @@ public class DetailsActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_details);
+        getSupportActionBar().hide();
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
                     .add(R.id.details_activity_container, new MovieDetailsFragment())

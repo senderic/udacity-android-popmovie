@@ -1,13 +1,13 @@
-package com.ericsender.android_nanodegree.project1;
+package com.ericsender.android_nanodegree.project1.activities;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.preference.ListPreference;
-import android.preference.Preference;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
+
+import com.ericsender.android_nanodegree.project1.fragments.MovieListFragment;
+import com.ericsender.android_nanodegree.project1.R;
 
 public class MainActivity extends ActionBarActivity {
 
