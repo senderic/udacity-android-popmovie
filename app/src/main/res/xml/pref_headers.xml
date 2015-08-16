@@ -3,7 +3,7 @@
     <!-- These settings headers are only used on tablets. -->
 
     <header
-        android:fragment="com.ericsender.android_nanodegree.project1.SettingsActivity$GeneralPreferenceFragment"
+        android:fragment="com.ericsender.android_nanodegree.project1.activities.SettingsActivity$GeneralPreferenceFragment"
         android:title="@string/settings_pref_title" />
 
 </preference-headers>
