@@ -1,2 +1,14 @@
-# udacity-android-nanodegree--july2015-project1
-Popular Movies - Project 1 for the Android Nanodegree July 2015
+# Udacity Android Nanodegree
+
+Popular Movies - Project 2 for the Android Nanodegree July 2015
+____
+
+License
+----
+
+None
+
+Author
+----
+
+- [Eric K. Sender](https://github.com/esend7881)
