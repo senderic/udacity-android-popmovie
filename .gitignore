@@ -28,10 +28,10 @@ proguard/
 *.log
 
 # Android Studio adds
-/.idea/workspace.xml
-/.idea/libraries
 .DS_Store
 /captures
+*.iml
+/.idea
 
 private_*
 temp.diff
