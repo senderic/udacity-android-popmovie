@@ -6,6 +6,7 @@ import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.ericsender.android_nanodegree.project1.fragments.MovieDetailsFragment;
 import com.ericsender.android_nanodegree.project1.utils.Utils;
 import com.ericsender.android_nanodegree.project1.fragments.MovieListFragment;
 import com.ericsender.android_nanodegree.project1.R;
