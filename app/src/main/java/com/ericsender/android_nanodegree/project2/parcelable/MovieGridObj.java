@@ -1,4 +1,4 @@
-package com.ericsender.android_nanodegree.project1.parcelable;
+package com.ericsender.android_nanodegree.project2.parcelable;
 
 import android.os.Parcel;
 import android.os.Parcelable;

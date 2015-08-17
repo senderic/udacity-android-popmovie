@@ -1,4 +1,4 @@
-package com.ericsender.android_nanodegree.project1.utils;
+package com.ericsender.android_nanodegree.project2.utils;
 
 import android.content.Context;
 import android.content.res.Configuration;

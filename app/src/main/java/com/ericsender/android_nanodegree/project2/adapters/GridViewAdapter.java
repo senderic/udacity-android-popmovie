@@ -1,18 +1,16 @@
-package com.ericsender.android_nanodegree.project1.adapters;
+package com.ericsender.android_nanodegree.project2.adapters;
 
 import android.app.Activity;
 import android.content.Context;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
-import android.widget.TextView;
 
-import com.ericsender.android_nanodegree.project1.R;
-import com.ericsender.android_nanodegree.project1.parcelable.MovieGridObj;
-import com.ericsender.android_nanodegree.project1.utils.Utils;
+import com.ericsender.android_nanodegree.project2.R;
+import com.ericsender.android_nanodegree.project2.parcelable.MovieGridObj;
+import com.ericsender.android_nanodegree.project2.utils.Utils;
 import com.squareup.picasso.Picasso;
 
 import java.util.List;
