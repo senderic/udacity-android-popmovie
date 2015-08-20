@@ -56,8 +56,10 @@ import java.util.TreeSet;
  */
 public class MovieListFragment extends Fragment {
 
+    public static final String MOVIE_LIST_KEY = "movieList";
+    public static final String CURR_SORT_ORDER_KEY = "currSortOrder";
     private ArrayAdapter<MovieGridObj> mMovieAdapter;
-    private List<MovieGridObj> mMovieList = new ArrayList<>();
+    private ArrayList<MovieGridObj> mMovieList = new ArrayList<>();
     private GridViewAdapter mGridViewAdapter;
     private GridView mMovieGridView;
     private final Comparator<MovieGridObj> sortAlgo = new Comparator<MovieGridObj>() {
@@ -114,7 +116,11 @@ public class MovieListFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        if (savedInstanceState != null) {
+            Log.d(getClass().getSimpleName(), "SavedInstanceState - Restore");
+            mMovieList = savedInstanceState.getParcelableArrayList(MOVIE_LIST_KEY);
+            mCurrSortOrder = savedInstanceState.getString(CURR_SORT_ORDER_KEY);
+        }
         // Add this line in order for this fragment to handle menu events.
         setHasOptionsMenu(true);
     }
@@ -131,8 +137,15 @@ public class MovieListFragment extends Fragment {
             // sortMovieList();
             updateMovieListVolley();
             setTitle();
-        }
+        } else Log.d(getClass().getSimpleName(), "No update needed");
         super.onResume();
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putParcelableArrayList(MOVIE_LIST_KEY, mMovieList);
+        outState.putString(CURR_SORT_ORDER_KEY, mCurrSortOrder);
     }
 
     private void sortMovieList() {
@@ -238,8 +251,8 @@ public class MovieListFragment extends Fragment {
                         mGridViewAdapter.setGridData(mMovieList);
                     }
 
-                    private List<MovieGridObj> covertMapToMovieObjList(LinkedTreeMap<String, Object> map) {
-                        List<MovieGridObj> movies = null;
+                    private ArrayList<MovieGridObj> covertMapToMovieObjList(LinkedTreeMap<String, Object> map) {
+                        ArrayList<MovieGridObj> movies = null;
                         Double page, total_pages, total_results;
                         for (Map.Entry<String, Object> entry : map.entrySet())
                             switch (entry.getKey()) {
@@ -263,8 +276,8 @@ public class MovieListFragment extends Fragment {
                         return movies;
                     }
 
-                    private List<MovieGridObj> handleResults(Object resultsObj) {
-                        List<LinkedTreeMap<String, Object>> results = (List<LinkedTreeMap<String, Object>>) resultsObj;
+                    private ArrayList<MovieGridObj> handleResults(Object resultsObj) {
+                        ArrayList<LinkedTreeMap<String, Object>> results = (ArrayList<LinkedTreeMap<String, Object>>) resultsObj;
                         Set<MovieGridObj> movies = new TreeSet<>(sortAlgo);
                         for (LinkedTreeMap<String, Object> m : results) {
                             MovieGridObj movie = new MovieGridObj();
