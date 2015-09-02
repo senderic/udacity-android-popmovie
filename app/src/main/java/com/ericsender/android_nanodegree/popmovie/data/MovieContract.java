@@ -40,13 +40,10 @@ public class MovieContract {
         public static final String CONTENT_ITEM_TYPE =
                 ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_MOVIE;
 
-        // Table name
         public static final String TABLE_NAME = "movie";
-
         public static final String COLUMN_JSON = "json";
     }
 
-    /* Inner class that defines the table contents of the location table */
     public static final class PopularEntry implements BaseColumns {
 
         public static final Uri CONTENT_URI =
@@ -57,11 +54,7 @@ public class MovieContract {
         public static final String CONTENT_ITEM_TYPE =
                 ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_POPULAR;
 
-        // Table name
         public static final String TABLE_NAME = "popular";
-
-        // The location setting string is what will be sent to openweathermap
-        // as the location query.
         public static final String COLUMN_MOVIE_ID = "movie_id";
 
         public static Uri buildLocationUri(long id) {
@@ -69,7 +62,24 @@ public class MovieContract {
         }
     }
 
-    /* Inner class that defines the table contents of the weather table */
+    public static final class FavoriteEntry implements BaseColumns {
+
+        public static final Uri CONTENT_URI =
+                BASE_CONTENT_URI.buildUpon().appendPath(PATH_POPULAR).build();
+
+        public static final String CONTENT_TYPE =
+                ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_FAVORITE;
+        public static final String CONTENT_ITEM_TYPE =
+                ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_FAVORITE;
+
+        public static final String TABLE_NAME = "favorite";
+        public static final String COLUMN_MOVIE_ID = "movie_id";
+
+        public static Uri buildLocationUri(long id) {
+            return ContentUris.withAppendedId(CONTENT_URI, id);
+        }
+    }
+
     public static final class RatingEntry implements BaseColumns {
 
         public static final Uri CONTENT_URI =
@@ -81,8 +91,6 @@ public class MovieContract {
                 ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_FAVORITE;
 
         public static final String TABLE_NAME = "rating";
-
-        // Column with the foreign key into the location table.
         public static final String COLUMN_MOVIE_ID = "movie_id";
 
         public static Uri buildWeatherUri(long id) {

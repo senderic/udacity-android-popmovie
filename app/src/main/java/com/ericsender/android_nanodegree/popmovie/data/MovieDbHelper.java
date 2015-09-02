@@ -30,24 +30,26 @@ public class MovieDbHelper extends SQLiteOpenHelper {
                 MovieContract.PopularEntry.COLUMN_MOVIE_ID + " TEXT UNIQUE NOT NULL, " +
                 " FOREIGN KEY (" + MovieContract.PopularEntry.COLUMN_MOVIE_ID + ") REFERENCES " +
                 MovieContract.MovieEntry.TABLE_NAME + " (" + MovieContract.MovieEntry._ID + "), " +
-                " UNIQUE (" + MovieContract.PopularEntry.COLUMN_MOVIE_ID + ") ON CONFLICT IGNORE);" +
-                " );";
+                " UNIQUE (" + MovieContract.PopularEntry.COLUMN_MOVIE_ID + ") ON CONFLICT IGNORE);";
 
         final String SQL_CREATE_RATING_TABLE = "CREATE TABLE " + MovieContract.RatingEntry.TABLE_NAME + " (" +
                 MovieContract.RatingEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
-
-                // the ID of the location entry associated with this weather data
                 MovieContract.RatingEntry.COLUMN_MOVIE_ID + " INTEGER NOT NULL, " +
-
-                // Set up the location column as a foreign key to location table.
                 " FOREIGN KEY (" + MovieContract.RatingEntry.COLUMN_MOVIE_ID + ") REFERENCES " +
                 MovieContract.RatingEntry.TABLE_NAME + " (" + MovieContract.MovieEntry._ID + "), " +
-                " UNIQUE (" + MovieContract.RatingEntry.COLUMN_MOVIE_ID + ") ON CONFLICT IGNORE);" +
-                " );";
+                " UNIQUE (" + MovieContract.RatingEntry.COLUMN_MOVIE_ID + ") ON CONFLICT IGNORE);";
+
+        final String SQL_CREATE_FAVORITE_TABLE = "CREATE TABLE " + MovieContract.FavoriteEntry.TABLE_NAME + " (" +
+                MovieContract.FavoriteEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
+                MovieContract.FavoriteEntry.COLUMN_MOVIE_ID + " INTEGER NOT NULL, " +
+                " FOREIGN KEY (" + MovieContract.RatingEntry.COLUMN_MOVIE_ID + ") REFERENCES " +
+                MovieContract.FavoriteEntry.TABLE_NAME + " (" + MovieContract.MovieEntry._ID + "), " +
+                " UNIQUE (" + MovieContract.FavoriteEntry.COLUMN_MOVIE_ID + ") ON CONFLICT IGNORE);";
 
         db.execSQL(SQL_CREATE_MOVIE_TABLE);
         db.execSQL(SQL_CREATE_POPULAR_TABLE);
         db.execSQL(SQL_CREATE_RATING_TABLE);
+        db.execSQL(SQL_CREATE_FAVORITE_TABLE);
     }
 
     @Override
