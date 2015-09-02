@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -159,7 +160,7 @@ public class MovieListFragment extends Fragment {
         mMovieGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
                 //Get item at position
-                MovieGridObj item = null;
+                Parcelable item = null;
                 try {
                     item = (MovieGridObj) parent.getItemAtPosition(position);
                 } catch (IndexOutOfBoundsException e) {
@@ -280,7 +281,7 @@ public class MovieListFragment extends Fragment {
                                         movie.genre_ids = (ArrayList<Double>) e.getValue();
                                         break;
                                     case "id":
-                                        movie.id = (Double) e.getValue();
+                                        movie.id = ((Double) e.getValue()).longValue();
                                         break;
                                     case "original_language":
                                         movie.original_language = (String) e.getValue();

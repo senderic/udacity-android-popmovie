@@ -3,17 +3,19 @@ package com.ericsender.android_nanodegree.popmovie.parcelable;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
  * Created by Eric K. Sender on 8/4/2015.
  */
-public class MovieGridObj implements Parcelable {
+public class MovieGridObj implements Parcelable, Serializable {
+    private static final long serialVersionUID = 1L;
     public String title;
     public Boolean adult;
     public String backdrop_path;
     public List<Double> genre_ids;
-    public Double id;
+    public Long id;
     public String original_language;
     public String original_title;
     public String overview;
@@ -31,7 +33,7 @@ public class MovieGridObj implements Parcelable {
         adult = Boolean.valueOf(in.readByte() == (byte) 1);
         backdrop_path = in.readString();
         genre_ids = in.readArrayList(ClassLoader.getSystemClassLoader());
-        id = in.readDouble();
+        id = (long) in.readDouble();
         original_language = in.readString();
         original_title = in.readString();
         overview = in.readString();

@@ -15,17 +15,12 @@ public class MovieContract {
     // relationship between a domain name and its website.  A convenient string to use for the
     // content authority is the package name for the app, which is guaranteed to be unique on the
     // device.
-    public static final String CONTENT_AUTHORITY = "com.ericsender.android_nanodegree.popmovie.app";
+    public static final String CONTENT_AUTHORITY = "com.ericsender.android_nanodegree.popmovie";
 
     // Use CONTENT_AUTHORITY to create the base of all URI's which apps will use to contact
     // the content provider.
     public static final Uri BASE_CONTENT_URI = Uri.parse("content://" + CONTENT_AUTHORITY);
-
-    // Possible paths (appended to base content URI for possible URI's)
-    // For instance, content://com.example.android.sunshine.app/weather/ is a valid path for
-    // looking at weather data. content://com.example.android.sunshine.app/givemeroot/ will fail,
-    // as the ContentProvider hasn't been given any information on what to do with "givemeroot".
-    // At least, let's hope not.  Don't be that dev, reader.  Don't be that dev.
+    
     public static final String PATH_FAVORITE = "favorite";
     public static final String PATH_POPULAR = "popular";
     public static final String PATH_RATING = "rating";
@@ -41,6 +36,7 @@ public class MovieContract {
                 ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_MOVIE;
 
         public static final String TABLE_NAME = "movie";
+        public static final String COLUMN_MOVIE_ID = "movie_id";
         public static final String COLUMN_JSON = "json";
     }
 
@@ -51,8 +47,6 @@ public class MovieContract {
 
         public static final String CONTENT_TYPE =
                 ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_POPULAR;
-        public static final String CONTENT_ITEM_TYPE =
-                ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_POPULAR;
 
         public static final String TABLE_NAME = "popular";
         public static final String COLUMN_MOVIE_ID = "movie_id";
@@ -69,13 +63,11 @@ public class MovieContract {
 
         public static final String CONTENT_TYPE =
                 ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_FAVORITE;
-        public static final String CONTENT_ITEM_TYPE =
-                ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_FAVORITE;
 
         public static final String TABLE_NAME = "favorite";
         public static final String COLUMN_MOVIE_ID = "movie_id";
 
-        public static Uri buildLocationUri(long id) {
+        public static Uri buildFavoriteUri(long id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);
         }
     }
@@ -87,8 +79,6 @@ public class MovieContract {
 
         public static final String CONTENT_TYPE =
                 ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_FAVORITE;
-        public static final String CONTENT_ITEM_TYPE =
-                ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_FAVORITE;
 
         public static final String TABLE_NAME = "rating";
         public static final String COLUMN_MOVIE_ID = "movie_id";

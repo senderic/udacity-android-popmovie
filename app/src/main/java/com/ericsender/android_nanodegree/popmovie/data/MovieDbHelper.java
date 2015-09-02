@@ -21,7 +21,8 @@ public class MovieDbHelper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         final String SQL_CREATE_MOVIE_TABLE = "CREATE TABLE " + MovieContract.MovieEntry.TABLE_NAME + " (" +
-                MovieContract.MovieEntry._ID + " INTEGER PRIMARY KEY," + // the ROWID will be the tmdb MOVIE_ID
+                MovieContract.MovieEntry._ID + " INTEGER PRIMARY KEY," +
+                MovieContract.MovieEntry.COLUMN_MOVIE_ID + " INTEGER UNIQUE NOT NULL " +
                 MovieContract.MovieEntry.COLUMN_JSON + " TEXT NOT NULL, " +
                 " UNIQUE (" + MovieContract.MovieEntry._ID + ") ON CONFLICT REPLACE);";
 
