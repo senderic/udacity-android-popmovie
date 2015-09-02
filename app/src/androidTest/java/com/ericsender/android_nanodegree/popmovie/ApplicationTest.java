@@ -1,4 +1,4 @@
-package com.ericsender.android_nanodegree.project2;
+package com.ericsender.android_nanodegree.popmovie;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;

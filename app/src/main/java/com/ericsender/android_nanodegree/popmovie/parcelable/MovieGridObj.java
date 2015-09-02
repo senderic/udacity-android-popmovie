@@ -1,4 +1,4 @@
-package com.ericsender.android_nanodegree.project2.parcelable;
+package com.ericsender.android_nanodegree.popmovie.parcelable;
 
 import android.os.Parcel;
 import android.os.Parcelable;

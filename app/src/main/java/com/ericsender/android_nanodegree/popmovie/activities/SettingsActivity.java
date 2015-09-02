@@ -1,4 +1,4 @@
-package com.ericsender.android_nanodegree.project2.activities;
+package com.ericsender.android_nanodegree.popmovie.activities;
 
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -12,7 +12,7 @@ import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 
 
-import com.ericsender.android_nanodegree.project2.R;
+import com.ericsender.android_nanodegree.popmovie.R;
 
 import java.util.List;
 

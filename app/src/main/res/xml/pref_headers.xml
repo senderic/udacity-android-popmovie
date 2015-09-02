@@ -3,7 +3,7 @@
     <!-- These settings headers are only used on tablets. -->
 
     <header
-        android:fragment="com.ericsender.android_nanodegree.project2.activities.SettingsActivity$GeneralPreferenceFragment"
+        android:fragment="com.ericsender.android_nanodegree.popmovie.activities.SettingsActivity$GeneralPreferenceFragment"
         android:title="@string/settings_pref_title" />
 
 </preference-headers>

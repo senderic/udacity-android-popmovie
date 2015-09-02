@@ -1,4 +1,4 @@
-package com.ericsender.android_nanodegree.project2.activities;
+package com.ericsender.android_nanodegree.popmovie.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -6,8 +6,8 @@ import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import com.ericsender.android_nanodegree.project2.fragments.MovieDetailsFragment;
-import com.ericsender.android_nanodegree.project2.R;
+import com.ericsender.android_nanodegree.popmovie.fragments.MovieDetailsFragment;
+import com.ericsender.android_nanodegree.popmovie.R;
 
 
 public class DetailsActivity extends ActionBarActivity {

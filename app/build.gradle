@@ -5,7 +5,7 @@ android {
     buildToolsVersion "22.0.1"
 
     defaultConfig {
-        applicationId "com.ericsender.android_nanodegree.project2"
+        applicationId "com.ericsender.android_nanodegree.popmovie"
         minSdkVersion 15
         targetSdkVersion 22
         versionCode 1

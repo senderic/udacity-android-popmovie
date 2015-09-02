@@ -1,4 +1,4 @@
-package com.ericsender.android_nanodegree.project2.fragments;
+package com.ericsender.android_nanodegree.popmovie.fragments;
 
 import android.net.Uri;
 import android.os.Bundle;
@@ -18,9 +18,9 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
-import com.ericsender.android_nanodegree.project2.R;
-import com.ericsender.android_nanodegree.project2.parcelable.MovieGridObj;
-import com.ericsender.android_nanodegree.project2.utils.Utils;
+import com.ericsender.android_nanodegree.popmovie.R;
+import com.ericsender.android_nanodegree.popmovie.parcelable.MovieGridObj;
+import com.ericsender.android_nanodegree.popmovie.utils.Utils;
 import com.google.gson.internal.LinkedTreeMap;
 import com.squareup.picasso.Picasso;
 

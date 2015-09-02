@@ -1,4 +1,4 @@
-package com.ericsender.android_nanodegree.project2.adapters;
+package com.ericsender.android_nanodegree.popmovie.adapters;
 
 import android.app.Activity;
 import android.content.Context;
@@ -8,9 +8,9 @@ import android.widget.ArrayAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
 
-import com.ericsender.android_nanodegree.project2.R;
-import com.ericsender.android_nanodegree.project2.parcelable.MovieGridObj;
-import com.ericsender.android_nanodegree.project2.utils.Utils;
+import com.ericsender.android_nanodegree.popmovie.R;
+import com.ericsender.android_nanodegree.popmovie.parcelable.MovieGridObj;
+import com.ericsender.android_nanodegree.popmovie.utils.Utils;
 import com.squareup.picasso.Picasso;
 
 import java.util.List;

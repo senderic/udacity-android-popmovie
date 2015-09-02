@@ -1,4 +1,4 @@
-package com.ericsender.android_nanodegree.project2.utils;
+package com.ericsender.android_nanodegree.popmovie.utils;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonDeserializationContext;
