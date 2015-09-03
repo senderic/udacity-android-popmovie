@@ -13,8 +13,10 @@ import android.test.AndroidTestCase;
 import com.ericsender.android_nanodegree.popmovie.data.MovieContract;
 import com.ericsender.android_nanodegree.popmovie.data.MovieDbHelper;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 public class TestDb extends AndroidTestCase {
 
@@ -38,6 +40,8 @@ public class TestDb extends AndroidTestCase {
         final HashSet<String> tableNameHashSet = new HashSet<>();
         tableNameHashSet.add(MovieContract.MovieEntry.TABLE_NAME);
         tableNameHashSet.add(MovieContract.FavoriteEntry.TABLE_NAME);
+        tableNameHashSet.add(MovieContract.RatingEntry.TABLE_NAME);
+        tableNameHashSet.add(MovieContract.PopularEntry.TABLE_NAME);
 
         mContext.deleteDatabase(MovieDbHelper.DATABASE_NAME);
         SQLiteDatabase db = new MovieDbHelper(
@@ -57,7 +61,7 @@ public class TestDb extends AndroidTestCase {
 
         // if this fails, it means that your database doesn't contain both the location entry
         // and weather entry tables
-        assertTrue("Error: Your database was created without both the location entry and weather entry tables",
+        assertTrue("Error: Your database was created without all required tables.",
                 tableNameHashSet.isEmpty());
 
         // now, do our tables contain the correct columns?
@@ -90,8 +94,41 @@ public class TestDb extends AndroidTestCase {
         insertMovies();
     }
 
+    public void testFavorites() {
+        MovieDbHelper dbHelper = new MovieDbHelper(mContext);
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        Map<Long, ContentValues> orderedInserts = insertMovies();
+        try {
+            for (int i = 0; i < 2; i++) {
+                dbHelper.emptyFavorites(db);
+                Cursor c = db.query(MovieContract.FavoriteEntry.TABLE_NAME, null, null, null, null, null, null);
+                assertFalse("Favorites table needs to be empty", c.moveToFirst());
+                c.close();
+                long dbFavOrder = 0;
+                while (dbFavOrder == 0) // just in case we get all random falses.
+                    for (Map.Entry<Long, ContentValues> e : orderedInserts.entrySet())
+                        dbFavOrder = TestUtilities.generateRandomFavorites(db, dbFavOrder, e.getValue());
 
-    public long insertMovies() {
+                Cursor cursor = db.query(
+                        MovieContract.FavoriteEntry.TABLE_NAME,  // Table to Query
+                        null, // all columns
+                        null, // Columns for the "where" clause
+                        null, // Values for the "where" clause
+                        null, // columns to group by
+                        null, // columns to filter by row groups
+                        null // sort order
+                );
+
+                assertTrue("Favorites not in Movies Table",
+                        TestUtilities.verifyFavoritesAreInMoviesTable(dbFavOrder, cursor, db));
+            }
+        } finally {
+            db.close();
+        }
+    }
+
+
+    public Map<Long, ContentValues> insertMovies() {
         // First step: Get reference to writable database
         // If there's an error in those massive SQL table creation Strings,
         // errors will be thrown here when you try to get a writable database.
@@ -99,17 +136,20 @@ public class TestDb extends AndroidTestCase {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
 
         // Second Step: Create ContentValues of what you want to insert
-        // (you can use the createMovieValues if you wish)
+        // (you can use the createPopularMovieValues if you wish)
 
-        List<ContentValues> testValues = TestUtilities.createMovieValues(mContext);
-
+        List<ContentValues> testValues = TestUtilities.createPopularMovieValues(mContext);
+        Map<Long, ContentValues> insertOrderedTestValues = new HashMap<>();
         // Third Step: Insert ContentValues into database and get a row ID back
         long movieRowId = -1L;
+        int insertCount = 0;
         for (ContentValues cv : testValues) {
             movieRowId = db.insert(MovieContract.MovieEntry.TABLE_NAME, null, cv);
 
             // Verify we got a row back.
-            assertTrue("Insert failed!", movieRowId != -1L);
+            assertFalse("Insert failed!", -1L == movieRowId);
+            insertOrderedTestValues.put(movieRowId, cv);
+            assertEquals("InsertCount match RowId", insertCount++, movieRowId);
         }
 
         // Fourth Step: Query the database and receive a Cursor back
@@ -129,10 +169,10 @@ public class TestDb extends AndroidTestCase {
         assertTrue("Error: No Records returned from movie query", cursor.moveToFirst());
 
         // Fifth Step: Validate data in resulting Cursor with the original ContentValues
-        // (you can use the validateCurrentRecord function in TestUtilities to validate the
+        // (you can use the validateRecordsToDatabase function in TestUtilities to validate the
         // query if you like)
-//        TestUtilities.validateCurrentRecord("Error: Location Query Validation Failed",
-//                cursor, testValues);
+        TestUtilities.validateRecordsToDatabase("Error: Location Query Validation Failed",
+                cursor, insertOrderedTestValues);
 
         // Move the cursor to demonstrate that there is only one record in the database
 //        assertFalse("Error: More than one record returned from location query",
@@ -141,7 +181,7 @@ public class TestDb extends AndroidTestCase {
         // Sixth Step: Close Cursor and Database
         cursor.close();
         db.close();
-        return movieRowId;
+        return insertOrderedTestValues;
     }
 }
 

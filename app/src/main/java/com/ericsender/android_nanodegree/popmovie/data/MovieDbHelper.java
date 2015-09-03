@@ -13,43 +13,86 @@ public class MovieDbHelper extends SQLiteOpenHelper {
     private static final int DATABASE_VERSION = 1;
 
     public static final String DATABASE_NAME = "movies.db";
+    private final String SQL_CREATE_MOVIE_TABLE;
+    private final String SQL_CREATE_POPULAR_TABLE;
+    private final String SQL_CREATE_RATING_TABLE;
+    private final String SQL_CREATE_FAVORITE_TABLE;
 
     public MovieDbHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
-    }
 
-    @Override
-    public void onCreate(SQLiteDatabase db) {
-        final String SQL_CREATE_MOVIE_TABLE = "CREATE TABLE " + MovieContract.MovieEntry.TABLE_NAME + " (" +
+        SQL_CREATE_MOVIE_TABLE = "CREATE TABLE " + MovieContract.MovieEntry.TABLE_NAME + " (" +
                 MovieContract.MovieEntry._ID + " INTEGER PRIMARY KEY," +
                 MovieContract.MovieEntry.COLUMN_MOVIE_ID + " INTEGER UNIQUE NOT NULL, " +
                 MovieContract.MovieEntry.COLUMN_JSON + " BLOB NOT NULL, " +
                 " UNIQUE (" + MovieContract.MovieEntry._ID + ") ON CONFLICT REPLACE);";
 
-        final String SQL_CREATE_POPULAR_TABLE = "CREATE TABLE " + MovieContract.PopularEntry.TABLE_NAME + " (" +
+        SQL_CREATE_POPULAR_TABLE = "CREATE TABLE " + MovieContract.PopularEntry.TABLE_NAME + " (" +
                 MovieContract.PopularEntry._ID + " INTEGER PRIMARY KEY," +
                 MovieContract.PopularEntry.COLUMN_MOVIE_ID + " TEXT UNIQUE NOT NULL, " +
                 " FOREIGN KEY (" + MovieContract.PopularEntry.COLUMN_MOVIE_ID + ") REFERENCES " +
                 MovieContract.MovieEntry.TABLE_NAME + " (" + MovieContract.MovieEntry._ID + "), " +
                 " UNIQUE (" + MovieContract.PopularEntry.COLUMN_MOVIE_ID + ") ON CONFLICT IGNORE);";
 
-        final String SQL_CREATE_RATING_TABLE = "CREATE TABLE " + MovieContract.RatingEntry.TABLE_NAME + " (" +
+        SQL_CREATE_RATING_TABLE = "CREATE TABLE " + MovieContract.RatingEntry.TABLE_NAME + " (" +
                 MovieContract.RatingEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
                 MovieContract.RatingEntry.COLUMN_MOVIE_ID + " INTEGER NOT NULL, " +
                 " FOREIGN KEY (" + MovieContract.RatingEntry.COLUMN_MOVIE_ID + ") REFERENCES " +
                 MovieContract.RatingEntry.TABLE_NAME + " (" + MovieContract.MovieEntry._ID + "), " +
                 " UNIQUE (" + MovieContract.RatingEntry.COLUMN_MOVIE_ID + ") ON CONFLICT IGNORE);";
 
-        final String SQL_CREATE_FAVORITE_TABLE = "CREATE TABLE " + MovieContract.FavoriteEntry.TABLE_NAME + " (" +
+        SQL_CREATE_FAVORITE_TABLE = "CREATE TABLE " + MovieContract.FavoriteEntry.TABLE_NAME + " (" +
                 MovieContract.FavoriteEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
                 MovieContract.FavoriteEntry.COLUMN_MOVIE_ID + " INTEGER NOT NULL, " +
                 " FOREIGN KEY (" + MovieContract.RatingEntry.COLUMN_MOVIE_ID + ") REFERENCES " +
                 MovieContract.FavoriteEntry.TABLE_NAME + " (" + MovieContract.MovieEntry._ID + "), " +
                 " UNIQUE (" + MovieContract.FavoriteEntry.COLUMN_MOVIE_ID + ") ON CONFLICT IGNORE);";
+    }
 
+    public void emptyFavorites(SQLiteDatabase db) {
+        boolean doClose = false;
+        if (db == null) {
+            doClose = true;
+            db = getWritableDatabase();
+        }
+        db.beginTransaction();
+        try {
+            db.execSQL("DROP TABLE IF EXISTS " + MovieContract.FavoriteEntry.TABLE_NAME);
+            createFavoriteTable(db);
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+            if (doClose) db.close();
+        }
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        db.beginTransaction();
+        try {
+            createMovieTable(db);
+            createFavoriteTable(db);
+            createPopularTable(db);
+            createRatingTable(db);
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    public void createMovieTable(SQLiteDatabase db) {
         db.execSQL(SQL_CREATE_MOVIE_TABLE);
+    }
+
+    public void createPopularTable(SQLiteDatabase db) {
         db.execSQL(SQL_CREATE_POPULAR_TABLE);
+    }
+
+    public void createRatingTable(SQLiteDatabase db) {
         db.execSQL(SQL_CREATE_RATING_TABLE);
+    }
+
+    public void createFavoriteTable(SQLiteDatabase db) {
         db.execSQL(SQL_CREATE_FAVORITE_TABLE);
     }
 

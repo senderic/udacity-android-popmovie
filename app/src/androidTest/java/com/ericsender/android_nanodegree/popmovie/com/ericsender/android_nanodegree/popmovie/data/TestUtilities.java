@@ -8,8 +8,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.support.annotation.NonNull;
 import android.test.AndroidTestCase;
-import android.util.Log;
 
 import com.ericsender.android_nanodegree.popmovie.R;
 import com.ericsender.android_nanodegree.popmovie.com.ericsender.android_nanodegree.popmovie.utils.PollingCheck;
@@ -23,8 +23,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 /**
@@ -32,44 +35,34 @@ import java.util.Set;
  * Adapted from Udacity Sunshine App
  */
 public class TestUtilities extends AndroidTestCase {
-    static final String TEST_LOCATION = "99705";
-    static final long TEST_DATE = 1419033600L;  // December 20th, 2014
 
-    static void validateCursor(String error, Cursor valueCursor, ContentValues expectedValues) {
-        assertTrue("Empty cursor returned. " + error, valueCursor.moveToFirst());
-        validateCurrentRecord(error, valueCursor, expectedValues);
-        valueCursor.close();
-    }
+    static void validateRecordsToDatabase(String error, Cursor valueCursor, Map<Long, ContentValues> expectedValues) {
+        while (valueCursor.moveToNext()) {
+            long _id = valueCursor.getLong(0);
+            Long movie_id = valueCursor.getLong(1);
+            byte[] bMovieObj = valueCursor.getBlob(2);
+            LinkedHashMap<String, Serializable> movieObj = (LinkedHashMap<String, Serializable>)
+                    Utils.deserialize(bMovieObj);
 
-    static void validateCurrentRecord(String error, Cursor valueCursor, ContentValues expectedValues) {
-        Set<Map.Entry<String, Object>> valueSet = expectedValues.valueSet();
-        for (Map.Entry<String, Object> entry : valueSet) {
-            String columnName = entry.getKey();
-            int idx = valueCursor.getColumnIndex(columnName);
-            assertFalse("Column '" + columnName + "' not found. " + error, idx == -1);
-            String expectedValue = entry.getValue().toString();
-            assertEquals("Value '" + entry.getValue().toString() +
-                    "' did not match the expected value '" +
-                    expectedValue + "'. " + error, expectedValue, valueCursor.getString(idx));
+            ContentValues cv = expectedValues.get(_id);
+            Long expectedId = (Long) cv.get(MovieContract.MovieEntry.COLUMN_MOVIE_ID);
+            byte[] expectedBMovieObject = (byte[]) cv.get(MovieContract.MovieEntry.COLUMN_JSON);
+            LinkedHashMap<String, Serializable> expectedMovieObj = (LinkedHashMap<String, Serializable>) Utils.deserialize(expectedBMovieObject);
+
+            assertEquals("movied id's don't match", expectedId, movie_id);
+            // assumes I didn't screw up the equals()/hashCode() functions!
+            assertEquals("movie objects don't match", expectedMovieObj, movieObj);
+            // paranoid sanity check:
+            assertTrue("binary movie objects don't match", Arrays.equals(expectedBMovieObject, bMovieObj));
         }
     }
 
-    /*
-        Students: Use this to create some default weather values for your database tests.
-     */
-    static ContentValues createWeatherValues(long locationRowId) {
-        ContentValues weatherValues = new ContentValues();
-        weatherValues.put(MovieContract.MovieEntry.COLUMN_JSON, locationRowId);
-        weatherValues.put(MovieContract.MovieEntry.COLUMN_MOVIE_ID, TEST_DATE);
-
-        return weatherValues;
-    }
 
     /*
         Students: You can uncomment this helper function once you have finished creating the
         FavoriteEntry part of the MovieContract.
      */
-    static List<ContentValues> createMovieValues(Context c) {
+    static List<ContentValues> createPopularMovieValues(Context c) {
         // Create a new map of values, where column names are the keys
         List<ContentValues> testValues = new ArrayList<>();
         InputStream in = c.getResources().openRawResource(R.raw.popular);
@@ -81,15 +74,30 @@ public class TestUtilities extends AndroidTestCase {
         }
 
         LinkedTreeMap<String, Serializable> map = Utils.getGson().fromJson(json, LinkedTreeMap.class);
-
+        long dbRowId = 0;
         for (Map<String, Serializable> m : (List<Map<String, Serializable>>) map.get("results")) {
-            ContentValues cv = new ContentValues();
-            cv.put(MovieContract.MovieEntry.COLUMN_MOVIE_ID, ((Double) m.get("id")).longValue());
-            cv.put(MovieContract.MovieEntry.COLUMN_JSON, Utils.serialize(m));
+            ContentValues cv = createMovieContentValue(dbRowId++, m);
             testValues.add(cv);
         }
 
         return testValues;
+    }
+
+    @NonNull
+    public static ContentValues createMovieContentValue(long dbRowId, Map<String, Serializable> m) {
+        ContentValues cv = new ContentValues();
+        cv.put(MovieContract.MovieEntry._ID, dbRowId);
+        cv.put(MovieContract.MovieEntry.COLUMN_MOVIE_ID, ((Double) m.get("id")).longValue());
+        cv.put(MovieContract.MovieEntry.COLUMN_JSON, Utils.serialize(m));
+        return cv;
+    }
+
+    @NonNull
+    public static ContentValues createFavoriteContentValue(long dbRowId, long movie_id) {
+        ContentValues cv = new ContentValues();
+        cv.put(MovieContract.FavoriteEntry._ID, dbRowId);
+        cv.put(MovieContract.FavoriteEntry.COLUMN_MOVIE_ID, movie_id);
+        return cv;
     }
 
     /*
@@ -100,7 +108,7 @@ public class TestUtilities extends AndroidTestCase {
         // insert our test records into the database
         MovieDbHelper dbHelper = new MovieDbHelper(context);
         SQLiteDatabase db = dbHelper.getWritableDatabase();
-        ContentValues testValues = null;// TestUtilities.createMovieValues(context);
+        ContentValues testValues = null;// TestUtilities.createPopularMovieValues(context);
 
         long locationRowId;
         locationRowId = db.insert(MovieContract.FavoriteEntry.TABLE_NAME, null, testValues);
@@ -109,6 +117,40 @@ public class TestUtilities extends AndroidTestCase {
         assertTrue("Error: Failure to insert North Pole Location Values", locationRowId != -1);
 
         return locationRowId;
+    }
+
+    static final Random rand = new Random();
+
+    static long generateRandomFavorites(SQLiteDatabase db, long dbFavOrder, ContentValues cv) {
+        if (rand.nextBoolean()) { // if is favorite
+            long movie_id = (Long) cv.get(MovieContract.MovieEntry.COLUMN_MOVIE_ID);
+            ContentValues fcv = createFavoriteContentValue(dbFavOrder++, movie_id);
+            db.insert(MovieContract.FavoriteEntry.TABLE_NAME, null, fcv);
+        }
+        return dbFavOrder;
+    }
+
+    public static boolean verifyFavoritesAreInMoviesTable(long dbFavOrder, Cursor cursor, SQLiteDatabase db) {
+        assertTrue("Something returned", cursor.moveToFirst());
+        assertEquals("Number of inserts = rows returned", dbFavOrder, cursor.getCount());
+
+        while (cursor.moveToNext()) {
+            long _id = cursor.getLong(0);
+            Long movie_id = cursor.getLong(1);
+
+            Cursor c = db.query(
+                    MovieContract.MovieEntry.TABLE_NAME,  // Table to Query
+                    null, // all columns
+                    String.format("%s=?", MovieContract.MovieEntry.COLUMN_MOVIE_ID), // Columns for the "where" clause
+                    new String[] {movie_id.toString()}, // Values for the "where" clause
+                    null, // columns to group by
+                    null, // columns to filter by row groups
+                    null // sort order
+            );
+            assertTrue("Movie_id did not match anything in the Movies table", c.moveToFirst());
+            c.close();
+        }
+        return true;
     }
 
     /*
