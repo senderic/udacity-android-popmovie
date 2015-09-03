@@ -142,7 +142,7 @@ public class MovieProvider extends ContentProvider {
                     long _id = insertMovie(values);
                     if (_id > 0) {
                         ContentValues v = new ContentValues(1);
-                        MovieGridObj o = (MovieGridObj) Utils.deserialize(values.getAsByteArray("serializedParseableJsonObj"));
+                        MovieGridObj o = (MovieGridObj) Utils.deserialize(values.getAsByteArray(MovieContract.MovieEntry.COLUMN_JSON));
                         // TODO: handle if o is null or o.id is null?
                         v.put(MovieContract.FavoriteEntry.COLUMN_MOVIE_ID, o.id.longValue());
                         long _fid = insertFavorite(values);

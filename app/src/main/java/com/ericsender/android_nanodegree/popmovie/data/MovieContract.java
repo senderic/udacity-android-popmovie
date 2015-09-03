@@ -37,7 +37,7 @@ public class MovieContract {
 
         public static final String TABLE_NAME = "movie";
         public static final String COLUMN_MOVIE_ID = "movie_id";
-        public static final String COLUMN_JSON = "json";
+        public static final String COLUMN_JSON = "serializedParseableJson";
     }
 
     public static final class PopularEntry implements BaseColumns {
