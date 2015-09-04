@@ -14,25 +14,23 @@
  * limitations under the License.
  */
 package com.ericsender.android_nanodegree.popmovie.com.ericsender.android_nanodegree.popmovie.data;
+
 import android.content.ComponentName;
-import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.pm.PackageManager;
 import android.content.pm.ProviderInfo;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.net.Uri;
 import android.os.Build;
 import android.test.AndroidTestCase;
-import android.util.Log;
 
 import com.ericsender.android_nanodegree.popmovie.data.MovieContract;
 import com.ericsender.android_nanodegree.popmovie.data.MovieDbHelper;
 import com.ericsender.android_nanodegree.popmovie.data.MovieProvider;
-import com.google.gson.internal.LinkedTreeMap;
 
-import java.io.Serializable;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 
 /*
@@ -144,8 +142,8 @@ public class TestProvider extends AndroidTestCase {
         assertEquals("Content Type",
                 MovieContract.MovieEntry.CONTENT_TYPE, type);
 
-        List<ContentValues> raw = TestUtilities.createPopularMovieValues(getContext());
-        Long movie_id = (Long) raw.get(0).get(MovieContract.MovieEntry.COLUMN_MOVIE_ID);
+        Map<Long, ContentValues> raw = TestUtilities.createPopularMovieValues(getContext());
+        Long movie_id = (Long) raw.values().toArray(new ContentValues[0])[0].get(MovieContract.MovieEntry.COLUMN_MOVIE_ID);
         // content://com.example.android.sunshine.app/movie/#
         type = mContext.getContentResolver().getType(
                 MovieContract.MovieEntry.buildMovieUri(movie_id));
@@ -163,73 +161,77 @@ public class TestProvider extends AndroidTestCase {
     }
 
 
-//    /*
-//        This test uses the database directly to insert and then uses the ContentProvider to
-//        read out the data.  Uncomment this test to see if the basic weather query functionality
-//        given in the ContentProvider is working correctly.
-//     */
-//    public void testBasicWeatherQuery() {
-//        // insert our test records into the database
-//        MovieDbHelper dbHelper = new MovieDbHelper(mContext);
-//        SQLiteDatabase db = dbHelper.getWritableDatabase();
-//
-//        ContentValues testValues = TestUtilities.createNorthPoleLocationValues();
-//        long locationRowId = TestUtilities.insertNorthPoleLocationValues(mContext);
-//
-//        // Fantastic.  Now that we have a location, add some weather!
-//        ContentValues weatherValues = TestUtilities.createWeatherValues(locationRowId);
-//
-//        long weatherRowId = db.insert(MovieContract.MovieEntry.TABLE_NAME, null, weatherValues);
-//        assertTrue("Unable to Insert MovieContract.MovieEntry into the Database", weatherRowId != -1);
-//
-//        db.close();
-//
-//        // Test the basic content provider query
-//        Cursor weatherCursor = mContext.getContentResolver().query(
-//                MovieContract.MovieEntry.CONTENT_URI,
-//                null,
-//                null,
-//                null,
-//                null
-//        );
-//
-//        // Make sure we get the correct cursor out of the database
-//        TestUtilities.validateCursor("testBasicWeatherQuery", weatherCursor, weatherValues);
-//    }
-//
-//    /*
-//        This test uses the database directly to insert and then uses the ContentProvider to
-//        read out the data.  Uncomment this test to see if your location queries are
-//        performing correctly.
-//     */
-//    public void testBasicLocationQueries() {
-//        // insert our test records into the database
-//        MovieDbHelper dbHelper = new MovieDbHelper(mContext);
-//        SQLiteDatabase db = dbHelper.getWritableDatabase();
-//
-//        ContentValues testValues = TestUtilities.createNorthPoleLocationValues();
-//        long locationRowId = TestUtilities.insertNorthPoleLocationValues(mContext);
-//
-//        // Test the basic content provider query
-//        Cursor locationCursor = mContext.getContentResolver().query(
-//                MovieContract.FavoriteEntry.CONTENT_URI,
-//                null,
-//                null,
-//                null,
-//                null
-//        );
-//
-//        // Make sure we get the correct cursor out of the database
-//        TestUtilities.validateCursor("testBasicLocationQueries, location query", locationCursor, testValues);
-//
-//        // Has the NotificationUri been set correctly? --- we can only test this easily against API
-//        // level 19 or greater because getNotificationUri was added in API level 19.
-//        if (Build.VERSION.SDK_INT >= 19) {
-//            assertEquals("Error: Location Query did not properly set NotificationUri",
-//                    locationCursor.getNotificationUri(), MovieContract.FavoriteEntry.CONTENT_URI);
-//        }
-//    }
-//
+    /*
+        This test uses the database directly to insert and then uses the ContentProvider to
+        read out the data.  Uncomment this test to see if the basic weather query functionality
+        given in the ContentProvider is working correctly.
+     */
+    public void testBasicMovieQuery() {
+        // insert our test records into the database
+
+        Map<Long, ContentValues> listContentValues = TestUtilities.createPopularMovieValues(getContext());
+        Map<Long, Long> locationRowIds = TestUtilities.insertMovieRow(mContext, listContentValues);
+
+
+        // Test the basic content provider query
+        Cursor movieCursor = mContext.getContentResolver().query(
+                MovieContract.MovieEntry.CONTENT_URI,
+                null,
+                null,
+                null,
+                null
+        );
+
+        // Make sure we get the correct cursor out of the database
+        TestUtilities.validateMovieCursor(movieCursor, listContentValues);
+    }
+
+    /*
+        This test uses the database directly to insert and then uses the ContentProvider to
+        read out the data.  Uncomment this test to see if your location queries are
+        performing correctly.
+     */
+    public void testBasicFavoriteQueries() {
+        //first insert movies:
+        Map<Long, ContentValues> listContentValues = TestUtilities.createPopularMovieValues(getContext());
+        Map<Long, Long> locationRowIds = TestUtilities.insertMovieRow(mContext, listContentValues);
+
+        // Insert random favorites
+        SQLiteDatabase db = new MovieDbHelper(getContext()).getWritableDatabase();
+        Set<Long> insertedMoviedIds = new HashSet<>();
+        try {
+            db.beginTransaction();
+            while (insertedMoviedIds.isEmpty())
+                for (Map.Entry<Long, ContentValues> e : listContentValues.entrySet())
+                    insertedMoviedIds.add(TestUtilities.generateRandomFavoritesAndInsert(db, e.getValue()));
+            insertedMoviedIds.remove(null);
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+            db.close();
+        }
+
+
+        // Test the basic content provider query
+        Cursor favCursor = mContext.getContentResolver().query(
+                MovieContract.FavoriteEntry.CONTENT_URI,
+                null,
+                null,
+                null,
+                null
+        );
+
+        // Make sure we get the correct cursor out of the database
+        TestUtilities.validateFavoritesCursor(favCursor, listContentValues, insertedMoviedIds);
+
+        // Has the NotificationUri been set correctly? --- we can only test this easily against API
+        // level 19 or greater because getNotificationUri was added in API level 19.
+        if (Build.VERSION.SDK_INT >= 19) {
+            assertEquals("Error: Favoriate Query did not properly set NotificationUri",
+                    favCursor.getNotificationUri(), MovieContract.FavoriteEntry.CONTENT_URI);
+        }
+    }
+
 //    /*
 //        This test uses the provider to insert and then update the data. Uncomment this test to
 //        see if your update location is functioning correctly.
@@ -280,7 +282,7 @@ public class TestProvider extends AndroidTestCase {
 //                null    // sort order
 //        );
 //
-//        TestUtilities.validateCursor("testUpdateLocation.  Error validating location entry update.",
+//        TestUtilities.validateMovieCursor("testUpdateLocation.  Error validating location entry update.",
 //                cursor, updatedValues);
 //
 //        cursor.close();
@@ -322,7 +324,7 @@ public class TestProvider extends AndroidTestCase {
 //                null  // sort order
 //        );
 //
-//        TestUtilities.validateCursor("testInsertReadProvider. Error validating MovieContract.FavoriteEntry.",
+//        TestUtilities.validateMovieCursor("testInsertReadProvider. Error validating MovieContract.FavoriteEntry.",
 //                cursor, testValues);
 //
 //        // Fantastic.  Now that we have a location, add some weather!
@@ -351,7 +353,7 @@ public class TestProvider extends AndroidTestCase {
 //                null // columns to group by
 //        );
 //
-//        TestUtilities.validateCursor("testInsertReadProvider. Error validating MovieContract.MovieEntry insert.",
+//        TestUtilities.validateMovieCursor("testInsertReadProvider. Error validating MovieContract.MovieEntry insert.",
 //                weatherCursor, weatherValues);
 //
 //        // Add the location values in with the weather data so that we can make
@@ -366,7 +368,7 @@ public class TestProvider extends AndroidTestCase {
 //                null, // values for "where" clause
 //                null  // sort order
 //        );
-//        TestUtilities.validateCursor("testInsertReadProvider.  Error validating joined Weather and Location Data.",
+//        TestUtilities.validateMovieCursor("testInsertReadProvider.  Error validating joined Weather and Location Data.",
 //                weatherCursor, weatherValues);
 //
 //        // Get the joined Weather and Location data with a start date
@@ -378,7 +380,7 @@ public class TestProvider extends AndroidTestCase {
 //                null, // values for "where" clause
 //                null  // sort order
 //        );
-//        TestUtilities.validateCursor("testInsertReadProvider.  Error validating joined Weather and Location Data with start date.",
+//        TestUtilities.validateMovieCursor("testInsertReadProvider.  Error validating joined Weather and Location Data with start date.",
 //                weatherCursor, weatherValues);
 //
 //        // Get the joined Weather data for a specific date
@@ -389,7 +391,7 @@ public class TestProvider extends AndroidTestCase {
 //                null,
 //                null
 //        );
-//        TestUtilities.validateCursor("testInsertReadProvider.  Error validating joined Weather and Location data for a specific date.",
+//        TestUtilities.validateMovieCursor("testInsertReadProvider.  Error validating joined Weather and Location data for a specific date.",
 //                weatherCursor, weatherValues);
 //    }
 //
@@ -463,7 +465,7 @@ public class TestProvider extends AndroidTestCase {
 //                null  // sort order
 //        );
 //
-//        TestUtilities.validateCursor("testBulkInsert. Error validating MovieContract.FavoriteEntry.",
+//        TestUtilities.validateMovieCursor("testBulkInsert. Error validating MovieContract.FavoriteEntry.",
 //                cursor, testValues);
 //
 //        // Now we can bulkInsert some weather.  In fact, we only implement BulkInsert for weather
@@ -500,7 +502,7 @@ public class TestProvider extends AndroidTestCase {
 //        // and let's make sure they match the ones we created
 //        cursor.moveToFirst();
 //        for (int i = 0; i < BULK_INSERT_RECORDS_TO_INSERT; i++, cursor.moveToNext()) {
-//            TestUtilities.validateCurrentRecord("testBulkInsert.  Error validating MovieContract.MovieEntry " + i,
+//            TestUtilities.validateMovieCurrentRecord("testBulkInsert.  Error validating MovieContract.MovieEntry " + i,
 //                    cursor, bulkInsertContentValues[i]);
 //        }
 //        cursor.close();

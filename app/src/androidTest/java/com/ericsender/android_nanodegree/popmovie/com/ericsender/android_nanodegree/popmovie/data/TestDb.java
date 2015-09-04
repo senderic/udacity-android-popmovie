@@ -13,10 +13,14 @@ import android.test.AndroidTestCase;
 import com.ericsender.android_nanodegree.popmovie.data.MovieContract;
 import com.ericsender.android_nanodegree.popmovie.data.MovieDbHelper;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class TestDb extends AndroidTestCase {
 
@@ -104,11 +108,12 @@ public class TestDb extends AndroidTestCase {
                 Cursor c = db.query(MovieContract.FavoriteEntry.TABLE_NAME, null, null, null, null, null, null);
                 assertFalse("Favorites table needs to be empty", c.moveToFirst());
                 c.close();
-                long dbFavOrder = 0;
-                while (dbFavOrder == 0) // just in case we get all random falses.
+                Set<Long> insertedFavs = new HashSet<>();
+                while (insertedFavs.isEmpty()) // just in case we get all random falses.
                     for (Map.Entry<Long, ContentValues> e : orderedInserts.entrySet())
-                        dbFavOrder = TestUtilities.generateRandomFavorites(db, dbFavOrder, e.getValue());
+                        insertedFavs.add(TestUtilities.generateRandomFavoritesAndInsert(db, e.getValue()));
 
+                insertedFavs.remove(null);
                 Cursor cursor = db.query(
                         MovieContract.FavoriteEntry.TABLE_NAME,  // Table to Query
                         null, // all columns
@@ -120,7 +125,7 @@ public class TestDb extends AndroidTestCase {
                 );
 
                 assertTrue("Favorites not in Movies Table",
-                        TestUtilities.verifyFavoritesAreInMoviesTable(dbFavOrder, cursor, db));
+                        TestUtilities.verifyFavoritesAreInMoviesTable(insertedFavs.size(), cursor, db));
             }
         } finally {
             db.close();
@@ -138,13 +143,20 @@ public class TestDb extends AndroidTestCase {
         // Second Step: Create ContentValues of what you want to insert
         // (you can use the createPopularMovieValues if you wish)
 
-        List<ContentValues> testValues = TestUtilities.createPopularMovieValues(mContext);
+        Map<Long, ContentValues> testValues = TestUtilities.createPopularMovieValues(mContext);
+        List<ContentValues> lTestValues = Arrays.asList(testValues.values().toArray(new ContentValues[0]));
+        Collections.sort(lTestValues, new Comparator<ContentValues>() {
+            @Override
+            public int compare(ContentValues lhs, ContentValues rhs) {
+                return lhs.getAsLong("_id").compareTo(rhs.getAsLong("_id"));
+            }
+        });
         Map<Long, ContentValues> insertOrderedTestValues = new HashMap<>();
         // Third Step: Insert ContentValues into database and get a row ID back
-        long movieRowId = -1L;
+
         int insertCount = 0;
-        for (ContentValues cv : testValues) {
-            movieRowId = db.insert(MovieContract.MovieEntry.TABLE_NAME, null, cv);
+        for (ContentValues cv : lTestValues) {
+            long movieRowId = db.insert(MovieContract.MovieEntry.TABLE_NAME, null, cv);
 
             // Verify we got a row back.
             assertFalse("Insert failed!", -1L == movieRowId);

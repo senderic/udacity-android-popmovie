@@ -42,6 +42,11 @@ public class MovieContract {
         public static Uri buildMovieUri(Long movie_id) {
             return CONTENT_URI.buildUpon().appendPath(movie_id.toString()).build();
         }
+
+
+        public static Uri buildMovieUri() {
+            return CONTENT_URI;
+        }
     }
 
     public static final class PopularEntry implements BaseColumns {

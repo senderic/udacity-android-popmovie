@@ -20,11 +20,11 @@ public class MovieProvider extends ContentProvider {
     private static final UriMatcher sUriMatcher = buildUriMatcher();
     private MovieDbHelper mOpenHelper;
 
-    static final int MOVIE = 100;
-    static final int MOVIE_WITH_ID = 101;
-    static final int MOVIE_FAVORITE = 200;
-    static final int MOVIE_RATING = 300;
-    static final int MOVIE_POPULAR = 400;
+    public static final int MOVIE = 100;
+    public static final int MOVIE_WITH_ID = 101;
+    public static final int MOVIE_FAVORITE = 200;
+    public static final int MOVIE_RATING = 300;
+    public static final int MOVIE_POPULAR = 400;
 
     private static final SQLiteQueryBuilder sMoviesAll;
     private static final SQLiteQueryBuilder sMovieById;
@@ -62,9 +62,10 @@ public class MovieProvider extends ContentProvider {
 
     private Cursor getFavoriteMovies() { // Uri uri, String[] projection, String[] selectionArgs) {
         return mOpenHelper.getReadableDatabase().rawQuery("SELECT "
+                + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_ID + ", "
                 + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_JSON
                 + " FROM " + MovieContract.MovieEntry.TABLE_NAME
-                + " WHERE " + MovieContract.MovieEntry.COLUMN_MOVIE_ID
+                + " WHERE " + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_ID
                 + " IN (SELECT "
                 + MovieContract.FavoriteEntry.TABLE_NAME + "." + MovieContract.FavoriteEntry.COLUMN_MOVIE_ID
                 + " FROM " + MovieContract.FavoriteEntry.TABLE_NAME
@@ -81,7 +82,7 @@ public class MovieProvider extends ContentProvider {
 //                MovieContract.FavoriteEntry._ID + " desc");
     }
 
-    static UriMatcher buildUriMatcher() {
+    public static UriMatcher buildUriMatcher() {
         final UriMatcher matcher = new UriMatcher(UriMatcher.NO_MATCH);
         final String authority = MovieContract.CONTENT_AUTHORITY;
 
@@ -142,8 +143,9 @@ public class MovieProvider extends ContentProvider {
                 return MovieContract.RatingEntry.CONTENT_TYPE;
             case MOVIE_POPULAR:
                 return MovieContract.PopularEntry.CONTENT_TYPE;
+            default:
+                throw new InvalidParameterException("Unknown uri/match: " + uri);
         }
-        throw new InvalidParameterException("Unknown uri/match: " + uri);
     }
 
     @Override
@@ -208,6 +210,7 @@ public class MovieProvider extends ContentProvider {
             default:
                 throw new UnsupportedOperationException("Unknown/Unimplemented uri: " + uri);
         }
+        retCursor.setNotificationUri(getContext().getContentResolver(), uri);
         return retCursor;
     }
 
