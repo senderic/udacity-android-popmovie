@@ -38,6 +38,10 @@ public class MovieContract {
         public static final String TABLE_NAME = "movie";
         public static final String COLUMN_MOVIE_ID = "movie_id";
         public static final String COLUMN_JSON = "serializedParseableJson";
+
+        public static Uri buildMovieUri(Long movie_id) {
+            return CONTENT_URI.buildUpon().appendPath(movie_id.toString()).build();
+        }
     }
 
     public static final class PopularEntry implements BaseColumns {
@@ -59,16 +63,16 @@ public class MovieContract {
     public static final class FavoriteEntry implements BaseColumns {
 
         public static final Uri CONTENT_URI =
-                BASE_CONTENT_URI.buildUpon().appendPath(PATH_POPULAR).build();
+                BASE_CONTENT_URI.buildUpon().appendPath(PATH_FAVORITE).build();
 
         public static final String CONTENT_TYPE =
-                ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_FAVORITE;
+                ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY  + "/" + PATH_FAVORITE;
 
         public static final String TABLE_NAME = "favorite";
         public static final String COLUMN_MOVIE_ID = "movie_id";
 
-        public static Uri buildFavoriteUri(long id) {
-            return ContentUris.withAppendedId(CONTENT_URI, id);
+        public static Uri buildFavoriteUri() {
+            return CONTENT_URI; // This will return all the favorites.
         }
     }
 

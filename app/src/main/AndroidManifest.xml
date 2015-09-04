@@ -27,7 +27,7 @@
 
         <provider
             android:name=".data.MovieProvider"
-            android:authorities="com.ericsender.android_nanodegree.popmovie.app"
+            android:authorities="com.ericsender.android_nanodegree.popmovie"
             android:enabled="true"
             android:exported="true" >
         </provider>

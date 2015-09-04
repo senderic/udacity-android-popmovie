@@ -65,6 +65,17 @@ public class TestUtilities extends AndroidTestCase {
     static List<ContentValues> createPopularMovieValues(Context c) {
         // Create a new map of values, where column names are the keys
         List<ContentValues> testValues = new ArrayList<>();
+        LinkedTreeMap<String, Serializable> map = getPopularDataAsMap(c);
+        long dbRowId = 0;
+        for (Map<String, Serializable> m : (List<Map<String, Serializable>>) map.get("results")) {
+            ContentValues cv = createMovieContentValue(dbRowId++, m);
+            testValues.add(cv);
+        }
+
+        return testValues;
+    }
+
+    static LinkedTreeMap<String, Serializable> getPopularDataAsMap(Context c) {
         InputStream in = c.getResources().openRawResource(R.raw.popular);
         String json = Utils.readStreamToString(in);
         try {
@@ -73,14 +84,7 @@ public class TestUtilities extends AndroidTestCase {
             throw new RuntimeException(e);
         }
 
-        LinkedTreeMap<String, Serializable> map = Utils.getGson().fromJson(json, LinkedTreeMap.class);
-        long dbRowId = 0;
-        for (Map<String, Serializable> m : (List<Map<String, Serializable>>) map.get("results")) {
-            ContentValues cv = createMovieContentValue(dbRowId++, m);
-            testValues.add(cv);
-        }
-
-        return testValues;
+        return Utils.getGson().fromJson(json, LinkedTreeMap.class);
     }
 
     @NonNull

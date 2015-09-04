@@ -7,7 +7,6 @@ import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
-import android.graphics.Movie;
 import android.net.Uri;
 
 import com.ericsender.android_nanodegree.popmovie.parcelable.MovieGridObj;
@@ -27,6 +26,7 @@ public class MovieProvider extends ContentProvider {
     static final int MOVIE_RATING = 300;
     static final int MOVIE_POPULAR = 400;
 
+    private static final SQLiteQueryBuilder sMoviesAll;
     private static final SQLiteQueryBuilder sMovieById;
     private static final SQLiteQueryBuilder sFavoriteMovies;
     private static final SQLiteQueryBuilder sHighRatedMovies;
@@ -34,11 +34,14 @@ public class MovieProvider extends ContentProvider {
 
     static {
         // TODO: do I need to implement this?
+        sMoviesAll = new SQLiteQueryBuilder();
         sMovieById = new SQLiteQueryBuilder();
         sFavoriteMovies = new SQLiteQueryBuilder();
         // TODO: implement below two once I know sFavoriteMovies is working
         sHighRatedMovies = new SQLiteQueryBuilder();
         sPopularMovies = new SQLiteQueryBuilder();
+
+        sMoviesAll.setTables(MovieContract.MovieEntry.TABLE_NAME);
 
         sFavoriteMovies.setTables(MovieContract.MovieEntry.TABLE_NAME
                 + " INNER JOIN " +
@@ -53,6 +56,10 @@ public class MovieProvider extends ContentProvider {
     private static final String sMovieSelection = MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_ID + " = ?";
     private static final String sSelectAllFavorites = MovieContract.FavoriteEntry.TABLE_NAME + "." + MovieContract.FavoriteEntry.COLUMN_MOVIE_ID;
 
+    private Cursor getAllMovies() {
+        return sMoviesAll.query(mOpenHelper.getReadableDatabase(), null, null, null, null, null, null);
+    }
+
     private Cursor getFavoriteMovies() { // Uri uri, String[] projection, String[] selectionArgs) {
         return mOpenHelper.getReadableDatabase().rawQuery("SELECT "
                 + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_JSON
@@ -61,7 +68,8 @@ public class MovieProvider extends ContentProvider {
                 + " IN (SELECT "
                 + MovieContract.FavoriteEntry.TABLE_NAME + "." + MovieContract.FavoriteEntry.COLUMN_MOVIE_ID
                 + " FROM " + MovieContract.FavoriteEntry.TABLE_NAME
-                + " WHERE TRUE ORDER BY " + MovieContract.FavoriteEntry._ID + " desc)", null);
+                + " WHERE 1 ORDER BY "
+                + MovieContract.FavoriteEntry.TABLE_NAME + "." + MovieContract.FavoriteEntry._ID + " desc)", null);
 
         // TODO: can this be made to work with subqueries / " IN ( ... ) " expressions?
 //        return sFavoriteMovies.query(mOpenHelper.getReadableDatabase(),
@@ -79,6 +87,8 @@ public class MovieProvider extends ContentProvider {
 
         // For each type of URI you want to add, create a corresponding code.
         // matcher.addURI(authority, MovieContract.PATH_MOVIE, MOVIE);
+        // Get all movies
+        matcher.addURI(authority, MovieContract.PATH_MOVIE, MOVIE);
         // Get a movie by id
         matcher.addURI(authority, MovieContract.PATH_MOVIE + "/#", MOVIE_WITH_ID);
         // Get all movies marked favorite (should not be limited)
@@ -102,11 +112,15 @@ public class MovieProvider extends ContentProvider {
         // this makes delete all rows return the number of rows deleted
         if (selection == null) selection = "1";
         switch (match) {
+            case MOVIE:
+                rowsDeleted = db.delete(MovieContract.MovieEntry.TABLE_NAME, selection, selectionArgs);
+                break;
             case MOVIE_FAVORITE:
                 rowsDeleted = db.delete(MovieContract.FavoriteEntry.TABLE_NAME, selection, selectionArgs);
                 break;
             default:
-                throw new UnsupportedOperationException("Unknown/Unimplemented uri: " + uri);
+                throw new UnsupportedOperationException(
+                        String.format("Unknown/Unimplemented match / uri: %d / %s", match, uri));
         }
         if (rowsDeleted != 0) {
             getContext().getContentResolver().notifyChange(uri, null);
@@ -118,8 +132,10 @@ public class MovieProvider extends ContentProvider {
     public String getType(Uri uri) {
         final int match = sUriMatcher.match(uri);
         switch (match) {
-            case MOVIE:
+            case MOVIE_WITH_ID:
                 return MovieContract.MovieEntry.CONTENT_ITEM_TYPE;
+            case MOVIE:
+                return MovieContract.MovieEntry.CONTENT_TYPE;
             case MOVIE_FAVORITE:
                 return MovieContract.FavoriteEntry.CONTENT_TYPE;
             case MOVIE_RATING:
@@ -141,13 +157,13 @@ public class MovieProvider extends ContentProvider {
                 case MOVIE_FAVORITE:
                     long _id = insertMovie(values);
                     if (_id > 0) {
-                        ContentValues v = new ContentValues(1);
+                        ContentValues v = new ContentValues();
                         MovieGridObj o = (MovieGridObj) Utils.deserialize(values.getAsByteArray(MovieContract.MovieEntry.COLUMN_JSON));
                         // TODO: handle if o is null or o.id is null?
                         v.put(MovieContract.FavoriteEntry.COLUMN_MOVIE_ID, o.id.longValue());
                         long _fid = insertFavorite(values);
                         if (_fid > 0)
-                            returnUri = MovieContract.FavoriteEntry.buildFavoriteUri(_fid);
+                            returnUri = MovieContract.FavoriteEntry.buildFavoriteUri();
                         else
                             throw new android.database.SQLException("Failed to insert row into favorites " + uri);
                         db.setTransactionSuccessful();
@@ -183,14 +199,16 @@ public class MovieProvider extends ContentProvider {
                         String[] selectionArgs, String sortOrder) {
         Cursor retCursor;
         switch (sUriMatcher.match(uri)) {
+            case MOVIE:
+                retCursor = getAllMovies();
+                break;
             case MOVIE_FAVORITE:
                 retCursor = getFavoriteMovies();
                 break;
             default:
                 throw new UnsupportedOperationException("Unknown/Unimplemented uri: " + uri);
         }
-
-        throw new UnsupportedOperationException("Not yet implemented");
+        return retCursor;
     }
 
     @Override
