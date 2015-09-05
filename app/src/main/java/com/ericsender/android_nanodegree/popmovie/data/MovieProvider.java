@@ -152,12 +152,25 @@ public class MovieProvider extends ContentProvider {
     public Uri insert(Uri uri, ContentValues values) {
         final SQLiteDatabase db = mOpenHelper.getWritableDatabase();
         final int match = sUriMatcher.match(uri);
+        long _id;
         Uri returnUri;
         db.beginTransaction();
         try {
             switch (match) {
+                case MOVIE:
+                    _id = insertMovie(values);
+                    if (_id <= 0)
+                        throw new RuntimeException("Failed insert of values: " + values);
+                    returnUri = MovieContract.MovieEntry.buildMovieUri();
+                    break;
+                case MOVIE_WITH_ID:
+                    _id = insertMovie(values);
+                    if (_id <= 0)
+                        throw new RuntimeException("Failed insert of values: " + values);
+                    returnUri = MovieContract.MovieEntry.buildMovieUri(values.getAsLong(MovieContract.MovieEntry.COLUMN_MOVIE_ID));
+                    break;
                 case MOVIE_FAVORITE:
-                    long _id = insertMovie(values);
+                    _id = insertMovie(values);
                     if (_id > 0) {
                         ContentValues v = new ContentValues();
                         MovieGridObj o = (MovieGridObj) Utils.deserialize(values.getAsByteArray(MovieContract.MovieEntry.COLUMN_JSON));

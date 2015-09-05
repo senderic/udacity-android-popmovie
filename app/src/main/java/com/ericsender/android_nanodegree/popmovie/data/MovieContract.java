@@ -43,7 +43,6 @@ public class MovieContract {
             return CONTENT_URI.buildUpon().appendPath(movie_id.toString()).build();
         }
 
-
         public static Uri buildMovieUri() {
             return CONTENT_URI;
         }

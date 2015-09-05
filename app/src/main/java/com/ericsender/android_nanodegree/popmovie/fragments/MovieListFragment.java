@@ -1,6 +1,9 @@
 package com.ericsender.android_nanodegree.popmovie.fragments;
 
+import android.content.ContentValues;
 import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -27,6 +30,8 @@ import com.android.volley.toolbox.Volley;
 import com.ericsender.android_nanodegree.popmovie.R;
 import com.ericsender.android_nanodegree.popmovie.activities.DetailsActivity;
 import com.ericsender.android_nanodegree.popmovie.adapters.GridViewAdapter;
+import com.ericsender.android_nanodegree.popmovie.data.MovieContract;
+import com.ericsender.android_nanodegree.popmovie.data.MovieDbHelper;
 import com.ericsender.android_nanodegree.popmovie.parcelable.MovieGridObj;
 import com.ericsender.android_nanodegree.popmovie.utils.NaturalDeserializer;
 import com.ericsender.android_nanodegree.popmovie.utils.Utils;
@@ -47,6 +52,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -57,6 +63,7 @@ import java.util.TreeSet;
  */
 public class MovieListFragment extends Fragment {
 
+    private static final String LOG_TAG = MovieListFragment.class.getSimpleName();
     private ArrayAdapter<MovieGridObj> mMovieAdapter;
     private List<MovieGridObj> mMovieList = new ArrayList<>();
     private GridViewAdapter mGridViewAdapter;
@@ -209,8 +216,49 @@ public class MovieListFragment extends Fragment {
     }
 
     private void updateMovieListVolley() {
+        int rows = 0;
         String sort = getApiSortPref();
+        // TODO add conditions for wanting live data (refresh/empty db)
+        // if (seekInternalDataFirst) {
+        Cursor cursor = getActivity().getContentResolver().query(
+                MovieContract.MovieEntry.CONTENT_URI,
+                null,
+                null,
+                null,
+                null
+        );
+        // rows = cursor.getCount();}
 
+        if (rows == 0)
+            getLiveData(sort);
+        else
+            getInternalData(cursor, sort);
+    }
+
+    private void insertMovieListIntoDatabase(final String sort) {
+        MovieDbHelper dbHelper = new MovieDbHelper(getActivity());
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        Map<Long, Long> rowIds = new HashMap<>();
+        try {
+            for (MovieGridObj obj : mMovieList) {
+                long movie_id = obj.id;
+                byte[] blob = Utils.serialize(obj);
+                ContentValues cv = new ContentValues();
+                cv.put(MovieContract.MovieEntry.COLUMN_MOVIE_ID, movie_id);
+                cv.put(MovieContract.MovieEntry.COLUMN_JSON, blob);
+                Uri uri = getActivity().getContentResolver().insert(MovieContract.MovieEntry.buildMovieUri(cv.getAsLong(MovieContract.MovieEntry.COLUMN_MOVIE_ID)), cv);
+                Log.d(LOG_TAG, String.format("Just inserted movie %s - uri %s", obj.original_title, uri));
+            }
+        } finally {
+            db.close();
+        }
+    }
+
+    private void getInternalData(Cursor cursor, String sort) {
+
+    }
+
+    private void getLiveData(final String sort) {
         RequestQueue queue = Volley.newRequestQueue(getActivity());
         Uri builtUri = Uri.parse(getString(R.string.tmdb_api_base_discover_url)).buildUpon()
                 .appendQueryParameter(getString(R.string.tmdb_param_sortby), sort)
@@ -237,6 +285,7 @@ public class MovieListFragment extends Fragment {
                         mMovieList = covertMapToMovieObjList(map);
                         Log.d(getClass().getSimpleName(), "Received a set of movies. Registering them.");
                         mGridViewAdapter.setGridData(mMovieList);
+                        insertMovieListIntoDatabase(sort);
                     }
 
                     private List<MovieGridObj> covertMapToMovieObjList(LinkedTreeMap<String, Object> map) {
