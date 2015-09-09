@@ -195,19 +195,24 @@ public class MovieListFragment extends Fragment {
                 null,
                 null
         );
-        // rows = cursor.getCount();}
+        rows = cursor.getCount();
 
         // TODO: Could the query handle loading live data isntead of the Fragment?
-        if (rows == 0)
+        if (rows == 0) {
+            Log.d(LOG_TAG, "getting live data");
             getLiveData(sort);
-        else
+        } else {
+            Log.d(LOG_TAG, "getting database data");
             getInternalData(cursor, sort);
+        }
     }
 
     private void insertMovieListIntoDatabase(final String sort) {
         MovieDbHelper dbHelper = new MovieDbHelper(getActivity());
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         Map<Long, Long> rowIds = new HashMap<>();
+        ContentValues[] inserts = new ContentValues[mMovieList.size()];
+        int i = 0;
         try {
             for (MovieGridObj obj : mMovieList) {
                 long movie_id = obj.id;
@@ -215,9 +220,10 @@ public class MovieListFragment extends Fragment {
                 ContentValues cv = new ContentValues();
                 cv.put(MovieContract.MovieEntry.COLUMN_MOVIE_ID, movie_id);
                 cv.put(MovieContract.MovieEntry.COLUMN_JSON, blob);
-                Uri uri = getActivity().getContentResolver().insert(MovieContract.MovieEntry.buildMovieUri(cv.getAsLong(MovieContract.MovieEntry.COLUMN_MOVIE_ID)), cv);
-                Log.d(LOG_TAG, String.format("Just inserted movie %s - uri %s", obj.original_title, uri));
+                inserts[i++] = cv;
             }
+            getActivity().getContentResolver().bulkInsert(MovieContract.MovieEntry.buildMovieUri(), inserts);
+            Log.d(LOG_TAG, String.format("Just inserted movies %s", mMovieList));
         } finally {
             db.close();
         }

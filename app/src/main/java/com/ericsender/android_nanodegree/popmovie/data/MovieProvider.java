@@ -71,6 +71,19 @@ public class MovieProvider extends ContentProvider {
 
     }
 
+    private Cursor getRatedMovies() {
+        return mOpenHelper.getReadableDatabase().rawQuery("SELECT "
+                + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_ID + ", "
+                + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_JSON
+                + " FROM " + MovieContract.MovieEntry.TABLE_NAME
+                + " WHERE " + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_ID
+                + " IN (SELECT "
+                + MovieContract.RatingEntry.TABLE_NAME + "." + MovieContract.RatingEntry.COLUMN_MOVIE_ID
+                + " FROM " + MovieContract.RatingEntry.TABLE_NAME
+                + " WHERE 1 ORDER BY "
+                + MovieContract.RatingEntry.TABLE_NAME + "." + MovieContract.RatingEntry._ID + " desc)", null);
+    }
+
     private Cursor getFavoriteMovies() { // Uri uri, String[] projection, String[] selectionArgs) {
         return mOpenHelper.getReadableDatabase().rawQuery("SELECT "
                 + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_ID + ", "
@@ -133,9 +146,12 @@ public class MovieProvider extends ContentProvider {
             case MOVIE_POPULAR:
                 rowsDeleted = db.delete(MovieContract.PopularEntry.TABLE_NAME, selection, selectionArgs);
                 break;
+            case MOVIE_RATING:
+                rowsDeleted = db.delete(MovieContract.RatingEntry.TABLE_NAME, selection, selectionArgs);
+                break;
             default:
                 throw new UnsupportedOperationException(
-                        String.format("Unknown/Unimplemented match / uri: %d / %s", match, uri));
+                        String.format("Unknown/Unimplemented match :: uri: %d / %s", match, uri));
         }
         if (rowsDeleted != 0) {
             getContext().getContentResolver().notifyChange(uri, null);
@@ -181,6 +197,12 @@ public class MovieProvider extends ContentProvider {
                     throw new RuntimeException("Failed insert of values: " + values);
                 returnUri = MovieContract.MovieEntry.buildMovieUri(values.getAsLong(MovieContract.MovieEntry.COLUMN_MOVIE_ID));
                 break;
+            case MOVIE_RATING:
+                _id = insertRated(values);
+                if (_id < 0)
+                    throw new android.database.SQLException("Failed to insert row into into movies " + uri);
+                returnUri = MovieContract.RatingEntry.buildRatingUri();
+                break;
             case MOVIE_POPULAR:
                 _id = insertPopular(values);
                 if (_id < 0)
@@ -200,6 +222,8 @@ public class MovieProvider extends ContentProvider {
         return returnUri;
     }
 
+
+
     @Override
     public int bulkInsert(Uri uri, ContentValues[] values) {
         final SQLiteDatabase db = mOpenHelper.getWritableDatabase();
@@ -212,7 +236,9 @@ public class MovieProvider extends ContentProvider {
             db.endTransaction();
         }
     }
-
+    private long insertRated(ContentValues values) {
+        return mOpenHelper.getWritableDatabase().insert(MovieContract.RatingEntry.TABLE_NAME, null, values);
+    }
     private long insertPopular(ContentValues values) {
         return mOpenHelper.getWritableDatabase().insert(MovieContract.PopularEntry.TABLE_NAME, null, values);
     }
@@ -238,6 +264,9 @@ public class MovieProvider extends ContentProvider {
         switch (sUriMatcher.match(uri)) {
             case MOVIE:
                 retCursor = getAllMovies();
+                break;
+            case MOVIE_RATING:
+                retCursor = getRatedMovies();
                 break;
             case MOVIE_FAVORITE:
                 retCursor = getFavoriteMovies();

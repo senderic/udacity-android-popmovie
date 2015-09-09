@@ -92,8 +92,8 @@ public class MovieContract {
         public static final String TABLE_NAME = PATH_RATING;
         public static final String COLUMN_MOVIE_ID = MovieEntry.COLUMN_MOVIE_ID;
 
-        public static Uri buildMovieList() {
-            return CONTENT_URI.buildUpon().appendPath(PATH_RATING).appendPath("*").build();
+        public static Uri buildRatingUri() {
+            return CONTENT_URI;
         }
 
         public static String getMovieListFromUri(Uri uri) {

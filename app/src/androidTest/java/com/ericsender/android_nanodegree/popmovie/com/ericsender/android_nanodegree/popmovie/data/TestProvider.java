@@ -231,7 +231,6 @@ public class TestProvider extends AndroidTestCase {
         }
     }
 
-    // TODO: Implement tests for the Ratings table and Popular table
     // TODO: Implement requesting of both types of data, filling both Ratings and Popular table
     // TODO: Implement changing sort order of screen using this data source.
 
