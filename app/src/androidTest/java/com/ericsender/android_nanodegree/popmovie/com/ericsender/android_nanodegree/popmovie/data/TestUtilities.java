@@ -15,6 +15,7 @@ import com.ericsender.android_nanodegree.popmovie.R;
 import com.ericsender.android_nanodegree.popmovie.com.ericsender.android_nanodegree.popmovie.utils.PollingCheck;
 import com.ericsender.android_nanodegree.popmovie.data.MovieContract;
 import com.ericsender.android_nanodegree.popmovie.data.MovieDbHelper;
+import com.ericsender.android_nanodegree.popmovie.parcelable.MovieGridObj;
 import com.ericsender.android_nanodegree.popmovie.utils.Utils;
 import com.google.gson.internal.LinkedTreeMap;
 
@@ -25,7 +26,6 @@ import java.io.InputStream;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -42,13 +42,12 @@ public class TestUtilities extends AndroidTestCase {
             long _id = valueCursor.getLong(0);
             Long movie_id = valueCursor.getLong(1);
             byte[] bMovieObj = valueCursor.getBlob(2);
-            LinkedHashMap<String, Serializable> movieObj = (LinkedHashMap<String, Serializable>)
-                    Utils.deserialize(bMovieObj);
+            MovieGridObj movieObj = (MovieGridObj) Utils.deserialize(bMovieObj);
 
             ContentValues cv = expectedValues.get(_id);
             Long expectedId = (Long) cv.get(MovieContract.MovieEntry.COLUMN_MOVIE_ID);
             byte[] expectedBMovieObject = (byte[]) cv.get(MovieContract.MovieEntry.COLUMN_JSON);
-            LinkedHashMap<String, Serializable> expectedMovieObj = (LinkedHashMap<String, Serializable>) Utils.deserialize(expectedBMovieObject);
+            MovieGridObj expectedMovieObj = (MovieGridObj) Utils.deserialize(expectedBMovieObject);
 
             assertEquals("movied id's don't match", expectedId, movie_id);
             // assumes I didn't screw up the equals()/hashCode() functions!
@@ -102,14 +101,15 @@ public class TestUtilities extends AndroidTestCase {
     /*
         Created a Map of content values ready for database insertion.
      */
-    static Map<Long, ContentValues> createPopularMovieValues(Context c, String sort) {
+    static Map<Long, ContentValues> createSortedMovieValues(Context c, String sort) {
         // Create a new map of values, where column names are the keys
         Map<Long, ContentValues> testValues = new HashMap<>();
         LinkedTreeMap<String, Serializable> map = getDataAsMap(c, sort);
+        List<MovieGridObj> lMovies = Utils.covertMapToMovieObjList(map);
         long dbRowId = 0;
-        for (Map<String, Serializable> m : (List<Map<String, Serializable>>) map.get("results")) {
+        for (MovieGridObj m : lMovies) {
             ContentValues cv = createMovieContentValue(dbRowId++, m);
-            testValues.put(cv.getAsLong("movie_id"), cv);
+            testValues.put(cv.getAsLong(MovieContract.MovieEntry.COLUMN_MOVIE_ID), cv);
         }
 
         return testValues;
@@ -130,10 +130,9 @@ public class TestUtilities extends AndroidTestCase {
     }
 
     @NonNull
-    public static ContentValues createMovieContentValue(long dbRowId, Map<String, Serializable> m) {
+    public static ContentValues createMovieContentValue(long dbRowId, MovieGridObj m) {
         ContentValues cv = new ContentValues();
-        cv.put(MovieContract.MovieEntry._ID, dbRowId);
-        cv.put(MovieContract.MovieEntry.COLUMN_MOVIE_ID, ((Double) m.get("id")).longValue());
+        cv.put(MovieContract.MovieEntry.COLUMN_MOVIE_ID, m.id.longValue());
         cv.put(MovieContract.MovieEntry.COLUMN_JSON, Utils.serialize(m));
         return cv;
     }
@@ -212,10 +211,29 @@ public class TestUtilities extends AndroidTestCase {
         while (c.moveToNext()) {
             long _id = c.getLong(0);
             byte[] bMovieObj = c.getBlob(1);
-            LinkedHashMap<String, Serializable> movieObj = (LinkedHashMap<String, Serializable>)
-                    Utils.deserialize(bMovieObj);
+            MovieGridObj movieObj = (MovieGridObj) Utils.deserialize(bMovieObj);
             bMovieObj = null; // force GC.
-            long movie_id = ((Double) movieObj.get("id")).longValue();
+            long movie_id = movieObj.id;
+
+            assertNotNull("list of content values contains movie_id = " + movie_id, listContentValues.get(movie_id));
+            assertTrue("count went too high", count < listContentValues.size());
+            count++;
+        }
+        assertEquals("count exact", count, listContentValues.size());
+        c.close();
+    }
+
+    public static void verifyRatingValuesInDatabase(Map<Long, ContentValues> listContentValues, Context mContext) {
+        Cursor c = mContext.getContentResolver().query(MovieContract.RatingEntry.CONTENT_URI, null, null, null, null);
+        assertTrue("Nothing returned from Rating Table", c.moveToFirst());
+        assertEquals("Size of list content values = number of rows returned", listContentValues.size(), c.getCount());
+        int count = 1;
+        while (c.moveToNext()) {
+            long _id = c.getLong(0);
+            byte[] bMovieObj = c.getBlob(1);
+            MovieGridObj movieObj = (MovieGridObj) Utils.deserialize(bMovieObj);
+            bMovieObj = null; // force GC.
+            long movie_id = movieObj.id;
 
             assertNotNull("list of content values contains movie_id = " + movie_id, listContentValues.get(movie_id));
             assertTrue("count went too high", count < listContentValues.size());

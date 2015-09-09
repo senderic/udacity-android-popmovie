@@ -2,6 +2,7 @@ package com.ericsender.android_nanodegree.popmovie.data;
 
 import android.content.ContentResolver;
 import android.content.ContentUris;
+import android.graphics.Movie;
 import android.net.Uri;
 import android.provider.BaseColumns;
 import android.text.format.Time;
@@ -35,7 +36,7 @@ public class MovieContract {
         public static final String CONTENT_ITEM_TYPE =
                 ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_MOVIE;
 
-        public static final String TABLE_NAME = "movie";
+        public static final String TABLE_NAME = PATH_MOVIE;
         public static final String COLUMN_MOVIE_ID = "movie_id";
         public static final String COLUMN_JSON = "serializedParseableJson";
 
@@ -56,8 +57,8 @@ public class MovieContract {
         public static final String CONTENT_TYPE =
                 ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_POPULAR;
 
-        public static final String TABLE_NAME = "popular";
-        public static final String COLUMN_MOVIE_ID = "movie_id";
+        public static final String TABLE_NAME = PATH_POPULAR;
+        public static final String COLUMN_MOVIE_ID = MovieEntry.COLUMN_MOVIE_ID;
 
         public static Uri buildPopularUri() {
             return CONTENT_URI;
@@ -72,8 +73,8 @@ public class MovieContract {
         public static final String CONTENT_TYPE =
                 ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY  + "/" + PATH_FAVORITE;
 
-        public static final String TABLE_NAME = "favorite";
-        public static final String COLUMN_MOVIE_ID = "movie_id";
+        public static final String TABLE_NAME = PATH_FAVORITE;
+        public static final String COLUMN_MOVIE_ID = MovieEntry.COLUMN_MOVIE_ID;
 
         public static Uri buildFavoriteUri() {
             return CONTENT_URI; // This will return all the favorites.
@@ -83,13 +84,13 @@ public class MovieContract {
     public static final class RatingEntry implements BaseColumns {
 
         public static final Uri CONTENT_URI =
-                BASE_CONTENT_URI.buildUpon().appendPath(PATH_FAVORITE).build();
+                BASE_CONTENT_URI.buildUpon().appendPath(PATH_RATING).build();
 
         public static final String CONTENT_TYPE =
-                ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_FAVORITE;
+                ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_RATING;
 
-        public static final String TABLE_NAME = "rating";
-        public static final String COLUMN_MOVIE_ID = "movie_id";
+        public static final String TABLE_NAME = PATH_RATING;
+        public static final String COLUMN_MOVIE_ID = MovieEntry.COLUMN_MOVIE_ID;
 
         public static Uri buildMovieList() {
             return CONTENT_URI.buildUpon().appendPath(PATH_RATING).appendPath("*").build();

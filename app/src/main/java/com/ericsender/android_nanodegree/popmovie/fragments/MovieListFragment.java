@@ -21,7 +21,6 @@ import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import com.android.volley.NetworkResponse;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -44,7 +43,6 @@ import org.apache.commons.lang3.time.StopWatch;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -53,46 +51,21 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
 
 /**
  * A placeholder fragment containing a simple view.
  */
 public class MovieListFragment extends Fragment {
 
-    private static final String LOG_TAG = MovieListFragment.class.getSimpleName();
+    public static final String LOG_TAG = MovieListFragment.class.getSimpleName();
     private ArrayAdapter<MovieGridObj> mMovieAdapter;
     private List<MovieGridObj> mMovieList = new ArrayList<>();
     private GridViewAdapter mGridViewAdapter;
     private GridView mMovieGridView;
-    private final Comparator<MovieGridObj> sortAlgo = new Comparator<MovieGridObj>() {
-        @Override
-        public int compare(MovieGridObj lhs, MovieGridObj rhs) {
-            // Not sorting now, using API calls for each new sort. Returning 1 essentially does nothing
-            return 1; //return performSort(lhs, rhs);
-        }
-
-        private int performSort(MovieGridObj lhs, MovieGridObj rhs) {
-            String sort = getCurrentSortPref();
-
-            sort = sort == null ? "" : sort; // defensive-ish code
-
-            // Log.d(getClass().getSimpleName(), f("Sorting %s and %s based on %s", lhs.title, rhs.title, sort));
-
-            if (sort.equalsIgnoreCase(getString(R.string.most_popular_val)))
-                return lhs.popularity.compareTo(rhs.popularity);
-            else if (sort.equalsIgnoreCase(getString(R.string.highest_rated_val)))
-                return lhs.vote_average.compareTo(rhs.vote_average);
-            else throw new RuntimeException("Sort setting not valid: " + sort);
-        }
-    };
     private String mCurrSortOrder;
 
     private String getCurrentSortPref() {
@@ -114,10 +87,6 @@ public class MovieListFragment extends Fragment {
 
     private void setTitle() {
         // getActivity().setTitle(getString(R.string.title_activity_main) + " - " + getCurrentSortPref());
-    }
-
-    public static final String f(String s, Object... args) {
-        return String.format(s, args);
     }
 
     public MovieListFragment() {
@@ -145,11 +114,6 @@ public class MovieListFragment extends Fragment {
             setTitle();
         }
         super.onResume();
-    }
-
-    private void sortMovieList() {
-        Collections.sort(mMovieList, sortAlgo);
-        mGridViewAdapter.setGridData(mMovieList);
     }
 
     @Override
@@ -269,7 +233,7 @@ public class MovieListFragment extends Fragment {
             bMovieObj = null; // Force feed to the GC.
             lMaps.add(movieObj);
         }
-        mMovieList = handleResults(lMaps);
+        mMovieList = Utils.convertJsonMapToMovieList(lMaps);
         registeringData(sort);
     }
 
@@ -299,7 +263,7 @@ public class MovieListFragment extends Fragment {
                     @Override
                     public void onResponse(JSONObject response) {
                         Log.d(getClass().getSimpleName(), "Response received.");
-                        LinkedTreeMap<String, Object> map = Utils.getGson().fromJson(response.toString(), LinkedTreeMap.class);
+                        LinkedTreeMap<String, Serializable> map = Utils.getGson().fromJson(response.toString(), LinkedTreeMap.class);
                         handleMap(map, sort);
                         t.setText("Loading Finished in: " + sw);
                     }
@@ -316,8 +280,8 @@ public class MovieListFragment extends Fragment {
         queue.add(jsObjRequest);
     }
 
-    private void handleMap(LinkedTreeMap<String, Object> map, String sort) {
-        mMovieList = covertMapToMovieObjList(map);
+    private void handleMap(LinkedTreeMap<String, Serializable> map, String sort) {
+        mMovieList = Utils.covertMapToMovieObjList(map);
         Log.d(getClass().getSimpleName(), "Received a set of movies. Registering them.");
         registeringData(sort);
     }
@@ -325,85 +289,6 @@ public class MovieListFragment extends Fragment {
     private void registeringData(String sort) {
         mGridViewAdapter.setGridData(mMovieList);
         insertMovieListIntoDatabase(sort);
-    }
-
-    private List<MovieGridObj> covertMapToMovieObjList(LinkedTreeMap<String, Object> map) {
-        List<MovieGridObj> movies = null;
-        Double page, total_pages, total_results;
-        for (Map.Entry<String, Object> entry : map.entrySet())
-            switch (entry.getKey()) {
-                case "page":
-                    page = (Double) entry.getValue();
-                    break;
-                case "results":
-                    movies = handleResults((ArrayList) entry.getValue());
-                    break;
-                case "total_pages":
-                    total_pages = (Double) entry.getValue();
-                    break;
-                case "total_results":
-                    total_results = (Double) entry.getValue();
-                    break;
-                default:
-                    Log.d(getClass().getSimpleName(), "Key/Val did not match predefined set: " + entry.getKey());
-            }
-        return movies;
-    }
-
-    private List<MovieGridObj> handleResults(Object resultsObj) {
-        List<LinkedTreeMap<String, Object>> results = (List<LinkedTreeMap<String, Object>>) resultsObj;
-        Set<MovieGridObj> movies = new TreeSet<>(sortAlgo);
-        for (LinkedTreeMap<String, Object> m : results) {
-            MovieGridObj movie = new MovieGridObj();
-            for (Map.Entry<String, Object> e : m.entrySet())
-                switch (e.getKey()) {
-                    case "adult":
-                        movie.adult = (Boolean) e.getValue();
-                        break;
-                    case "backdrop_path":
-                        movie.backdrop_path = (String) e.getValue();
-                        break;
-                    case "genre_ids":
-                        movie.genre_ids = (ArrayList<Double>) e.getValue();
-                        break;
-                    case "id":
-                        movie.id = ((Double) e.getValue()).longValue();
-                        break;
-                    case "original_language":
-                        movie.original_language = (String) e.getValue();
-                        break;
-                    case "original_title":
-                        movie.original_title = (String) e.getValue();
-                        break;
-                    case "overview":
-                        movie.overview = (String) e.getValue();
-                        break;
-                    case "release_date":
-                        movie.release_date = (String) e.getValue();
-                        break;
-                    case "poster_path":
-                        movie.poster_path = (String) e.getValue();
-                        break;
-                    case "popularity":
-                        movie.popularity = (Double) e.getValue();
-                        break;
-                    case "title":
-                        movie.title = (String) e.getValue();
-                        break;
-                    case "video":
-                        movie.video = (Boolean) e.getValue();
-                        break;
-                    case "vote_average":
-                        movie.vote_average = (Double) e.getValue();
-                        break;
-                    case "vote_count":
-                        movie.vote_count = ((Double) e.getValue()).intValue();
-                        break;
-                }
-            // Log.d(getClass().getSimpleName(), "Just received " + movie.title + " from API.");
-            movies.add(movie);
-        }
-        return new ArrayList<>(movies);
     }
 
     /*
@@ -449,7 +334,7 @@ public class MovieListFragment extends Fragment {
                 Gson gson = gsonBuilder.create();
                 map = gson.fromJson(reader, LinkedTreeMap.class);
             } finally {
-                closeQuietly(inputStream, reader);
+                Utils.closeQuietly(inputStream, reader);
             }
 
             if (map == null) {
@@ -461,12 +346,5 @@ public class MovieListFragment extends Fragment {
         }
     }
 
-    public static void closeQuietly(Closeable... cs) {
-        for (Closeable c : cs)
-            if (c != null) try {
-                c.close();
-            } catch (IOException e) {
-            }
-    }
 }
 

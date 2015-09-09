@@ -10,7 +10,6 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.test.AndroidTestCase;
 
-import com.ericsender.android_nanodegree.popmovie.R;
 import com.ericsender.android_nanodegree.popmovie.data.MovieContract;
 import com.ericsender.android_nanodegree.popmovie.data.MovieDbHelper;
 
@@ -143,16 +142,10 @@ public class TestDb extends AndroidTestCase {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
 
         // Second Step: Create ContentValues of what you want to insert
-        // (you can use the createPopularMovieValues if you wish)
+        // (you can use the createSortedMovieValues if you wish)
 
-        Map<Long, ContentValues> testValues = TestUtilities.createPopularMovieValues(mContext, "popular");
+        Map<Long, ContentValues> testValues = TestUtilities.createSortedMovieValues(mContext, "popular");
         List<ContentValues> lTestValues = Arrays.asList(testValues.values().toArray(new ContentValues[0]));
-        Collections.sort(lTestValues, new Comparator<ContentValues>() {
-            @Override
-            public int compare(ContentValues lhs, ContentValues rhs) {
-                return lhs.getAsLong("_id").compareTo(rhs.getAsLong("_id"));
-            }
-        });
         Map<Long, ContentValues> insertOrderedTestValues = new HashMap<>();
         // Third Step: Insert ContentValues into database and get a row ID back
 
@@ -203,7 +196,7 @@ public class TestDb extends AndroidTestCase {
                 // Verify we got a row back.
                 assertFalse("Insert failed!", -1L == movieRowId);
                 insertOrderedTestValues.put(movieRowId, cv);
-                assertEquals("InsertCount match RowId", insertCount++, movieRowId);
+                assertEquals("InsertCount match RowId", ++insertCount, movieRowId);
             }
             db.setTransactionSuccessful();
         } finally {

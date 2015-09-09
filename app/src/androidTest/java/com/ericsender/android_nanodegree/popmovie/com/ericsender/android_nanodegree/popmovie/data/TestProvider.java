@@ -142,7 +142,7 @@ public class TestProvider extends AndroidTestCase {
         assertEquals("Content Type",
                 MovieContract.MovieEntry.CONTENT_TYPE, type);
 
-        Map<Long, ContentValues> raw = TestUtilities.createPopularMovieValues(getContext(), "popular");
+        Map<Long, ContentValues> raw = TestUtilities.createSortedMovieValues(getContext(), "popular");
         Long movie_id = (Long) raw.values().toArray(new ContentValues[0])[0].get(MovieContract.MovieEntry.COLUMN_MOVIE_ID);
         // content://com.example.android.sunshine.app/movie/#
         type = mContext.getContentResolver().getType(
@@ -168,7 +168,7 @@ public class TestProvider extends AndroidTestCase {
     public void testBasicMovieQuery() {
         // insert our test records into the database
 
-        Map<Long, ContentValues> listContentValues = TestUtilities.createPopularMovieValues(getContext(), "popular");
+        Map<Long, ContentValues> listContentValues = TestUtilities.createSortedMovieValues(getContext(), "popular");
         Map<Long, Long> locationRowIds = TestUtilities.insertMovieRow(mContext, listContentValues);
 
 
@@ -192,7 +192,7 @@ public class TestProvider extends AndroidTestCase {
      */
     public void testBasicFavoriteQueries() {
         //first insert movies:
-        Map<Long, ContentValues> listContentValues = TestUtilities.createPopularMovieValues(getContext(), "popular");
+        Map<Long, ContentValues> listContentValues = TestUtilities.createSortedMovieValues(getContext(), "popular");
         Map<Long, Long> locationRowIds = TestUtilities.insertMovieRow(mContext, listContentValues);
 
         // Insert random favorites
@@ -237,7 +237,7 @@ public class TestProvider extends AndroidTestCase {
 
     public void testAddingPopularMoviesToTable() {
         mContext.getContentResolver().delete(MovieContract.PopularEntry.CONTENT_URI, null, null);
-        Map<Long, ContentValues> listContentValues = TestUtilities.createPopularMovieValues(getContext(), "popular");
+        Map<Long, ContentValues> listContentValues = TestUtilities.createSortedMovieValues(getContext(), "popular");
         ContentValues[] arr = (ContentValues[]) listContentValues.values().toArray(new ContentValues[0]);
 
         mContext.getContentResolver().bulkInsert(MovieContract.MovieEntry.CONTENT_URI, arr);
@@ -250,6 +250,24 @@ public class TestProvider extends AndroidTestCase {
         mContext.getContentResolver().bulkInsert(MovieContract.PopularEntry.CONTENT_URI, movie_ids);
 
         TestUtilities.verifyPopularValuesInDatabase(listContentValues, mContext);
+    }
+
+    public void testAddingRatedMoviesToTable() {
+        mContext.getContentResolver().delete(MovieContract.RatingEntry.CONTENT_URI, null, null);
+        Map<Long, ContentValues> listContentValues = TestUtilities.createSortedMovieValues(getContext(), "rating");
+
+        ContentValues[] arr = (ContentValues[]) listContentValues.values().toArray(new ContentValues[0]);
+
+        mContext.getContentResolver().bulkInsert(MovieContract.MovieEntry.CONTENT_URI, arr);
+
+        ContentValues[] movie_ids = new ContentValues[arr.length];
+        for (int i = 0; i < arr.length; i++)
+            (movie_ids[i] = new ContentValues()).put(MovieContract.RatingEntry.COLUMN_MOVIE_ID,
+                    arr[i].getAsLong(MovieContract.MovieEntry.COLUMN_MOVIE_ID));
+
+        mContext.getContentResolver().bulkInsert(MovieContract.RatingEntry.CONTENT_URI, movie_ids);
+
+        TestUtilities.verifyRatingValuesInDatabase(listContentValues, mContext);
     }
 
 //    /*
