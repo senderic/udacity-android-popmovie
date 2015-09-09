@@ -9,9 +9,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 
-import com.ericsender.android_nanodegree.popmovie.parcelable.MovieGridObj;
-import com.ericsender.android_nanodegree.popmovie.utils.Utils;
-
 import java.security.InvalidParameterException;
 
 public class MovieProvider extends ContentProvider {
@@ -58,6 +55,20 @@ public class MovieProvider extends ContentProvider {
 
     private Cursor getAllMovies() {
         return sMoviesAll.query(mOpenHelper.getReadableDatabase(), null, null, null, null, null, null);
+    }
+
+    private Cursor getPopularMovies() {
+        return mOpenHelper.getReadableDatabase().rawQuery("SELECT "
+                + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_ID + ", "
+                + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_JSON
+                + " FROM " + MovieContract.MovieEntry.TABLE_NAME
+                + " WHERE " + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_ID
+                + " IN (SELECT "
+                + MovieContract.PopularEntry.TABLE_NAME + "." + MovieContract.PopularEntry.COLUMN_MOVIE_ID
+                + " FROM " + MovieContract.PopularEntry.TABLE_NAME
+                + " WHERE 1 ORDER BY "
+                + MovieContract.PopularEntry.TABLE_NAME + "." + MovieContract.PopularEntry._ID + " desc)", null);
+
     }
 
     private Cursor getFavoriteMovies() { // Uri uri, String[] projection, String[] selectionArgs) {
@@ -119,6 +130,9 @@ public class MovieProvider extends ContentProvider {
             case MOVIE_FAVORITE:
                 rowsDeleted = db.delete(MovieContract.FavoriteEntry.TABLE_NAME, selection, selectionArgs);
                 break;
+            case MOVIE_POPULAR:
+                rowsDeleted = db.delete(MovieContract.PopularEntry.TABLE_NAME, selection, selectionArgs);
+                break;
             default:
                 throw new UnsupportedOperationException(
                         String.format("Unknown/Unimplemented match / uri: %d / %s", match, uri));
@@ -154,45 +168,53 @@ public class MovieProvider extends ContentProvider {
         final int match = sUriMatcher.match(uri);
         long _id;
         Uri returnUri;
-        db.beginTransaction();
-        try {
-            switch (match) {
-                case MOVIE:
-                    _id = insertMovie(values);
-                    if (_id <= 0)
-                        throw new RuntimeException("Failed insert of values: " + values);
-                    returnUri = MovieContract.MovieEntry.buildMovieUri();
-                    break;
-                case MOVIE_WITH_ID:
-                    _id = insertMovie(values);
-                    if (_id <= 0)
-                        throw new RuntimeException("Failed insert of values: " + values);
-                    returnUri = MovieContract.MovieEntry.buildMovieUri(values.getAsLong(MovieContract.MovieEntry.COLUMN_MOVIE_ID));
-                    break;
-                case MOVIE_FAVORITE:
-                    _id = insertMovie(values);
-                    if (_id > 0) {
-                        ContentValues v = new ContentValues();
-                        MovieGridObj o = (MovieGridObj) Utils.deserialize(values.getAsByteArray(MovieContract.MovieEntry.COLUMN_JSON));
-                        // TODO: handle if o is null or o.id is null?
-                        v.put(MovieContract.FavoriteEntry.COLUMN_MOVIE_ID, o.id.longValue());
-                        long _fid = insertFavorite(values);
-                        if (_fid > 0)
-                            returnUri = MovieContract.FavoriteEntry.buildFavoriteUri();
-                        else
-                            throw new android.database.SQLException("Failed to insert row into favorites " + uri);
-                        db.setTransactionSuccessful();
-                    } else
-                        throw new android.database.SQLException("Failed to insert row into into movies " + uri);
-                    break;
-                default:
-                    throw new UnsupportedOperationException("Unknown/Unimplemented uri " + uri);
-            }
-        } finally {
-            db.endTransaction();
+        switch (match) {
+            case MOVIE:
+                _id = insertMovie(values);
+                if (_id < 0)
+                    throw new RuntimeException("Failed insert of values: " + values);
+                returnUri = MovieContract.MovieEntry.buildMovieUri();
+                break;
+            case MOVIE_WITH_ID:
+                _id = insertMovie(values);
+                if (_id < 0)
+                    throw new RuntimeException("Failed insert of values: " + values);
+                returnUri = MovieContract.MovieEntry.buildMovieUri(values.getAsLong(MovieContract.MovieEntry.COLUMN_MOVIE_ID));
+                break;
+            case MOVIE_POPULAR:
+                _id = insertPopular(values);
+                if (_id < 0)
+                    throw new android.database.SQLException("Failed to insert row into into movies " + uri);
+                returnUri = MovieContract.PopularEntry.buildPopularUri();
+                break;
+            case MOVIE_FAVORITE:
+                _id = insertMovie(values);
+                if (_id < 0)
+                    throw new android.database.SQLException("Failed to insert row into into movies " + uri);
+                returnUri = MovieContract.FavoriteEntry.buildFavoriteUri();
+                break;
+            default:
+                throw new UnsupportedOperationException("Unknown/Unimplemented uri " + uri);
         }
         getContext().getContentResolver().notifyChange(uri, null);
         return returnUri;
+    }
+
+    @Override
+    public int bulkInsert(Uri uri, ContentValues[] values) {
+        final SQLiteDatabase db = mOpenHelper.getWritableDatabase();
+        db.beginTransaction();
+        try {
+            int retVal = super.bulkInsert(uri, values);
+            if (retVal > 0) db.setTransactionSuccessful();
+            return retVal;
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    private long insertPopular(ContentValues values) {
+        return mOpenHelper.getWritableDatabase().insert(MovieContract.PopularEntry.TABLE_NAME, null, values);
     }
 
     private long insertFavorite(ContentValues values) {
@@ -219,6 +241,9 @@ public class MovieProvider extends ContentProvider {
                 break;
             case MOVIE_FAVORITE:
                 retCursor = getFavoriteMovies();
+                break;
+            case MOVIE_POPULAR:
+                retCursor = getPopularMovies();
                 break;
             default:
                 throw new UnsupportedOperationException("Unknown/Unimplemented uri: " + uri);

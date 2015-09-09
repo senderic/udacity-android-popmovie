@@ -59,8 +59,8 @@ public class MovieContract {
         public static final String TABLE_NAME = "popular";
         public static final String COLUMN_MOVIE_ID = "movie_id";
 
-        public static Uri buildLocationUri(long id) {
-            return ContentUris.withAppendedId(CONTENT_URI, id);
+        public static Uri buildPopularUri() {
+            return CONTENT_URI;
         }
     }
 
@@ -90,10 +90,6 @@ public class MovieContract {
 
         public static final String TABLE_NAME = "rating";
         public static final String COLUMN_MOVIE_ID = "movie_id";
-
-        public static Uri buildWeatherUri(long id) {
-            return ContentUris.withAppendedId(CONTENT_URI, id);
-        }
 
         public static Uri buildMovieList() {
             return CONTENT_URI.buildUpon().appendPath(PATH_RATING).appendPath("*").build();

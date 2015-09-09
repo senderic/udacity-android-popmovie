@@ -10,8 +10,11 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.test.AndroidTestCase;
 
+import com.ericsender.android_nanodegree.popmovie.R;
 import com.ericsender.android_nanodegree.popmovie.data.MovieContract;
 import com.ericsender.android_nanodegree.popmovie.data.MovieDbHelper;
+
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -132,7 +135,6 @@ public class TestDb extends AndroidTestCase {
         }
     }
 
-
     public Map<Long, ContentValues> insertMovies() {
         // First step: Get reference to writable database
         // If there's an error in those massive SQL table creation Strings,
@@ -143,7 +145,7 @@ public class TestDb extends AndroidTestCase {
         // Second Step: Create ContentValues of what you want to insert
         // (you can use the createPopularMovieValues if you wish)
 
-        Map<Long, ContentValues> testValues = TestUtilities.createPopularMovieValues(mContext);
+        Map<Long, ContentValues> testValues = TestUtilities.createPopularMovieValues(mContext, "popular");
         List<ContentValues> lTestValues = Arrays.asList(testValues.values().toArray(new ContentValues[0]));
         Collections.sort(lTestValues, new Comparator<ContentValues>() {
             @Override
@@ -154,15 +156,7 @@ public class TestDb extends AndroidTestCase {
         Map<Long, ContentValues> insertOrderedTestValues = new HashMap<>();
         // Third Step: Insert ContentValues into database and get a row ID back
 
-        int insertCount = 0;
-        for (ContentValues cv : lTestValues) {
-            long movieRowId = db.insert(MovieContract.MovieEntry.TABLE_NAME, null, cv);
-
-            // Verify we got a row back.
-            assertFalse("Insert failed!", -1L == movieRowId);
-            insertOrderedTestValues.put(movieRowId, cv);
-            assertEquals("InsertCount match RowId", insertCount++, movieRowId);
-        }
+        insertMovieValues(db, lTestValues, insertOrderedTestValues, "popular");
 
         // Fourth Step: Query the database and receive a Cursor back
         // A cursor is your primary interface to the query results.
@@ -195,5 +189,25 @@ public class TestDb extends AndroidTestCase {
         db.close();
         return insertOrderedTestValues;
     }
-}
 
+    private void insertMovieValues(SQLiteDatabase db, List<ContentValues> lTestValues, Map<Long, ContentValues> insertOrderedTestValues, String sort) {
+        int insertCount = 0;
+        db.beginTransaction();
+        try {
+            for (ContentValues cv : lTestValues) {
+                long movieRowId = db.insert(MovieContract.MovieEntry.TABLE_NAME, null, cv);
+                ContentValues cv0 = new ContentValues();
+                cv0.put(MovieContract.MovieEntry.COLUMN_MOVIE_ID, cv.getAsLong(MovieContract.MovieEntry.COLUMN_MOVIE_ID));
+                String subTable = StringUtils.containsIgnoreCase("popular", sort) ? MovieContract.PopularEntry.TABLE_NAME : MovieContract.RatingEntry.TABLE_NAME;
+                db.insert(subTable, null, cv0);
+                // Verify we got a row back.
+                assertFalse("Insert failed!", -1L == movieRowId);
+                insertOrderedTestValues.put(movieRowId, cv);
+                assertEquals("InsertCount match RowId", insertCount++, movieRowId);
+            }
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+}

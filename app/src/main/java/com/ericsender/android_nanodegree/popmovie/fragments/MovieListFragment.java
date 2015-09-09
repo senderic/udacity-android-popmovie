@@ -21,6 +21,7 @@ import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.android.volley.NetworkResponse;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -39,6 +40,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.internal.LinkedTreeMap;
 
+import org.apache.commons.lang3.time.StopWatch;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -46,6 +48,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Serializable;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -53,6 +56,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -229,6 +233,7 @@ public class MovieListFragment extends Fragment {
         );
         // rows = cursor.getCount();}
 
+        // TODO: Could the query handle loading live data isntead of the Fragment?
         if (rows == 0)
             getLiveData(sort);
         else
@@ -255,7 +260,17 @@ public class MovieListFragment extends Fragment {
     }
 
     private void getInternalData(Cursor cursor, String sort) {
-
+        List<LinkedHashMap<String, Serializable>> lMaps = new ArrayList<>();
+        while (cursor.moveToNext()) {
+            Long movie_id = cursor.getLong(0);
+            byte[] bMovieObj = cursor.getBlob(1);
+            LinkedHashMap<String, Serializable> movieObj = (LinkedHashMap<String, Serializable>)
+                    Utils.deserialize(bMovieObj);
+            bMovieObj = null; // Force feed to the GC.
+            lMaps.add(movieObj);
+        }
+        mMovieList = handleResults(lMaps);
+        registeringData(sort);
     }
 
     private void getLiveData(final String sort) {
@@ -274,7 +289,10 @@ public class MovieListFragment extends Fragment {
         }
 
         Log.d(getClass().getSimpleName(), "updateMovieListVolley() - url = " + url);// .substring(0, url.length() - 16));
-
+        final Toast t = Toast.makeText(getActivity(), "Loading Data...", Toast.LENGTH_LONG);
+        final StopWatch sw = new StopWatch();
+        t.show();
+        sw.start();
         JsonObjectRequest jsObjRequest = new JsonObjectRequest
                 (Request.Method.GET, url, (String) null, new Response.Listener<JSONObject>() {
 
@@ -282,102 +300,110 @@ public class MovieListFragment extends Fragment {
                     public void onResponse(JSONObject response) {
                         Log.d(getClass().getSimpleName(), "Response received.");
                         LinkedTreeMap<String, Object> map = Utils.getGson().fromJson(response.toString(), LinkedTreeMap.class);
-                        mMovieList = covertMapToMovieObjList(map);
-                        Log.d(getClass().getSimpleName(), "Received a set of movies. Registering them.");
-                        mGridViewAdapter.setGridData(mMovieList);
-                        insertMovieListIntoDatabase(sort);
+                        handleMap(map, sort);
+                        t.setText("Loading Finished in: " + sw);
                     }
 
-                    private List<MovieGridObj> covertMapToMovieObjList(LinkedTreeMap<String, Object> map) {
-                        List<MovieGridObj> movies = null;
-                        Double page, total_pages, total_results;
-                        for (Map.Entry<String, Object> entry : map.entrySet())
-                            switch (entry.getKey()) {
-                                case "page":
-                                    page = (Double) entry.getValue();
-                                    break;
-                                case "results":
-                                    movies = handleResults((ArrayList) entry.getValue());
-                                    break;
-                                case "total_pages":
-                                    total_pages = (Double) entry.getValue();
-                                    break;
-                                case "total_results":
-                                    total_results = (Double) entry.getValue();
-                                    break;
-                                default:
-                                    Log.d(getClass().getSimpleName(), "Key/Val did not match predefined set: " + entry.getKey());
-                            }
-//                        for (int c = 0; c < movies.size(); c++)
-//                            Log.d(getClass().getSimpleName(), f("%d>> List for %s", c + 1, movies.get(c)));
-                        return movies;
-                    }
-
-                    private List<MovieGridObj> handleResults(Object resultsObj) {
-                        List<LinkedTreeMap<String, Object>> results = (List<LinkedTreeMap<String, Object>>) resultsObj;
-                        Set<MovieGridObj> movies = new TreeSet<>(sortAlgo);
-                        for (LinkedTreeMap<String, Object> m : results) {
-                            MovieGridObj movie = new MovieGridObj();
-                            for (Map.Entry<String, Object> e : m.entrySet())
-                                switch (e.getKey()) {
-                                    case "adult":
-                                        movie.adult = (Boolean) e.getValue();
-                                        break;
-                                    case "backdrop_path":
-                                        movie.backdrop_path = (String) e.getValue();
-                                        break;
-                                    case "genre_ids":
-                                        movie.genre_ids = (ArrayList<Double>) e.getValue();
-                                        break;
-                                    case "id":
-                                        movie.id = ((Double) e.getValue()).longValue();
-                                        break;
-                                    case "original_language":
-                                        movie.original_language = (String) e.getValue();
-                                        break;
-                                    case "original_title":
-                                        movie.original_title = (String) e.getValue();
-                                        break;
-                                    case "overview":
-                                        movie.overview = (String) e.getValue();
-                                        break;
-                                    case "release_date":
-                                        movie.release_date = (String) e.getValue();
-                                        break;
-                                    case "poster_path":
-                                        movie.poster_path = (String) e.getValue();
-                                        break;
-                                    case "popularity":
-                                        movie.popularity = (Double) e.getValue();
-                                        break;
-                                    case "title":
-                                        movie.title = (String) e.getValue();
-                                        break;
-                                    case "video":
-                                        movie.video = (Boolean) e.getValue();
-                                        break;
-                                    case "vote_average":
-                                        movie.vote_average = (Double) e.getValue();
-                                        break;
-                                    case "vote_count":
-                                        movie.vote_count = ((Double) e.getValue()).intValue();
-                                        break;
-                                }
-                            // Log.d(getClass().getSimpleName(), "Just received " + movie.title + " from API.");
-                            movies.add(movie);
-                        }
-                        return new ArrayList<>(movies);
-                    }
                 }, new Response.ErrorListener() {
 
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         Log.e(getClass().getSimpleName(), error.getMessage(), error);
-                        Toast.makeText(getActivity(), "Error connecting to server.", Toast.LENGTH_SHORT).show();
+                        t.setText(String.format("Error connecting to server (%s) in: %s", error.getMessage(), sw));
+                        //Toast.makeText(getActivity(), "Error connecting to server.", Toast.LENGTH_SHORT).show();
                     }
                 });
-
         queue.add(jsObjRequest);
+    }
+
+    private void handleMap(LinkedTreeMap<String, Object> map, String sort) {
+        mMovieList = covertMapToMovieObjList(map);
+        Log.d(getClass().getSimpleName(), "Received a set of movies. Registering them.");
+        registeringData(sort);
+    }
+
+    private void registeringData(String sort) {
+        mGridViewAdapter.setGridData(mMovieList);
+        insertMovieListIntoDatabase(sort);
+    }
+
+    private List<MovieGridObj> covertMapToMovieObjList(LinkedTreeMap<String, Object> map) {
+        List<MovieGridObj> movies = null;
+        Double page, total_pages, total_results;
+        for (Map.Entry<String, Object> entry : map.entrySet())
+            switch (entry.getKey()) {
+                case "page":
+                    page = (Double) entry.getValue();
+                    break;
+                case "results":
+                    movies = handleResults((ArrayList) entry.getValue());
+                    break;
+                case "total_pages":
+                    total_pages = (Double) entry.getValue();
+                    break;
+                case "total_results":
+                    total_results = (Double) entry.getValue();
+                    break;
+                default:
+                    Log.d(getClass().getSimpleName(), "Key/Val did not match predefined set: " + entry.getKey());
+            }
+        return movies;
+    }
+
+    private List<MovieGridObj> handleResults(Object resultsObj) {
+        List<LinkedTreeMap<String, Object>> results = (List<LinkedTreeMap<String, Object>>) resultsObj;
+        Set<MovieGridObj> movies = new TreeSet<>(sortAlgo);
+        for (LinkedTreeMap<String, Object> m : results) {
+            MovieGridObj movie = new MovieGridObj();
+            for (Map.Entry<String, Object> e : m.entrySet())
+                switch (e.getKey()) {
+                    case "adult":
+                        movie.adult = (Boolean) e.getValue();
+                        break;
+                    case "backdrop_path":
+                        movie.backdrop_path = (String) e.getValue();
+                        break;
+                    case "genre_ids":
+                        movie.genre_ids = (ArrayList<Double>) e.getValue();
+                        break;
+                    case "id":
+                        movie.id = ((Double) e.getValue()).longValue();
+                        break;
+                    case "original_language":
+                        movie.original_language = (String) e.getValue();
+                        break;
+                    case "original_title":
+                        movie.original_title = (String) e.getValue();
+                        break;
+                    case "overview":
+                        movie.overview = (String) e.getValue();
+                        break;
+                    case "release_date":
+                        movie.release_date = (String) e.getValue();
+                        break;
+                    case "poster_path":
+                        movie.poster_path = (String) e.getValue();
+                        break;
+                    case "popularity":
+                        movie.popularity = (Double) e.getValue();
+                        break;
+                    case "title":
+                        movie.title = (String) e.getValue();
+                        break;
+                    case "video":
+                        movie.video = (Boolean) e.getValue();
+                        break;
+                    case "vote_average":
+                        movie.vote_average = (Double) e.getValue();
+                        break;
+                    case "vote_count":
+                        movie.vote_count = ((Double) e.getValue()).intValue();
+                        break;
+                }
+            // Log.d(getClass().getSimpleName(), "Just received " + movie.title + " from API.");
+            movies.add(movie);
+        }
+        return new ArrayList<>(movies);
     }
 
     /*

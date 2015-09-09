@@ -29,23 +29,23 @@ public class MovieDbHelper extends SQLiteOpenHelper {
 
         SQL_CREATE_POPULAR_TABLE = "CREATE TABLE " + MovieContract.PopularEntry.TABLE_NAME + " (" +
                 MovieContract.PopularEntry._ID + " INTEGER PRIMARY KEY," +
-                MovieContract.PopularEntry.COLUMN_MOVIE_ID + " TEXT UNIQUE NOT NULL, " +
+                MovieContract.PopularEntry.COLUMN_MOVIE_ID + " INTEGER UNIQUE NOT NULL, " +
                 " FOREIGN KEY (" + MovieContract.PopularEntry.COLUMN_MOVIE_ID + ") REFERENCES " +
-                MovieContract.MovieEntry.TABLE_NAME + " (" + MovieContract.MovieEntry._ID + "), " +
+                MovieContract.PopularEntry.TABLE_NAME + " (" + MovieContract.MovieEntry.COLUMN_MOVIE_ID + "), " +
                 " UNIQUE (" + MovieContract.PopularEntry.COLUMN_MOVIE_ID + ") ON CONFLICT IGNORE);";
 
         SQL_CREATE_RATING_TABLE = "CREATE TABLE " + MovieContract.RatingEntry.TABLE_NAME + " (" +
                 MovieContract.RatingEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
-                MovieContract.RatingEntry.COLUMN_MOVIE_ID + " INTEGER NOT NULL, " +
+                MovieContract.RatingEntry.COLUMN_MOVIE_ID + " INTEGER UNIQUE NOT NULL, " +
                 " FOREIGN KEY (" + MovieContract.RatingEntry.COLUMN_MOVIE_ID + ") REFERENCES " +
-                MovieContract.RatingEntry.TABLE_NAME + " (" + MovieContract.MovieEntry._ID + "), " +
+                MovieContract.RatingEntry.TABLE_NAME + " (" + MovieContract.MovieEntry.COLUMN_MOVIE_ID + "), " +
                 " UNIQUE (" + MovieContract.RatingEntry.COLUMN_MOVIE_ID + ") ON CONFLICT IGNORE);";
 
         SQL_CREATE_FAVORITE_TABLE = "CREATE TABLE " + MovieContract.FavoriteEntry.TABLE_NAME + " (" +
                 MovieContract.FavoriteEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
-                MovieContract.FavoriteEntry.COLUMN_MOVIE_ID + " INTEGER NOT NULL, " +
-                " FOREIGN KEY (" + MovieContract.RatingEntry.COLUMN_MOVIE_ID + ") REFERENCES " +
-                MovieContract.FavoriteEntry.TABLE_NAME + " (" + MovieContract.MovieEntry._ID + "), " +
+                MovieContract.FavoriteEntry.COLUMN_MOVIE_ID + " INTEGER UNIQUE NOT NULL, " +
+                " FOREIGN KEY (" + MovieContract.FavoriteEntry.COLUMN_MOVIE_ID + ") REFERENCES " +
+                MovieContract.FavoriteEntry.TABLE_NAME + " (" + MovieContract.MovieEntry.COLUMN_MOVIE_ID + "), " +
                 " UNIQUE (" + MovieContract.FavoriteEntry.COLUMN_MOVIE_ID + ") ON CONFLICT IGNORE);";
     }
 

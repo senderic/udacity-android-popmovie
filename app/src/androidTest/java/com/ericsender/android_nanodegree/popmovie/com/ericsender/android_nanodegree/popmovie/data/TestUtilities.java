@@ -18,6 +18,8 @@ import com.ericsender.android_nanodegree.popmovie.data.MovieDbHelper;
 import com.ericsender.android_nanodegree.popmovie.utils.Utils;
 import com.google.gson.internal.LinkedTreeMap;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
@@ -100,10 +102,10 @@ public class TestUtilities extends AndroidTestCase {
     /*
         Created a Map of content values ready for database insertion.
      */
-    static Map<Long, ContentValues> createPopularMovieValues(Context c) {
+    static Map<Long, ContentValues> createPopularMovieValues(Context c, String sort) {
         // Create a new map of values, where column names are the keys
         Map<Long, ContentValues> testValues = new HashMap<>();
-        LinkedTreeMap<String, Serializable> map = getPopularDataAsMap(c);
+        LinkedTreeMap<String, Serializable> map = getDataAsMap(c, sort);
         long dbRowId = 0;
         for (Map<String, Serializable> m : (List<Map<String, Serializable>>) map.get("results")) {
             ContentValues cv = createMovieContentValue(dbRowId++, m);
@@ -113,8 +115,10 @@ public class TestUtilities extends AndroidTestCase {
         return testValues;
     }
 
-    public static LinkedTreeMap<String, Serializable> getPopularDataAsMap(Context c) {
-        InputStream in = c.getResources().openRawResource(R.raw.popular);
+    public static LinkedTreeMap<String, Serializable> getDataAsMap(Context c, String sort) {
+        InputStream in = StringUtils.containsIgnoreCase("popular", sort) ?
+                c.getResources().openRawResource(R.raw.popular) :
+                c.getResources().openRawResource(R.raw.rating);
         String json = Utils.readStreamToString(in);
         try {
             in.close();
@@ -198,6 +202,27 @@ public class TestUtilities extends AndroidTestCase {
             c.close();
         }
         return true;
+    }
+
+    public static void verifyPopularValuesInDatabase(Map<Long, ContentValues> listContentValues, Context mContext) {
+        Cursor c = mContext.getContentResolver().query(MovieContract.PopularEntry.CONTENT_URI, null, null, null, null);
+        assertTrue("Nothing returned from Popular Table", c.moveToFirst());
+        assertEquals("Size of list content values = number of rows returned", listContentValues.size(), c.getCount());
+        int count = 1;
+        while (c.moveToNext()) {
+            long _id = c.getLong(0);
+            byte[] bMovieObj = c.getBlob(1);
+            LinkedHashMap<String, Serializable> movieObj = (LinkedHashMap<String, Serializable>)
+                    Utils.deserialize(bMovieObj);
+            bMovieObj = null; // force GC.
+            long movie_id = ((Double) movieObj.get("id")).longValue();
+
+            assertNotNull("list of content values contains movie_id = " + movie_id, listContentValues.get(movie_id));
+            assertTrue("count went too high", count < listContentValues.size());
+            count++;
+        }
+        assertEquals("count exact", count, listContentValues.size());
+        c.close();
     }
 
     /*
