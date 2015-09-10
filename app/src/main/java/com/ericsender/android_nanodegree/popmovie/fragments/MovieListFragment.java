@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.preference.PreferenceManager;
@@ -19,6 +18,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.android.volley.Request;
@@ -33,28 +33,19 @@ import com.ericsender.android_nanodegree.popmovie.adapters.GridViewAdapter;
 import com.ericsender.android_nanodegree.popmovie.data.MovieContract;
 import com.ericsender.android_nanodegree.popmovie.data.MovieDbHelper;
 import com.ericsender.android_nanodegree.popmovie.parcelable.MovieGridObj;
-import com.ericsender.android_nanodegree.popmovie.utils.NaturalDeserializer;
 import com.ericsender.android_nanodegree.popmovie.utils.Utils;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.internal.LinkedTreeMap;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Serializable;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 /**
  * A placeholder fragment containing a simple view.
@@ -96,6 +87,9 @@ public class MovieListFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        getActivity().getContentResolver().delete(MovieContract.PopularEntry.buildPopularUri(), null, null);
+        getActivity().getContentResolver().delete(MovieContract.RatingEntry.buildRatingUri(), null, null);
+
         // Add this line in order for this fragment to handle menu events.
         setHasOptionsMenu(true);
     }
@@ -110,11 +104,12 @@ public class MovieListFragment extends Fragment {
             mCurrSortOrder = foo;
             Log.d(getClass().getSimpleName(), "Sorting on: " + mCurrSortOrder);
             // sortMovieList();
-            updateMovieListVolley();
+            updateMovieListVolley(false);
             setTitle();
         }
         super.onResume();
     }
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -170,76 +165,114 @@ public class MovieListFragment extends Fragment {
 
         switch (item.getItemId()) {
             case R.id.action_refresh:
-                Log.d(getClass().getSimpleName(), "Refreshing!");
-                updateMovieListVolley();
+                Log.d(LOG_TAG, "Refreshing!");
+                updateMovieListVolley(true);
                 //updateMovieList();
+                return true;
+            case R.id.action_sort:
+                Log.d(LOG_TAG, "Sort Spinner");
+                handleSortSpinner();
                 return true;
         }
         return super.onOptionsItemSelected(item);
     }
 
-    private void updateMovieList() {
-        FetchMoviesTask fmt = new FetchMoviesTask();
-        fmt.execute("");
+    private void handleSortSpinner() {
+        final Spinner spinner = (Spinner) getActivity().findViewById(R.id.sort_spinner);
+        final ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(getActivity(),
+                R.array.pref_sort_order_entries, android.R.layout.simple_spinner_item);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                Log.d(LOG_TAG, Utils.f("onItemSelected parent (%s), view (%s), position (%s), id (%s)", parent, view, position, id));
+                // parent.removeView(spinner);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
     }
 
-    private void updateMovieListVolley() {
+    private Uri determineUri(String sort) {
+        if (StringUtils.containsIgnoreCase(sort, "popular"))
+            return MovieContract.PopularEntry.buildPopularUri();
+        else if (StringUtils.containsIgnoreCase(sort, "vote"))
+            return MovieContract.RatingEntry.buildRatingUri();
+        else
+            throw new UnsupportedOperationException("Sort not identified: " + sort);
+    }
+
+    private void updateMovieListVolley(boolean hardRefresh) {
         int rows = 0;
         String sort = getApiSortPref();
-        // TODO add conditions for wanting live data (refresh/empty db)
-        // if (seekInternalDataFirst) {
-        Cursor cursor = getActivity().getContentResolver().query(
-                MovieContract.MovieEntry.CONTENT_URI,
-                null,
-                null,
-                null,
-                null
-        );
-        rows = cursor.getCount();
+        Cursor cursor = null;
+        if (hardRefresh == false) {  // Get data internally
+            Uri uri = determineUri(sort);
 
+            cursor = getActivity().getContentResolver().query(
+                    uri,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+            rows = cursor.getCount();
+            Log.d(LOG_TAG, "Queried this number of rows: " + rows);
+        }
         // TODO: Could the query handle loading live data isntead of the Fragment?
         if (rows == 0) {
             Log.d(LOG_TAG, "getting live data");
             getLiveData(sort);
-        } else {
-            Log.d(LOG_TAG, "getting database data");
+            insertMovieListIntoDatabase(sort);
+        } else if (cursor != null) {
+            Log.d(LOG_TAG, Utils.f("getting database data (rows returned = %d)", rows));
             getInternalData(cursor, sort);
-        }
+        } else
+            throw new UnsupportedOperationException(Utils.f("Cursor is null but %d rows were expected", rows));
     }
 
     private void insertMovieListIntoDatabase(final String sort) {
         MovieDbHelper dbHelper = new MovieDbHelper(getActivity());
         SQLiteDatabase db = dbHelper.getWritableDatabase();
-        Map<Long, Long> rowIds = new HashMap<>();
-        ContentValues[] inserts = new ContentValues[mMovieList.size()];
+        ContentValues[] movie_ids = new ContentValues[mMovieList.size()];
+        ContentValues[] cvs = new ContentValues[mMovieList.size()];
         int i = 0;
         try {
             for (MovieGridObj obj : mMovieList) {
                 long movie_id = obj.id;
                 byte[] blob = Utils.serialize(obj);
-                ContentValues cv = new ContentValues();
-                cv.put(MovieContract.MovieEntry.COLUMN_MOVIE_ID, movie_id);
-                cv.put(MovieContract.MovieEntry.COLUMN_JSON, blob);
-                inserts[i++] = cv;
+                ContentValues movieCv = new ContentValues();
+                ContentValues idCv = new ContentValues();
+                movieCv.put(MovieContract.MovieEntry.COLUMN_MOVIE_ID, movie_id);
+                movieCv.put(MovieContract.MovieEntry.COLUMN_JSON, blob);
+                idCv.put(MovieContract.MovieEntry.COLUMN_MOVIE_ID, movie_id);
+                cvs[i] = movieCv;
+                movie_ids[i++] = idCv;
             }
-            getActivity().getContentResolver().bulkInsert(MovieContract.MovieEntry.buildMovieUri(), inserts);
-            Log.d(LOG_TAG, String.format("Just inserted movies %s", mMovieList));
+            Uri uri = determineUri(sort);
+            getActivity().getContentResolver().bulkInsert(MovieContract.MovieEntry.buildMovieUri(), cvs);
+            getActivity().getContentResolver().delete(uri, null, null);
+            getActivity().getContentResolver().bulkInsert(uri, movie_ids);
+            Log.d(LOG_TAG, String.format("Just inserted movies %s", Arrays.toString(cvs)));
         } finally {
             db.close();
         }
     }
 
     private void getInternalData(Cursor cursor, String sort) {
-        List<LinkedHashMap<String, Serializable>> lMaps = new ArrayList<>();
+        List<MovieGridObj> lMaps = new ArrayList<>();
         while (cursor.moveToNext()) {
             Long movie_id = cursor.getLong(0);
             byte[] bMovieObj = cursor.getBlob(1);
-            LinkedHashMap<String, Serializable> movieObj = (LinkedHashMap<String, Serializable>)
-                    Utils.deserialize(bMovieObj);
+            MovieGridObj movieObj = (MovieGridObj) Utils.deserialize(bMovieObj);
             bMovieObj = null; // Force feed to the GC.
             lMaps.add(movieObj);
         }
-        mMovieList = Utils.convertJsonMapToMovieList(lMaps);
+        mMovieList.clear();
+        mMovieList = lMaps;
         registeringData(sort);
     }
 
@@ -294,63 +327,6 @@ public class MovieListFragment extends Fragment {
 
     private void registeringData(String sort) {
         mGridViewAdapter.setGridData(mMovieList);
-        insertMovieListIntoDatabase(sort);
     }
-
-    /*
-    TODO: This Async may be able to be deleted. Replaced with Volley above.
-     */
-    public class FetchMoviesTask extends AsyncTask<String, Void, String[]> {
-
-        private final String LOG_TAG = getClass().getSimpleName();
-
-        String sort = getString(R.string.tmdb_arg_popularity);
-
-        protected String[] doInBackground(String... params) {
-            InputStream inputStream = null;
-            BufferedReader reader = null;
-            LinkedTreeMap map;
-            Uri builtUri = Uri.parse(getString(R.string.tmdb_api_base_discover_url)).buildUpon()
-                    .appendQueryParameter(getString(R.string.tmdb_param_sortby), sort)
-                    .appendQueryParameter(getString(R.string.tmdb_param_api), getString(R.string.private_tmdb_api))
-                    .build();
-
-
-            try {
-                URL url = new URL(builtUri.toString());
-                HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-                urlConnection.setRequestMethod("GET");
-                urlConnection.connect();
-                inputStream = urlConnection.getInputStream();
-            } catch (IOException e) {
-                Log.e(LOG_TAG, e.getMessage(), e);
-            }
-
-            StringBuffer buffer = new StringBuffer();
-            if (inputStream == null) {
-                Log.e(LOG_TAG, "inputstream null!");
-                return null;
-            }
-
-            try {
-                reader = new BufferedReader(new InputStreamReader(inputStream));
-
-                GsonBuilder gsonBuilder = new GsonBuilder();
-                gsonBuilder.registerTypeAdapter(Object.class, new NaturalDeserializer());
-                Gson gson = gsonBuilder.create();
-                map = gson.fromJson(reader, LinkedTreeMap.class);
-            } finally {
-                Utils.closeQuietly(inputStream, reader);
-            }
-
-            if (map == null) {
-                // Stream was empty.  No point in parsing.
-                return null;
-            }
-            Log.d(LOG_TAG, new GsonBuilder().setPrettyPrinting().create().toJson(map));
-            return new String[0];
-        }
-    }
-
 }
 

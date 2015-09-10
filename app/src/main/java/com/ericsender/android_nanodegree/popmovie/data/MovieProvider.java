@@ -5,9 +5,14 @@ import android.content.ContentProvider;
 import android.content.ContentValues;
 import android.content.UriMatcher;
 import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
+import android.util.Log;
+
+import com.ericsender.android_nanodegree.popmovie.utils.Utils;
 
 import java.security.InvalidParameterException;
 
@@ -15,6 +20,7 @@ public class MovieProvider extends ContentProvider {
 
     // The URI Matcher used by this content provider.
     private static final UriMatcher sUriMatcher = buildUriMatcher();
+    private static final String LOG_TAG = "MovieProvider";
     private MovieDbHelper mOpenHelper;
 
     public static final int MOVIE = 100;
@@ -187,31 +193,31 @@ public class MovieProvider extends ContentProvider {
         switch (match) {
             case MOVIE:
                 _id = insertMovie(values);
-                if (_id < 0)
+                if (_id == -1)
                     throw new RuntimeException("Failed insert of values: " + values);
                 returnUri = MovieContract.MovieEntry.buildMovieUri();
                 break;
             case MOVIE_WITH_ID:
                 _id = insertMovie(values);
-                if (_id < 0)
+                if (_id == -1)
                     throw new RuntimeException("Failed insert of values: " + values);
                 returnUri = MovieContract.MovieEntry.buildMovieUri(values.getAsLong(MovieContract.MovieEntry.COLUMN_MOVIE_ID));
                 break;
             case MOVIE_RATING:
                 _id = insertRated(values);
-                if (_id < 0)
+                if (_id == -1)
                     throw new android.database.SQLException("Failed to insert row into into movies " + uri);
                 returnUri = MovieContract.RatingEntry.buildRatingUri();
                 break;
             case MOVIE_POPULAR:
                 _id = insertPopular(values);
-                if (_id < 0)
+                if (_id == -1)
                     throw new android.database.SQLException("Failed to insert row into into movies " + uri);
                 returnUri = MovieContract.PopularEntry.buildPopularUri();
                 break;
             case MOVIE_FAVORITE:
                 _id = insertMovie(values);
-                if (_id < 0)
+                if (_id == -1)
                     throw new android.database.SQLException("Failed to insert row into into movies " + uri);
                 returnUri = MovieContract.FavoriteEntry.buildFavoriteUri();
                 break;
@@ -221,7 +227,6 @@ public class MovieProvider extends ContentProvider {
         getContext().getContentResolver().notifyChange(uri, null);
         return returnUri;
     }
-
 
 
     @Override
@@ -236,19 +241,50 @@ public class MovieProvider extends ContentProvider {
             db.endTransaction();
         }
     }
+
     private long insertRated(ContentValues values) {
-        return mOpenHelper.getWritableDatabase().insert(MovieContract.RatingEntry.TABLE_NAME, null, values);
+        try {
+            return mOpenHelper.getWritableDatabase().insertOrThrow(MovieContract.RatingEntry.TABLE_NAME, null, values);
+        } catch (android.database.sqlite.SQLiteConstraintException e) {
+            return -2L;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return -1L;
+        }
     }
+
     private long insertPopular(ContentValues values) {
-        return mOpenHelper.getWritableDatabase().insert(MovieContract.PopularEntry.TABLE_NAME, null, values);
+        try {
+            return mOpenHelper.getWritableDatabase().insertOrThrow(MovieContract.PopularEntry.TABLE_NAME, null, values);
+        } catch (android.database.sqlite.SQLiteConstraintException e) {
+            Log.e(LOG_TAG, Utils.f("Did not insert %d because of constraint (already exists)", values.getAsLong(MovieContract.PopularEntry.COLUMN_MOVIE_ID)));
+            return -2L;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return -1L;
+        }
     }
 
     private long insertFavorite(ContentValues values) {
-        return mOpenHelper.getWritableDatabase().insert(MovieContract.FavoriteEntry.TABLE_NAME, null, values);
+        try {
+            return mOpenHelper.getWritableDatabase().insertOrThrow(MovieContract.FavoriteEntry.TABLE_NAME, null, values);
+        } catch (android.database.sqlite.SQLiteConstraintException e) {
+            return -2L;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return -1L;
+        }
     }
 
     private long insertMovie(ContentValues values) {
-        return mOpenHelper.getWritableDatabase().insert(MovieContract.MovieEntry.TABLE_NAME, null, values);
+        try {
+            return mOpenHelper.getWritableDatabase().insertOrThrow(MovieContract.MovieEntry.TABLE_NAME, null, values);
+        } catch (SQLiteConstraintException e) {
+            return -2L;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return -1L;
+        }
     }
 
     @Override

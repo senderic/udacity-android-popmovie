@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Project1</string>
+    <string name="app_name">Pop Movies</string>
 
     <string name="settings_pref_title">Settings</string>
     <string name="title_activity_main">Pop Movies</string>

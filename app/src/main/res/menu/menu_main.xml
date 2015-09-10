@@ -10,5 +10,10 @@
     <item
         android:id="@+id/action_refresh"
         android:title="@string/action_refresh"
-        app:showAsAction="never" />
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/action_sort"
+        android:title="@string/spinner_title_sort"
+        app:showAsAction="ifRoom" />
+
 </menu>

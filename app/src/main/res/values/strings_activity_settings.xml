@@ -2,6 +2,7 @@
     <string name="title_activity_settings">Settings</string>
 
     <string name="pref_title_sort_order">Sort Order</string>
+    <string name="spinner_title_sort">Sort</string>
     <string-array name="pref_sort_order_entries">
         <item>@string/most_popular_title</item>
         <item>@string/highest_rated_title</item>
