@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.preference.ListPreference;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -36,6 +37,7 @@ import com.ericsender.android_nanodegree.popmovie.parcelable.MovieGridObj;
 import com.ericsender.android_nanodegree.popmovie.utils.Utils;
 import com.google.gson.internal.LinkedTreeMap;
 
+import org.apache.commons.lang3.SerializationUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.json.JSONObject;
@@ -71,8 +73,10 @@ public class MovieListFragment extends Fragment {
 
         if (sort.equals(getString(R.string.most_popular_val)))
             return getString(R.string.tmdb_arg_popularity);
-        else //if (sort.equals(getString(R.string.highest_rated_val))) {
+        else if (sort.equals(getString(R.string.highest_rated_val)))
             return getString(R.string.tmdb_arg_highestrating);
+        else //if (sort.equals(getString(R.string.favorite_val)))
+            return getString(R.string.tmdb_arg_favorite);
         // else throw new RuntimeException("Sort order value is not known: " + sort);
     }
 
@@ -201,6 +205,8 @@ public class MovieListFragment extends Fragment {
             return MovieContract.PopularEntry.buildPopularUri();
         else if (StringUtils.containsIgnoreCase(sort, "vote"))
             return MovieContract.RatingEntry.buildRatingUri();
+        else if (StringUtils.containsIgnoreCase(sort, "fav"))
+            return MovieContract.FavoriteEntry.buildFavoriteUri();
         else
             throw new UnsupportedOperationException("Sort not identified: " + sort);
     }
@@ -209,29 +215,33 @@ public class MovieListFragment extends Fragment {
         int rows = 0;
         String sort = getApiSortPref();
         Cursor cursor = null;
-        if (hardRefresh == false) {  // Get data internally
-            Uri uri = determineUri(sort);
+        try {
+            if (hardRefresh == false) {  // Get data internally
+                Uri uri = determineUri(sort);
 
-            cursor = getActivity().getContentResolver().query(
-                    uri,
-                    null,
-                    null,
-                    null,
-                    null
-            );
-            rows = cursor.getCount();
-            Log.d(LOG_TAG, "Queried this number of rows: " + rows);
+                cursor = getActivity().getContentResolver().query(
+                        uri,
+                        null,
+                        null,
+                        null,
+                        null
+                );
+                rows = cursor.getCount();
+                Log.d(LOG_TAG, "Queried this number of rows: " + rows);
+            }
+            // TODO: Could the query handle loading live data isntead of the Fragment?
+            if (rows == 0) {
+                Log.d(LOG_TAG, "getting live data");
+                getLiveData(sort);
+                insertMovieListIntoDatabase(sort);
+            } else if (cursor != null) {
+                Log.d(LOG_TAG, Utils.f("getting database data (rows returned = %d)", rows));
+                getInternalData(cursor, sort);
+            } else
+                throw new UnsupportedOperationException(Utils.f("Cursor is null but %d rows were expected", rows));
+        } finally {
+            Utils.closeQuietly(cursor);
         }
-        // TODO: Could the query handle loading live data isntead of the Fragment?
-        if (rows == 0) {
-            Log.d(LOG_TAG, "getting live data");
-            getLiveData(sort);
-            insertMovieListIntoDatabase(sort);
-        } else if (cursor != null) {
-            Log.d(LOG_TAG, Utils.f("getting database data (rows returned = %d)", rows));
-            getInternalData(cursor, sort);
-        } else
-            throw new UnsupportedOperationException(Utils.f("Cursor is null but %d rows were expected", rows));
     }
 
     private void insertMovieListIntoDatabase(final String sort) {
@@ -243,7 +253,7 @@ public class MovieListFragment extends Fragment {
         try {
             for (MovieGridObj obj : mMovieList) {
                 long movie_id = obj.id;
-                byte[] blob = Utils.serialize(obj);
+                byte[] blob = SerializationUtils.serialize(obj);
                 ContentValues movieCv = new ContentValues();
                 ContentValues idCv = new ContentValues();
                 movieCv.put(MovieContract.MovieEntry.COLUMN_MOVIE_ID, movie_id);
@@ -267,8 +277,7 @@ public class MovieListFragment extends Fragment {
         while (cursor.moveToNext()) {
             Long movie_id = cursor.getLong(0);
             byte[] bMovieObj = cursor.getBlob(1);
-            MovieGridObj movieObj = (MovieGridObj) Utils.deserialize(bMovieObj);
-            bMovieObj = null; // Force feed to the GC.
+            MovieGridObj movieObj = (MovieGridObj) SerializationUtils.deserialize(bMovieObj);
             lMaps.add(movieObj);
         }
         mMovieList.clear();

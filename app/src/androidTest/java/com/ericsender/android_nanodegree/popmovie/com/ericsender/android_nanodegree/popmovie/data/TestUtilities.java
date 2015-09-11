@@ -19,6 +19,7 @@ import com.ericsender.android_nanodegree.popmovie.parcelable.MovieGridObj;
 import com.ericsender.android_nanodegree.popmovie.utils.Utils;
 import com.google.gson.internal.LinkedTreeMap;
 
+import org.apache.commons.lang3.SerializationUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
@@ -42,12 +43,12 @@ public class TestUtilities extends AndroidTestCase {
             long _id = valueCursor.getLong(0);
             Long movie_id = valueCursor.getLong(1);
             byte[] bMovieObj = valueCursor.getBlob(2);
-            MovieGridObj movieObj = (MovieGridObj) Utils.deserialize(bMovieObj);
+            MovieGridObj movieObj = (MovieGridObj) SerializationUtils.deserialize(bMovieObj);
 
             ContentValues cv = expectedValues.get(_id);
             Long expectedId = (Long) cv.get(MovieContract.MovieEntry.COLUMN_MOVIE_ID);
             byte[] expectedBMovieObject = (byte[]) cv.get(MovieContract.MovieEntry.COLUMN_JSON);
-            MovieGridObj expectedMovieObj = (MovieGridObj) Utils.deserialize(expectedBMovieObject);
+            MovieGridObj expectedMovieObj = (MovieGridObj) SerializationUtils.deserialize(expectedBMovieObject);
 
             assertEquals("movied id's don't match", expectedId, movie_id);
             // assumes I didn't screw up the equals()/hashCode() functions!
@@ -133,7 +134,7 @@ public class TestUtilities extends AndroidTestCase {
     public static ContentValues createMovieContentValue(long dbRowId, MovieGridObj m) {
         ContentValues cv = new ContentValues();
         cv.put(MovieContract.MovieEntry.COLUMN_MOVIE_ID, m.id.longValue());
-        cv.put(MovieContract.MovieEntry.COLUMN_JSON, Utils.serialize(m));
+        cv.put(MovieContract.MovieEntry.COLUMN_JSON, SerializationUtils.serialize(m));
         return cv;
     }
 
@@ -211,7 +212,7 @@ public class TestUtilities extends AndroidTestCase {
         while (c.moveToNext()) {
             long _id = c.getLong(0);
             byte[] bMovieObj = c.getBlob(1);
-            MovieGridObj movieObj = (MovieGridObj) Utils.deserialize(bMovieObj);
+            MovieGridObj movieObj = (MovieGridObj) SerializationUtils.deserialize(bMovieObj);
             bMovieObj = null; // force GC.
             long movie_id = movieObj.id;
 
@@ -231,7 +232,7 @@ public class TestUtilities extends AndroidTestCase {
         while (c.moveToNext()) {
             long _id = c.getLong(0);
             byte[] bMovieObj = c.getBlob(1);
-            MovieGridObj movieObj = (MovieGridObj) Utils.deserialize(bMovieObj);
+            MovieGridObj movieObj = (MovieGridObj) SerializationUtils.deserialize(bMovieObj);
             bMovieObj = null; // force GC.
             long movie_id = movieObj.id;
 
@@ -251,7 +252,7 @@ public class TestUtilities extends AndroidTestCase {
         while (c.moveToNext()) {
             long _id = c.getLong(0);
             byte[] bMovieObj = c.getBlob(1);
-            MovieGridObj movieObj = (MovieGridObj) Utils.deserialize(bMovieObj);
+            MovieGridObj movieObj = (MovieGridObj) SerializationUtils.deserialize(bMovieObj);
             bMovieObj = null; // force GC.
             long movie_id = movieObj.id;
 

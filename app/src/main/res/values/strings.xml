@@ -13,8 +13,9 @@
     <string name="tmdb_param_api">api_key</string>
     <string name="tmdb_arg_popularity">popularity.desc</string>
     <string name="tmdb_arg_highestrating">vote_average.desc</string>
-
+    <string name="tmdb_arg_favorite">_internal_favs</string>
 
     <string name="const_trailer">Trailers</string>
     <string name="movie_details_frag_title">Movie Details</string>
+
 </resources>
