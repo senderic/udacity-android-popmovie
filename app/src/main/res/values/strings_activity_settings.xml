@@ -6,16 +6,20 @@
     <string-array name="pref_sort_order_entries">
         <item>@string/most_popular_title</item>
         <item>@string/highest_rated_title</item>
+        <item>@string/favorite_title</item>
     </string-array>
     <string-array name="pref_sort_order_values">
         <item>@string/most_popular_val</item>
         <item>@string/highest_rated_val</item>
+        <item>@string/favorite_val</item>
     </string-array>
 
     <string name="most_popular_title">Most Popular</string>
     <string name="highest_rated_title">Highest Rated</string>
+    <string name="favorite_title">Favorite</string>
     <string name="most_popular_val">most_popular</string>
     <string name="highest_rated_val">highest_rated</string>
+    <string name="favorite_val">favorite</string>
 
     <string name="pref_sort_order_key">sort_order_list</string>
     <string name="action_refresh">Refresh</string>

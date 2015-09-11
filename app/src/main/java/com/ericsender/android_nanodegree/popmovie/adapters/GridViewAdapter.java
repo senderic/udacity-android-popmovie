@@ -90,7 +90,7 @@ public class GridViewAdapter extends ArrayAdapter<MovieGridObj> {
         // Picasso.with(getContext()).setLoggingEnabled(true);
         // Log.d(getClass().getSimpleName(), String.format("%d>> Loading image: %s - %s", count.incrementAndGet(), title, load));
 
-        Picasso.with(mContext)
+        Picasso.with(mContext.getApplicationContext())
                 .load(load)
                 .placeholder(R.drawable.abc_btn_rating_star_on_mtrl_alpha)
                 .error(R.drawable.abc_btn_rating_star_off_mtrl_alpha)

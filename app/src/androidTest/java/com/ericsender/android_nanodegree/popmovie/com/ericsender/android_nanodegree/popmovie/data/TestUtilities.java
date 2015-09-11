@@ -243,6 +243,26 @@ public class TestUtilities extends AndroidTestCase {
         c.close();
     }
 
+    public static void verifyFavoriteValuesInDatabase(Map<Long, ContentValues> listContentValues, Context mContext) {
+        Cursor c = mContext.getContentResolver().query(MovieContract.FavoriteEntry.CONTENT_URI, null, null, null, null);
+        assertTrue("Nothing returned from Favorite Table", c.moveToFirst());
+        assertEquals("Size of list content values = number of rows returned", listContentValues.size(), c.getCount());
+        int count = 1;
+        while (c.moveToNext()) {
+            long _id = c.getLong(0);
+            byte[] bMovieObj = c.getBlob(1);
+            MovieGridObj movieObj = (MovieGridObj) Utils.deserialize(bMovieObj);
+            bMovieObj = null; // force GC.
+            long movie_id = movieObj.id;
+
+            assertNotNull("list of content values contains movie_id = " + movie_id, listContentValues.get(movie_id));
+            assertTrue("count went too high", count < listContentValues.size());
+            count++;
+        }
+        assertEquals("count exact", count, listContentValues.size());
+        c.close();
+    }
+
     /*
         Students: The functions we provide inside of TestProvider use this utility class to test
         the ContentObserver callbacks using the PollingCheck class that we grabbed from the Android

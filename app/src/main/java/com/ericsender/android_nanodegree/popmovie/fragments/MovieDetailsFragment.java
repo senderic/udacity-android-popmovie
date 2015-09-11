@@ -1,5 +1,7 @@
 package com.ericsender.android_nanodegree.popmovie.fragments;
 
+import android.content.ContentValues;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -7,6 +9,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -19,6 +22,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.ericsender.android_nanodegree.popmovie.R;
+import com.ericsender.android_nanodegree.popmovie.data.MovieContract;
 import com.ericsender.android_nanodegree.popmovie.parcelable.MovieGridObj;
 import com.ericsender.android_nanodegree.popmovie.utils.Utils;
 import com.google.gson.internal.LinkedTreeMap;
@@ -40,6 +44,8 @@ public class MovieDetailsFragment extends Fragment {
     private MovieGridObj mMovieObj;
     private ProgressBar mDurationProgress;
     private View mRootView;
+    private boolean isLoadFinished;
+    private Button mFavButton;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -51,13 +57,13 @@ public class MovieDetailsFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-
+        isLoadFinished = false;
         mRootView = inflater.inflate(R.layout.fragment_movie_details, container, false);
 
         boolean success = handleFirst();
         if (success) {
             handleOffThread();
-            handleLast();
+            isLoadFinished = handleLast();
         } else throw new RuntimeException("handleFirst() returned false.");
 
         return mRootView;
@@ -114,15 +120,23 @@ public class MovieDetailsFragment extends Fragment {
         mDurationTextView = (TextView) mRootView.findViewById(R.id.movie_duration);
         mDurationProgress = (ProgressBar) mRootView.findViewById(R.id.movie_duration_progressBar);
         if (Utils.isTablet(getActivity())) imageView.setAdjustViewBounds(true);
-        Picasso.with(getActivity()).load(getString(R.string.tmdb_image_base_url) + getString(R.string.tmdb_image_size) + mMovieObj.poster_path)
+        Picasso.with(getActivity().getApplicationContext()).load(getString(R.string.tmdb_image_base_url) + getString(R.string.tmdb_image_size) + mMovieObj.poster_path)
                 .placeholder(R.drawable.blank)
                 .error(R.drawable.blank)
                 .resize(366, 516)
                 .into(imageView);
+
+        mFavButton = (Button) mRootView.findViewById(R.id.button_mark_fav);
+        mFavButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                handleFavoriteClick(v);
+            }
+        });
         return true;
     }
 
-    private void handleLast() {
+    private boolean handleLast() {
         titleTextView = (TextView) mRootView.findViewById(R.id.movie_title);
 
         yearTextView = (TextView) mRootView.findViewById(R.id.movie_year);
@@ -140,7 +154,32 @@ public class MovieDetailsFragment extends Fragment {
                 :
                 String.format("%.1f", va);
         ratingTextView.setText(roundRating + "/10");
+        return true;
     }
 
+    public void handleFavoriteClick(View view) {
+        if (isLoadFinished) {
+            // check if its already pressed
+            Cursor c = getActivity().getContentResolver().query(MovieContract.FavoriteEntry.buildFavoriteUri(mMovieObj.id),
+                    null, null, null, null);
+            if (!c.moveToFirst()) {
+                // add to favorites
+                ContentValues cv = new ContentValues();
+                cv.put(MovieContract.FavoriteEntry.COLUMN_MOVIE_ID, mMovieObj.id);
+                Uri u = getActivity().getContentResolver().insert(MovieContract.FavoriteEntry.buildFavoriteUri(), cv);
+                Toast.makeText(getActivity(), Utils.f("Added %s to Favorites", mMovieObj.title),
+                        Toast.LENGTH_SHORT).show();
+            } else {
+                // remove from favorites?
+                getActivity().getContentResolver().delete(MovieContract.FavoriteEntry.buildFavoriteUri(),
+                        MovieContract.FavoriteEntry.COLUMN_MOVIE_ID + "=?",
+                        new String[]{mMovieObj.id.toString()});
+                Toast.makeText(getActivity(), Utils.f("Removed %s from Favorites", mMovieObj.title),
+                        Toast.LENGTH_SHORT).show();
+            }
 
+            c.close();
+        } else
+            Toast.makeText(getActivity(), "Please Wait... still loading", Toast.LENGTH_SHORT).show();
+    }
 }

@@ -72,12 +72,18 @@ public class MovieContract {
 
         public static final String CONTENT_TYPE =
                 ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY  + "/" + PATH_FAVORITE;
+        public static final String CONTENT_ITEM_TYPE =
+                ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_FAVORITE;
 
         public static final String TABLE_NAME = PATH_FAVORITE;
         public static final String COLUMN_MOVIE_ID = MovieEntry.COLUMN_MOVIE_ID;
 
         public static Uri buildFavoriteUri() {
             return CONTENT_URI; // This will return all the favorites.
+        }
+
+        public static Uri buildFavoriteUri(Long movie_id) {
+            return CONTENT_URI.buildUpon().appendPath(movie_id.toString()).build();
         }
     }
 

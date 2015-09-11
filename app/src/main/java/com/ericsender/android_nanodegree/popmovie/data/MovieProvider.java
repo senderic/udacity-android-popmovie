@@ -14,6 +14,8 @@ import android.util.Log;
 
 import com.ericsender.android_nanodegree.popmovie.utils.Utils;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.security.InvalidParameterException;
 
 public class MovieProvider extends ContentProvider {
@@ -26,6 +28,7 @@ public class MovieProvider extends ContentProvider {
     public static final int MOVIE = 100;
     public static final int MOVIE_WITH_ID = 101;
     public static final int MOVIE_FAVORITE = 200;
+    public static final int MOVIE_FAVORITE_WITH_ID = 201;
     public static final int MOVIE_RATING = 300;
     public static final int MOVIE_POPULAR = 400;
 
@@ -35,16 +38,21 @@ public class MovieProvider extends ContentProvider {
     private static final SQLiteQueryBuilder sHighRatedMovies;
     private static final SQLiteQueryBuilder sPopularMovies;
 
+    private static final SQLiteQueryBuilder sFavoriteMovie;
+
     static {
         // TODO: do I need to implement this?
         sMoviesAll = new SQLiteQueryBuilder();
         sMovieById = new SQLiteQueryBuilder();
         sFavoriteMovies = new SQLiteQueryBuilder();
+        sFavoriteMovie = new SQLiteQueryBuilder();
         // TODO: implement below two once I know sFavoriteMovies is working
         sHighRatedMovies = new SQLiteQueryBuilder();
         sPopularMovies = new SQLiteQueryBuilder();
 
         sMoviesAll.setTables(MovieContract.MovieEntry.TABLE_NAME);
+
+        sFavoriteMovie.setTables(MovieContract.FavoriteEntry.TABLE_NAME);
 
         sFavoriteMovies.setTables(MovieContract.MovieEntry.TABLE_NAME
                 + " INNER JOIN " +
@@ -90,6 +98,14 @@ public class MovieProvider extends ContentProvider {
                 + MovieContract.RatingEntry.TABLE_NAME + "." + MovieContract.RatingEntry._ID + " desc)", null);
     }
 
+    private Cursor getFavoriteMovieId(String movie_id) {
+        return sFavoriteMovie.query(mOpenHelper.getReadableDatabase(),
+                new String[] {MovieContract.FavoriteEntry._ID},
+                MovieContract.FavoriteEntry.COLUMN_MOVIE_ID + "=?",
+                new String[] {movie_id},
+                null, null, null);
+    }
+
     private Cursor getFavoriteMovies() { // Uri uri, String[] projection, String[] selectionArgs) {
         return mOpenHelper.getReadableDatabase().rawQuery("SELECT "
                 + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_ID + ", "
@@ -124,6 +140,8 @@ public class MovieProvider extends ContentProvider {
         matcher.addURI(authority, MovieContract.PATH_MOVIE + "/#", MOVIE_WITH_ID);
         // Get all movies marked favorite (should not be limited)
         matcher.addURI(authority, MovieContract.PATH_FAVORITE, MOVIE_FAVORITE);
+        // Get a favorite movie
+        matcher.addURI(authority, MovieContract.PATH_FAVORITE + "/#", MOVIE_FAVORITE_WITH_ID);
         // Get all movies marked as highest rated (should be limited to 20)
         matcher.addURI(authority, MovieContract.PATH_RATING, MOVIE_RATING);
         // Get all movies marked as most popular (should be limited to 20)
@@ -216,7 +234,7 @@ public class MovieProvider extends ContentProvider {
                 returnUri = MovieContract.PopularEntry.buildPopularUri();
                 break;
             case MOVIE_FAVORITE:
-                _id = insertMovie(values);
+                _id = insertFavorite(values);
                 if (_id == -1)
                     throw new android.database.SQLException("Failed to insert row into into movies " + uri);
                 returnUri = MovieContract.FavoriteEntry.buildFavoriteUri();
@@ -306,6 +324,9 @@ public class MovieProvider extends ContentProvider {
                 break;
             case MOVIE_FAVORITE:
                 retCursor = getFavoriteMovies();
+                break;
+            case MOVIE_FAVORITE_WITH_ID:
+                retCursor = getFavoriteMovieId(uri.getLastPathSegment());
                 break;
             case MOVIE_POPULAR:
                 retCursor = getPopularMovies();

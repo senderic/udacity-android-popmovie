@@ -269,6 +269,24 @@ public class TestProvider extends AndroidTestCase {
         TestUtilities.verifyRatingValuesInDatabase(listContentValues, mContext);
     }
 
+    public void testAddingFavoriteMoviesToTable() {
+        mContext.getContentResolver().delete(MovieContract.FavoriteEntry.CONTENT_URI, null, null);
+        Map<Long, ContentValues> listContentValues = TestUtilities.createSortedMovieValues(getContext(), "rating");
+
+        ContentValues[] arr = (ContentValues[]) listContentValues.values().toArray(new ContentValues[0]);
+
+        mContext.getContentResolver().bulkInsert(MovieContract.MovieEntry.CONTENT_URI, arr);
+
+        ContentValues[] movie_ids = new ContentValues[arr.length];
+        for (int i = 0; i < arr.length; i++)
+            (movie_ids[i] = new ContentValues()).put(MovieContract.RatingEntry.COLUMN_MOVIE_ID,
+                    arr[i].getAsLong(MovieContract.MovieEntry.COLUMN_MOVIE_ID));
+
+        mContext.getContentResolver().bulkInsert(MovieContract.FavoriteEntry.CONTENT_URI, movie_ids);
+
+        TestUtilities.verifyFavoriteValuesInDatabase(listContentValues, mContext);
+    }
+
 //    /*
 //        This test uses the provider to insert and then update the data. Uncomment this test to
 //        see if your update location is functioning correctly.
