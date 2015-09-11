@@ -1,9 +1,12 @@
 package com.ericsender.android_nanodegree.popmovie.utils;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.util.Log;
 
+import com.ericsender.android_nanodegree.popmovie.activities.MainActivity;
+import com.ericsender.android_nanodegree.popmovie.data.MovieContract;
 import com.ericsender.android_nanodegree.popmovie.fragments.MovieListFragment;
 import com.ericsender.android_nanodegree.popmovie.parcelable.MovieGridObj;
 import com.google.gson.Gson;
@@ -149,5 +152,13 @@ public class Utils {
                     Log.d(LOG_TAG, "Key/Val did not match predefined set: " + entry.getKey());
             }
         return movies;
+    }
+
+    public static void eraseDatabase(Activity activity) {
+        activity.getContentResolver().delete(MovieContract.MovieEntry.buildMovieUri(), null, null);
+        activity.getContentResolver().delete(MovieContract.FavoriteEntry.buildFavoriteUri(), null, null);
+        activity.getContentResolver().delete(MovieContract.RatingEntry.buildRatingUri(), null, null);
+        activity.getContentResolver().delete(MovieContract.PopularEntry.buildPopularUri(), null, null);
+        Log.d(LOG_TAG, "Erased databased!");
     }
 }

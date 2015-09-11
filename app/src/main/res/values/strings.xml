@@ -17,5 +17,6 @@
 
     <string name="const_trailer">Trailers</string>
     <string name="movie_details_frag_title">Movie Details</string>
+    <string name="action_delete_db">Erase Database (Debug Only)</string>
 
 </resources>

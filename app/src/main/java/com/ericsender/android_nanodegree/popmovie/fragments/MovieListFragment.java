@@ -28,6 +28,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+import com.ericsender.android_nanodegree.popmovie.Application.PopMoviesApplication;
 import com.ericsender.android_nanodegree.popmovie.R;
 import com.ericsender.android_nanodegree.popmovie.activities.DetailsActivity;
 import com.ericsender.android_nanodegree.popmovie.adapters.GridViewAdapter;
@@ -48,6 +49,9 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.ericsender.android_nanodegree.popmovie.Application.STATE.REFRESH_GRID;
 
 /**
  * A placeholder fragment containing a simple view.
@@ -104,12 +108,16 @@ public class MovieListFragment extends Fragment {
         String foo = getCurrentSortPref();
         Log.d(getClass().getSimpleName(), "onResume with Sort =  " + foo);
         // If a change to the sort order is seen, resort the gridview and redistplay
-        if (!foo.equals(mCurrSortOrder)) { // This will also be true on inital loading.
+        PopMoviesApplication Me = ((PopMoviesApplication) getActivity().getApplication());
+        AtomicBoolean refreshGrid = (AtomicBoolean) Me.getStateManager().getState(REFRESH_GRID);
+        Log.d(LOG_TAG, "Forced RefreshGrid status is: " + refreshGrid);
+        if (refreshGrid.get() == true || !foo.equals(mCurrSortOrder)) { // This will also be true on inital loading.
             mCurrSortOrder = foo;
             Log.d(getClass().getSimpleName(), "Sorting on: " + mCurrSortOrder);
             // sortMovieList();
             updateMovieListVolley(false);
             setTitle();
+            refreshGrid.set(false);
         }
         super.onResume();
     }
@@ -214,7 +222,8 @@ public class MovieListFragment extends Fragment {
 
     private void updateMovieListVolley(boolean hardRefresh) {
         int rows = 0;
-        String sort = getApiSortPref();
+        final String sort = getApiSortPref();
+        boolean isFav = getString(R.string.tmdb_arg_favorite).equals(sort);
         Cursor cursor = null;
         try {
             if (hardRefresh == false) {  // Get data internally
@@ -229,10 +238,16 @@ public class MovieListFragment extends Fragment {
                 );
                 rows = cursor.getCount();
                 Log.d(LOG_TAG, "Queried this number of rows: " + rows);
+                if (isFav && rows == 0) {
+                    Toast.makeText(getActivity(), "No Favorites in Database. Please select a different sort!", Toast.LENGTH_SHORT).show();
+                    mMovieList.clear();
+                    registeringData(sort);
+                    return;
+                }
             }
             // TODO: Could the query handle loading live data isntead of the Fragment?
             if (rows == 0) {
-                if (getString(R.string.tmdb_arg_favorite).equals(sort))
+                if (isFav)
                     Toast.makeText(getActivity(), "Cannot Refresh When Sorting Preference is Favorites. Please choose '"
                             + getString(R.string.most_popular_title) + "' or '"
                             + getString(R.string.highest_rated_title)

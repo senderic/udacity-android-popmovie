@@ -2,11 +2,13 @@ package com.ericsender.android_nanodegree.popmovie.adapters;
 
 import android.app.Activity;
 import android.content.Context;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.ericsender.android_nanodegree.popmovie.R;
 import com.ericsender.android_nanodegree.popmovie.parcelable.MovieGridObj;
@@ -84,6 +86,11 @@ public class GridViewAdapter extends ArrayAdapter<MovieGridObj> {
             holder = (ViewHolder) row.getTag();
         }
 
+        // TODO may need to handle null pointer exceptions here (or in fragment) if the server returns nothing.
+        if (movie == null || movie.poster_path == null) {
+            Log.e(LOG_TAG, "null movie value. either returned nothing from server or db is empty");
+            return row;
+        }
         String load = holder.isSet ? baseUrl + movie.poster_path : "null";
         String title = holder.isSet ? movie.title : "null";
 

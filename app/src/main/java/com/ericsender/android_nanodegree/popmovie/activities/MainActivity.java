@@ -37,6 +37,9 @@ public class MainActivity extends ActionBarActivity {
             case R.id.action_settings:
                 startActivity(new Intent(this, SettingsActivity.class));
                 return true;
+            case R.id.action_delete_db:
+                Utils.eraseDatabase(this);
+                return true;
         }
         return super.onOptionsItemSelected(item);
     }

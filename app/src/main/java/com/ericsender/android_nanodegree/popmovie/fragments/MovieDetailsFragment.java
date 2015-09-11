@@ -21,6 +21,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+import com.ericsender.android_nanodegree.popmovie.Application.PopMoviesApplication;
 import com.ericsender.android_nanodegree.popmovie.R;
 import com.ericsender.android_nanodegree.popmovie.data.MovieContract;
 import com.ericsender.android_nanodegree.popmovie.parcelable.MovieGridObj;
@@ -32,6 +33,9 @@ import org.json.JSONObject;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.ericsender.android_nanodegree.popmovie.Application.STATE.REFRESH_GRID;
 
 public class MovieDetailsFragment extends Fragment {
     private TextView titleTextView;
@@ -181,5 +185,9 @@ public class MovieDetailsFragment extends Fragment {
             c.close();
         } else
             Toast.makeText(getActivity(), "Please Wait... still loading", Toast.LENGTH_SHORT).show();
+
+        PopMoviesApplication Me = ((PopMoviesApplication) getActivity().getApplication());
+        AtomicBoolean o = (AtomicBoolean) Me.getStateManager().getState(REFRESH_GRID);
+        o.set(true);
     }
 }
