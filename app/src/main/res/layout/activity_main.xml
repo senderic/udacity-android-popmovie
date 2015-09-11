@@ -4,6 +4,7 @@
     android:layout_height="match_parent"
     android:orientation="horizontal">
 
+    <!--
     <Spinner
         android:id="@+id/sort_spinner"
         android:layout_width="0dp"
@@ -14,5 +15,5 @@
         android:popupBackground="@android:color/white"
         android:scrollbars="none"
         android:spinnerMode="dropdown" />
-
+    -->
 </LinearLayout>

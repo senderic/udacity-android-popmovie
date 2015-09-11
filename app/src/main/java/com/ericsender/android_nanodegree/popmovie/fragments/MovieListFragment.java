@@ -173,32 +173,33 @@ public class MovieListFragment extends Fragment {
                 updateMovieListVolley(true);
                 //updateMovieList();
                 return true;
-            case R.id.action_sort:
-                Log.d(LOG_TAG, "Sort Spinner");
-                handleSortSpinner();
-                return true;
+//            case R.id.action_sort:
+//                Log.d(LOG_TAG, "Sort Spinner");
+//                handleSortSpinner();
+//                return true;
         }
         return super.onOptionsItemSelected(item);
     }
 
-    private void handleSortSpinner() {
-        final Spinner spinner = (Spinner) getActivity().findViewById(R.id.sort_spinner);
-        final ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(getActivity(),
-                R.array.pref_sort_order_entries, android.R.layout.simple_spinner_item);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinner.setAdapter(adapter);
-        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                Log.d(LOG_TAG, Utils.f("onItemSelected parent (%s), view (%s), position (%s), id (%s)", parent, view, position, id));
-                // parent.removeView(spinner);
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-            }
-        });
-    }
+//      TODO: implement as an optional bonus.
+//    private void handleSortSpinner() {
+//        final Spinner spinner = (Spinner) getActivity().findViewById(R.id.sort_spinner);
+//        final ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(getActivity(),
+//                R.array.pref_sort_order_entries, android.R.layout.simple_spinner_item);
+//        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+//        spinner.setAdapter(adapter);
+//        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+//            @Override
+//            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+//                Log.d(LOG_TAG, Utils.f("onItemSelected parent (%s), view (%s), position (%s), id (%s)", parent, view, position, id));
+//                // parent.removeView(spinner);
+//            }
+//
+//            @Override
+//            public void onNothingSelected(AdapterView<?> parent) {
+//            }
+//        });
+//    }
 
     private Uri determineUri(String sort) {
         if (StringUtils.containsIgnoreCase(sort, "popular"))
