@@ -232,9 +232,15 @@ public class MovieListFragment extends Fragment {
             }
             // TODO: Could the query handle loading live data isntead of the Fragment?
             if (rows == 0) {
-                Log.d(LOG_TAG, "getting live data");
-                getLiveData(sort);
-                insertMovieListIntoDatabase(sort);
+                if (getString(R.string.tmdb_arg_favorite).equals(sort))
+                    Toast.makeText(getActivity(), "Cannot Refresh When Sorting Preference is Favorites. Please choose '"
+                            + getString(R.string.most_popular_title) + "' or '"
+                            + getString(R.string.highest_rated_title)
+                            + "'", Toast.LENGTH_SHORT).show();
+                else {
+                    Log.d(LOG_TAG, "getting live data");
+                    getLiveData(sort);
+                }
             } else if (cursor != null) {
                 Log.d(LOG_TAG, Utils.f("getting database data (rows returned = %d)", rows));
                 getInternalData(cursor, sort);
@@ -263,10 +269,14 @@ public class MovieListFragment extends Fragment {
                 cvs[i] = movieCv;
                 movie_ids[i++] = idCv;
             }
-            Uri uri = determineUri(sort);
             getActivity().getContentResolver().bulkInsert(MovieContract.MovieEntry.buildMovieUri(), cvs);
-            getActivity().getContentResolver().delete(uri, null, null);
-            getActivity().getContentResolver().bulkInsert(uri, movie_ids);
+            // Deleted whatever is in rating/poppular
+            if (StringUtils.containsIgnoreCase(sort, "rate") ||
+                    StringUtils.containsIgnoreCase(sort, "popular")) {
+                Uri uri = determineUri(sort);
+                getActivity().getContentResolver().delete(uri, null, null);
+                getActivity().getContentResolver().bulkInsert(uri, movie_ids);
+            }
             Log.d(LOG_TAG, String.format("Just inserted movies %s", Arrays.toString(cvs)));
         } finally {
             db.close();
@@ -314,6 +324,7 @@ public class MovieListFragment extends Fragment {
                         Log.d(getClass().getSimpleName(), "Response received.");
                         LinkedTreeMap<String, Serializable> map = Utils.getGson().fromJson(response.toString(), LinkedTreeMap.class);
                         handleMap(map, sort);
+                        insertMovieListIntoDatabase(sort);
                         t.setText("Loading Finished in: " + sw);
                     }
 
