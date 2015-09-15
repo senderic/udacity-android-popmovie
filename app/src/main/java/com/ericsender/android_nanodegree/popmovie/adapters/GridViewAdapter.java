@@ -8,7 +8,6 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
-import android.widget.Toast;
 
 import com.ericsender.android_nanodegree.popmovie.R;
 import com.ericsender.android_nanodegree.popmovie.parcelable.MovieGridObj;
@@ -21,12 +20,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class GridViewAdapter extends ArrayAdapter<MovieGridObj> {
 
     private final GridView mMovieGrid;
+    private final String sImgSize;
     private List<MovieGridObj> mGridData;
     private final Context mContext;
     private static final String LOG_TAG = GridViewAdapter.class.getSimpleName();
     private static final AtomicInteger count = new AtomicInteger();
     private final int mResource;
-    private final String baseUrl;
+    private final String sImgUrl;
 
     public String getThumbUrl() {
         return thumbUrl;
@@ -50,7 +50,8 @@ public class GridViewAdapter extends ArrayAdapter<MovieGridObj> {
         mGridData = movies;
         mResource = resource;
         this.mMovieGrid = mMovieGrid;
-        baseUrl = context.getString(R.string.tmdb_image_base_url) + context.getString(R.string.tmdb_image_size);
+        sImgUrl = context.getString(R.string.tmdb_image_base_url);
+        sImgSize = context.getString(R.string.tmdb_image_size);
     }
 
     public int getCount() {
@@ -91,7 +92,7 @@ public class GridViewAdapter extends ArrayAdapter<MovieGridObj> {
             Log.e(LOG_TAG, "null movie value. either returned nothing from server or db is empty");
             return row;
         }
-        String load = holder.isSet ? baseUrl + movie.poster_path : "null";
+        String load = holder.isSet ? String.format(sImgUrl, sImgSize, movie.poster_path) : "null";
         String title = holder.isSet ? movie.title : "null";
 
         // Picasso.with(getContext()).setLoggingEnabled(true);

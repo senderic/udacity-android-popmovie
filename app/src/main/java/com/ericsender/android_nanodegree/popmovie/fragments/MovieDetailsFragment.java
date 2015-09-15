@@ -19,7 +19,6 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -45,6 +44,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static com.ericsender.android_nanodegree.popmovie.Application.STATE.REFRESH_GRID;
 
 public class MovieDetailsFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
+    private static final String LOG_TAG = MovieDetailsFragment.class.getSimpleName();
     private TextView titleTextView;
     private ImageView imageView;
     private TextView yearTextView;
@@ -56,57 +56,161 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     private MovieGridObj mMovieObj;
     private ProgressBar mDurationProgress;
     private View mRootView;
-    private boolean isLoadFinished;
+    private boolean mIsLoadFinished;
     private Button mFavButton;
     private Long mMovieId;
     private boolean mIsAlreadyFav = false;
+    private String sIsAlreadyFav;
+    private String sMovieObjKey;
+    private String sMovieIdKey;
+    private String sVideoUrl;
+    private String sParamApi;
+    private String sApiKey;
+    private String sReviewKey;
+    private String sBaseUrl;
+    private String sImgSize;
+    private String sNoLongerFav;
+    private String sImgUrl;
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putParcelable(getString(R.string.movie_obj_key), mMovieObj);
-        outState.putLong(getString(R.string.movie_id_key), mMovieId);
+        outState.putParcelable(sMovieObjKey, mMovieObj);
+        outState.putLong(sMovieIdKey, mMovieId);
     }
 
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        init();
         setHasOptionsMenu(false);
+    }
+
+    // Limit use of getString since seeing a random null pointer crash regarding one of them.
+    private void init() {
+        sIsAlreadyFav = getString(R.string.is_already_fav);
+        sMovieObjKey = getString(R.string.movie_obj_key);
+        sMovieIdKey = getString(R.string.movie_id_key);
+        sVideoUrl = getString(R.string.tmdb_api_movie_videos_url);
+        sParamApi = getString(R.string.tmdb_param_api);
+        sApiKey = getString(R.string.private_tmdb_api);
+        sReviewKey = getString(R.string.tmdb_api_movie_review_url);
+        sBaseUrl = getString(R.string.tmdb_api_base_movie_url);
+        sImgUrl = getString(R.string.tmdb_image_base_url);
+        sImgSize = getString(R.string.tmdb_image_size);
+        sNoLongerFav = getString(R.string.is_no_longer_fav);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        isLoadFinished = false;
+        mIsLoadFinished = false;
         mRootView = inflater.inflate(R.layout.fragment_movie_details, container, false);
         mProgress = (FrameLayout) mRootView.findViewById(R.id.movie_details_progress_bar);
         // runFragment();
         if (savedInstanceState != null) {
-            mMovieObj = (MovieGridObj) savedInstanceState.getParcelable(getString(R.string.movie_obj_key));
-            mMovieId = savedInstanceState.getLong(getString(R.string.movie_id_key));
+            mMovieObj = (MovieGridObj) savedInstanceState.getParcelable(sMovieObjKey);
+            mMovieId = savedInstanceState.getLong(sMovieIdKey);
             runFragment();
         } else {
-            mMovieId = getActivity().getIntent().getLongExtra(getString(R.string.movie_id_key), -1L);
+            mMovieId = getActivity().getIntent().getLongExtra(sMovieIdKey, -1L);
             Bundle b = new Bundle();
-            b.putLong(getString(R.string.movie_id_key), mMovieId);
+            b.putLong(sMovieIdKey, mMovieId);
             getLoaderManager().initLoader(0, b, this);
         }
         return mRootView;
     }
 
     private void runFragment() {
-        boolean success = handleFirst();
-        if (success) {
-            handleOffThread();
-            isLoadFinished = handleLast();
-            getActivity().setProgressBarIndeterminateVisibility(false);
-            mProgress.setVisibility(View.GONE);
-        } else throw new RuntimeException("handleFirst() returned false.");
+        handleOffThread();
+        mIsLoadFinished = handleLast();
+        getActivity().setProgressBarIndeterminateVisibility(false);
+        mProgress.setVisibility(View.GONE);
     }
 
 
-    public MovieDetailsFragment() {
+    private void handleFirst() {
+        mMovieObj = getMovieObjFromIntent();
+        imageView = (ImageView) mRootView.findViewById(R.id.movie_thumb);
+        mDurationTextView = (TextView) mRootView.findViewById(R.id.movie_duration);
+        mDurationProgress = (ProgressBar) mRootView.findViewById(R.id.movie_duration_progressBar);
+        titleTextView = (TextView) mRootView.findViewById(R.id.movie_title);
+        yearTextView = (TextView) mRootView.findViewById(R.id.movie_year);
+        ratingTextView = (TextView) mRootView.findViewById(R.id.movie_rating);
+        overviewTextView = (TextView) mRootView.findViewById(R.id.movie_overview);
+
+        mFavButton = (Button) mRootView.findViewById(R.id.button_mark_fav);
+        mFavButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                handleFavoriteClick(v);
+            }
+        });
+
+        if (Utils.isTablet(getActivity())) imageView.setAdjustViewBounds(true);
+    }
+
+    private MovieGridObj getMovieObjFromIntent() {
+        return mMovieObj == null ?
+                (MovieGridObj) getActivity().getIntent().getParcelableExtra(sMovieObjKey) : mMovieObj;
+    }
+
+    private boolean handleLast() {
+        // Picasso *should* be caching these poster images, so this call should not require network access
+        // TODO: (bonus if time) confirm picasso is using a cache to get this data by studying network logs?
+        Picasso.with(getActivity().getApplicationContext()).load(
+                String.format(sImgUrl, sImgSize, mMovieObj.poster_path))
+                .placeholder(R.drawable.blank)
+                .error(R.drawable.blank)
+                .resize(366, 516)
+                .into(imageView);
+        titleTextView.setText(mMovieObj.title);
+        yearTextView.setText(mMovieObj.release_date.substring(0, 4));
+        overviewTextView.setText(mMovieObj.overview);
+        // TODO is there a String.format that will do %.1f and strip trailing zeros?
+        double va = mMovieObj.vote_average.doubleValue();
+        String roundRating = va == (long) va
+                ?
+                String.format("%d", (long) va)
+                :
+                String.format("%.1f", va);
+        ratingTextView.setText(roundRating + "/10");
+        return true;
+    }
+
+    public void handleFavoriteClick(View view) {
+        if (mIsLoadFinished) {
+            // check if its already pressed
+            Cursor c = getActivity().getContentResolver().query(MovieContract.FavoriteEntry.buildFavoriteUri(mMovieObj.id),
+                    null, null, null, null);
+            if (!c.moveToFirst()) {
+                // add to favorites
+                ContentValues cv = new ContentValues();
+                cv.put(MovieContract.FavoriteEntry.COLUMN_MOVIE_ID, mMovieObj.id);
+                Uri u = getActivity().getContentResolver().insert(MovieContract.FavoriteEntry.buildFavoriteUri(), cv);
+                mIsAlreadyFav = true;
+                mFavButton.setText(sIsAlreadyFav);
+                Snackbar.make(mRootView, String.format("%s %s to Favorites", "Added", mMovieObj.title),
+                        Snackbar.LENGTH_SHORT).show();
+            } else {
+                // remove from favorites?
+                getActivity().getContentResolver().delete(MovieContract.FavoriteEntry.buildFavoriteUri(),
+                        MovieContract.FavoriteEntry.COLUMN_MOVIE_ID + "=?",
+                        new String[]{mMovieObj.id.toString()});
+                mIsAlreadyFav = false;
+                mFavButton.setText(sNoLongerFav);
+                Snackbar.make(mRootView, String.format("%s %s from Favorites", "Removed", mMovieObj.title),
+                        Snackbar.LENGTH_SHORT).show();
+            }
+
+            c.close();
+        } else
+            Snackbar.make(mRootView, "Please Wait... still loading", Snackbar.LENGTH_SHORT).show();
+
+        PopMoviesApplication Me = ((PopMoviesApplication) getActivity().getApplication());
+        AtomicBoolean o = (AtomicBoolean) Me.getStateManager().getState(REFRESH_GRID);
+        o.set(true);
     }
 
     private void handleOffThread() {
@@ -124,8 +228,8 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     }
 
     private JsonObjectRequest getVideoDataAsync() {
-        Uri builtUri = Uri.parse(String.format(getString(R.string.tmdb_api_movie_videos_url), mMovieObj.id)).buildUpon()
-                .appendQueryParameter(getString(R.string.tmdb_param_api), getString(R.string.private_tmdb_api))
+        Uri builtUri = Uri.parse(String.format(sVideoUrl, mMovieObj.id)).buildUpon()
+                .appendQueryParameter(sParamApi, sApiKey)
                 .build();
         String url = "";
         try {
@@ -160,8 +264,8 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     }
 
     private JsonObjectRequest getReviewDataAsync() {
-        Uri builtUri = Uri.parse(String.format(getString(R.string.tmdb_api_movie_review_url), mMovieObj.id)).buildUpon()
-                .appendQueryParameter(getString(R.string.tmdb_param_api), getString(R.string.private_tmdb_api))
+        Uri builtUri = Uri.parse(String.format(sReviewKey, mMovieObj.id)).buildUpon()
+                .appendQueryParameter(sParamApi, sApiKey)
                 .build();
         String url = "";
         try {
@@ -197,8 +301,8 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
 
     @NonNull
     private JsonObjectRequest getMinutesDataAsync() {
-        Uri builtUri = Uri.parse(String.format(getString(R.string.tmdb_api_base_movie_url), mMovieObj.id)).buildUpon()
-                .appendQueryParameter(getString(R.string.tmdb_param_api), getString(R.string.private_tmdb_api))
+        Uri builtUri = Uri.parse(String.format(sBaseUrl, mMovieObj.id)).buildUpon()
+                .appendQueryParameter(sParamApi, sApiKey)
                 .build();
         String url = "";
         try {
@@ -234,105 +338,21 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         return jsObjRequest;
     }
 
-    private boolean handleFirst() {
-        mMovieObj = getMovieObjFromIntent();
-        imageView = (ImageView) mRootView.findViewById(R.id.movie_thumb);
-        mDurationTextView = (TextView) mRootView.findViewById(R.id.movie_duration);
-        mDurationProgress = (ProgressBar) mRootView.findViewById(R.id.movie_duration_progressBar);
-        if (Utils.isTablet(getActivity())) imageView.setAdjustViewBounds(true);
-        // Picasso *should* be caching these poster images, so this call should not require network access
-        // TODO: (bonus if time) confirm picasso is using a cache to get this data by studying network logs?
-        Picasso.with(getActivity().getApplicationContext()).load(
-                String.format(getString(R.string.tmdb_image_base_url), getString(R.string.tmdb_image_size), mMovieObj.poster_path))
-                .placeholder(R.drawable.blank)
-                .error(R.drawable.blank)
-                .resize(366, 516)
-                .into(imageView);
-
-        mFavButton = (Button) mRootView.findViewById(R.id.button_mark_fav);
-        mFavButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                handleFavoriteClick(v);
-            }
-        });
-        return true;
-    }
-
-    private MovieGridObj getMovieObjFromIntent() {
-        return mMovieObj == null ?
-                (MovieGridObj) getActivity().getIntent().getParcelableExtra(getString(R.string.movie_obj_key)) : mMovieObj;
-    }
-
-    private boolean handleLast() {
-        titleTextView = (TextView) mRootView.findViewById(R.id.movie_title);
-
-        yearTextView = (TextView) mRootView.findViewById(R.id.movie_year);
-        ratingTextView = (TextView) mRootView.findViewById(R.id.movie_rating);
-        overviewTextView = (TextView) mRootView.findViewById(R.id.movie_overview);
-
-        titleTextView.setText(mMovieObj.title);
-        yearTextView.setText(mMovieObj.release_date.substring(0, 4));
-        overviewTextView.setText(mMovieObj.overview);
-        // TODO is there a String.format that will do %.1f and strip trailing zeros?
-        double va = mMovieObj.vote_average.doubleValue();
-        String roundRating = va == (long) va
-                ?
-                String.format("%d", (long) va)
-                :
-                String.format("%.1f", va);
-        ratingTextView.setText(roundRating + "/10");
-        return true;
-    }
-
-    public void handleFavoriteClick(View view) {
-        if (isLoadFinished) {
-            // check if its already pressed
-            Cursor c = getActivity().getContentResolver().query(MovieContract.FavoriteEntry.buildFavoriteUri(mMovieObj.id),
-                    null, null, null, null);
-            if (!c.moveToFirst()) {
-                // add to favorites
-                ContentValues cv = new ContentValues();
-                cv.put(MovieContract.FavoriteEntry.COLUMN_MOVIE_ID, mMovieObj.id);
-                Uri u = getActivity().getContentResolver().insert(MovieContract.FavoriteEntry.buildFavoriteUri(), cv);
-                mIsAlreadyFav = true;
-                mFavButton.setText(getString(R.string.is_already_fav));
-                Toast.makeText(getActivity(), String.format("Added %s to Favorites", mMovieObj.title),
-                        Toast.LENGTH_SHORT).show();
-            } else {
-                // remove from favorites?
-                getActivity().getContentResolver().delete(MovieContract.FavoriteEntry.buildFavoriteUri(),
-                        MovieContract.FavoriteEntry.COLUMN_MOVIE_ID + "=?",
-                        new String[]{mMovieObj.id.toString()});
-                mIsAlreadyFav = false;
-                mFavButton.setText(getString(R.string.is_no_longer_fav));
-                Toast.makeText(getActivity(), String.format("Removed %s from Favorites", mMovieObj.title),
-                        Toast.LENGTH_SHORT).show();
-            }
-
-            c.close();
-        } else
-            Toast.makeText(getActivity(), "Please Wait... still loading", Toast.LENGTH_SHORT).show();
-
-        PopMoviesApplication Me = ((PopMoviesApplication) getActivity().getApplication());
-        AtomicBoolean o = (AtomicBoolean) Me.getStateManager().getState(REFRESH_GRID);
-        o.set(true);
-    }
-
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         return new CursorLoader(getActivity(), MovieContract.MovieEntry
-                .buildMovieUnionFavoriteUri(args.getLong(getString(R.string.movie_id_key))),
+                .buildMovieUnionFavoriteUri(args.getLong(sMovieIdKey)),
                 null, null, null, null);
     }
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        handleFirst();
         if (!data.moveToFirst())
             Snackbar.make(mRootView, "No Data Loaded. Please go back and refresh", Snackbar.LENGTH_LONG).show();
         else {
             if (data.getCount() == 2) {
-                mFavButton.setText(getString(R.string.is_already_fav));
+                mFavButton.setText(sIsAlreadyFav);
                 mIsAlreadyFav = true;
                 data.moveToLast();
             }
