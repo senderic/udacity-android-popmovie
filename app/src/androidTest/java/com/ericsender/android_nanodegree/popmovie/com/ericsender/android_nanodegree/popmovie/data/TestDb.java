@@ -16,8 +16,6 @@ import com.ericsender.android_nanodegree.popmovie.data.MovieDbHelper;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -80,7 +78,7 @@ public class TestDb extends AndroidTestCase {
         // Build a HashSet of all of the column names we want to look for
         final HashSet<String> movieColumnHashSet = new HashSet<>();
         movieColumnHashSet.add(MovieContract.MovieEntry._ID);
-        movieColumnHashSet.add(MovieContract.MovieEntry.COLUMN_JSON);
+        movieColumnHashSet.add(MovieContract.MovieEntry.COLUMN_MOVIE_BLOB);
         movieColumnHashSet.add(MovieContract.MovieEntry.COLUMN_MOVIE_ID);
 
         int columnNameIndex = c.getColumnIndex("name");

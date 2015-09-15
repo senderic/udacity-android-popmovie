@@ -35,13 +35,19 @@ public class MovieContract {
                 ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_MOVIE;
         public static final String CONTENT_ITEM_TYPE =
                 ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_MOVIE;
+        public static final String CONTENT_ISFAV_TYPE =
+                ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_MOVIE;
 
         public static final String TABLE_NAME = PATH_MOVIE;
         public static final String COLUMN_MOVIE_ID = "movie_id";
-        public static final String COLUMN_JSON = "serializedParseableJson";
+        public static final String COLUMN_MOVIE_BLOB = "serializedParseableJson";
 
         public static Uri buildMovieUri(Long movie_id) {
             return CONTENT_URI.buildUpon().appendPath(movie_id.toString()).build();
+        }
+
+        public static Uri buildMovieUnionFavoriteUri(Long movie_id) {
+            return CONTENT_URI.buildUpon().appendPath("isFav").appendPath(movie_id.toString()).build();
         }
 
         public static Uri buildMovieUri() {

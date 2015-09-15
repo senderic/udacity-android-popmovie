@@ -63,10 +63,6 @@ public class Utils {
         return sb.toString();
     }
 
-    public static final String f(String s, Object... args) {
-        return String.format(s, args);
-    }
-
     public static List<MovieGridObj> convertJsonMapToMovieList(Object resultsObj) {
         List<LinkedTreeMap<String, Object>> results = (List<LinkedTreeMap<String, Object>>) resultsObj;
         Set<MovieGridObj> movies = new HashSet<>();

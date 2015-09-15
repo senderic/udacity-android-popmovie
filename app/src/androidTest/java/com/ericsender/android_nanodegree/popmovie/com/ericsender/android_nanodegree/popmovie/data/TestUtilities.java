@@ -47,7 +47,7 @@ public class TestUtilities extends AndroidTestCase {
 
             ContentValues cv = expectedValues.get(_id);
             Long expectedId = (Long) cv.get(MovieContract.MovieEntry.COLUMN_MOVIE_ID);
-            byte[] expectedBMovieObject = (byte[]) cv.get(MovieContract.MovieEntry.COLUMN_JSON);
+            byte[] expectedBMovieObject = (byte[]) cv.get(MovieContract.MovieEntry.COLUMN_MOVIE_BLOB);
             MovieGridObj expectedMovieObj = (MovieGridObj) SerializationUtils.deserialize(expectedBMovieObject);
 
             assertEquals("movied id's don't match", expectedId, movie_id);
@@ -75,7 +75,7 @@ public class TestUtilities extends AndroidTestCase {
             ContentValues expect = expectedValues.get(movie_id);
 
             assertEquals("movied ids don't match", expect.getAsLong(MovieContract.MovieEntry.COLUMN_MOVIE_ID), movie_id);
-            assertTrue("Binaries don't match", Arrays.equals(expect.getAsByteArray(MovieContract.MovieEntry.COLUMN_JSON), blob));
+            assertTrue("Binaries don't match", Arrays.equals(expect.getAsByteArray(MovieContract.MovieEntry.COLUMN_MOVIE_BLOB), blob));
         }
     }
 
@@ -94,7 +94,7 @@ public class TestUtilities extends AndroidTestCase {
             ContentValues expect = expectedValue.get(movie_id);
 
             assertEquals("movied ids don't match", expect.getAsLong(MovieContract.MovieEntry.COLUMN_MOVIE_ID), movie_id);
-            assertTrue("Binaries don't match", Arrays.equals(expect.getAsByteArray(MovieContract.MovieEntry.COLUMN_JSON), blob));
+            assertTrue("Binaries don't match", Arrays.equals(expect.getAsByteArray(MovieContract.MovieEntry.COLUMN_MOVIE_BLOB), blob));
         }
     }
 
@@ -134,7 +134,7 @@ public class TestUtilities extends AndroidTestCase {
     public static ContentValues createMovieContentValue(long dbRowId, MovieGridObj m) {
         ContentValues cv = new ContentValues();
         cv.put(MovieContract.MovieEntry.COLUMN_MOVIE_ID, m.id.longValue());
-        cv.put(MovieContract.MovieEntry.COLUMN_JSON, SerializationUtils.serialize(m));
+        cv.put(MovieContract.MovieEntry.COLUMN_MOVIE_BLOB, SerializationUtils.serialize(m));
         return cv;
     }
 

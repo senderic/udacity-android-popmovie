@@ -28,6 +28,7 @@ import com.ericsender.android_nanodegree.popmovie.data.MovieContract;
 import com.ericsender.android_nanodegree.popmovie.data.MovieDbHelper;
 import com.ericsender.android_nanodegree.popmovie.data.MovieProvider;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -287,6 +288,44 @@ public class TestProvider extends AndroidTestCase {
         TestUtilities.verifyFavoriteValuesInDatabase(listContentValues, mContext);
     }
 
+    public void testGettingMovieAndMaybeFavorite() {
+        mContext.getContentResolver().delete(MovieContract.FavoriteEntry.CONTENT_URI, null, null);
+        Map<Long, ContentValues> listContentValues = TestUtilities.createSortedMovieValues(getContext(), "rating");
+
+        ContentValues[] arr = (ContentValues[]) listContentValues.values().toArray(new ContentValues[0]);
+
+        mContext.getContentResolver().bulkInsert(MovieContract.MovieEntry.CONTENT_URI, arr);
+
+        ContentValues[] movie_ids = new ContentValues[arr.length];
+        for (int i = 0; i < arr.length; i++)
+            (movie_ids[i] = new ContentValues()).put(MovieContract.RatingEntry.COLUMN_MOVIE_ID,
+                    arr[i].getAsLong(MovieContract.MovieEntry.COLUMN_MOVIE_ID));
+
+        mContext.getContentResolver().bulkInsert(MovieContract.FavoriteEntry.CONTENT_URI, movie_ids);
+
+        TestUtilities.verifyFavoriteValuesInDatabase(listContentValues, mContext);
+
+        Long expected = movie_ids[0].getAsLong(MovieContract.MovieEntry.COLUMN_MOVIE_ID);
+        Cursor c = mContext.getContentResolver().query(MovieContract.MovieEntry.buildMovieUnionFavoriteUri(expected),
+                null, null, null, null);
+
+        assertTrue(c.moveToFirst());
+        assertEquals(2, c.getCount());
+        assertEquals(expected.longValue(), c.getLong(0));
+        assertTrue(c.moveToNext());
+        assertTrue(c.getBlob(0).length > 0);
+        c.close();
+
+        mContext.getContentResolver().delete(MovieContract.FavoriteEntry.CONTENT_URI, MovieContract.FavoriteEntry.COLUMN_MOVIE_ID + "=?", new String[]{expected.toString()});
+
+        c = mContext.getContentResolver().query(MovieContract.MovieEntry.buildMovieUnionFavoriteUri(expected),
+                null, null, null, null);
+
+        assertTrue(c.moveToFirst());
+        assertEquals(1, c.getCount());
+        assertTrue(c.getBlob(0).length > 0);
+    }
+
 //    /*
 //        This test uses the provider to insert and then update the data. Uncomment this test to
 //        see if your update location is functioning correctly.
@@ -489,7 +528,7 @@ public class TestProvider extends AndroidTestCase {
 //        for (int i = 0; i < BULK_INSERT_RECORDS_TO_INSERT; i++, currentTestDate += millisecondsInADay) {
 //            ContentValues weatherValues = new ContentValues();
 //            weatherValues.put(MovieContract.MovieEntry.COLUMN_MOVIE_ID, locationRowId);
-//            weatherValues.put(MovieContract.MovieEntry.COLUMN_JSON, currentTestDate);
+//            weatherValues.put(MovieContract.MovieEntry.COLUMN_MOVIE_BLOB, currentTestDate);
 //            returnContentValues[i] = weatherValues;
 //        }
 //        return returnContentValues;

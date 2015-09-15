@@ -12,10 +12,6 @@ import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 import android.util.Log;
 
-import com.ericsender.android_nanodegree.popmovie.utils.Utils;
-
-import org.apache.commons.lang3.StringUtils;
-
 import java.security.InvalidParameterException;
 
 public class MovieProvider extends ContentProvider {
@@ -27,6 +23,7 @@ public class MovieProvider extends ContentProvider {
 
     public static final int MOVIE = 100;
     public static final int MOVIE_WITH_ID = 101;
+    public static final int MOVIE_WITH_ID_AND_MAYBE_FAVORITE = 102;
     public static final int MOVIE_FAVORITE = 200;
     public static final int MOVIE_FAVORITE_WITH_ID = 201;
     public static final int MOVIE_RATING = 300;
@@ -61,6 +58,8 @@ public class MovieProvider extends ContentProvider {
                 + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_ID
                 + " = "
                 + MovieContract.FavoriteEntry.TABLE_NAME + "." + MovieContract.FavoriteEntry.COLUMN_MOVIE_ID);
+
+        sMovieById.setTables(MovieContract.MovieEntry.TABLE_NAME);
     }
 
     // movie._id = ?
@@ -74,7 +73,7 @@ public class MovieProvider extends ContentProvider {
     private Cursor getPopularMovies() {
         return mOpenHelper.getReadableDatabase().rawQuery("SELECT "
                 + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_ID + ", "
-                + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_JSON
+                + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_BLOB
                 + " FROM " + MovieContract.MovieEntry.TABLE_NAME
                 + " WHERE " + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_ID
                 + " IN (SELECT "
@@ -85,10 +84,22 @@ public class MovieProvider extends ContentProvider {
 
     }
 
+    private Cursor getMovieWithIdAndMaybeFavorite(String movie_id) {
+        return mOpenHelper.getReadableDatabase().rawQuery("SELECT "
+                + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_BLOB
+                + " FROM " + MovieContract.MovieEntry.TABLE_NAME
+                + " WHERE " + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_ID + "=?"
+                + " UNION SELECT "
+                + MovieContract.FavoriteEntry.TABLE_NAME + "." + MovieContract.FavoriteEntry.COLUMN_MOVIE_ID
+                + " FROM " + MovieContract.FavoriteEntry.TABLE_NAME
+                + " WHERE " + MovieContract.FavoriteEntry.TABLE_NAME + "." + MovieContract.FavoriteEntry.COLUMN_MOVIE_ID + "=?",
+                new String[]{movie_id, movie_id});
+    }
+
     private Cursor getRatedMovies() {
         return mOpenHelper.getReadableDatabase().rawQuery("SELECT "
                 + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_ID + ", "
-                + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_JSON
+                + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_BLOB
                 + " FROM " + MovieContract.MovieEntry.TABLE_NAME
                 + " WHERE " + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_ID
                 + " IN (SELECT "
@@ -100,16 +111,24 @@ public class MovieProvider extends ContentProvider {
 
     private Cursor getFavoriteMovieId(String movie_id) {
         return sFavoriteMovie.query(mOpenHelper.getReadableDatabase(),
-                new String[] {MovieContract.FavoriteEntry._ID},
+                new String[]{MovieContract.FavoriteEntry._ID},
                 MovieContract.FavoriteEntry.COLUMN_MOVIE_ID + "=?",
-                new String[] {movie_id},
+                new String[]{movie_id},
+                null, null, null);
+    }
+
+    private Cursor getMovieById(String movie_id) {
+        return sMovieById.query(mOpenHelper.getReadableDatabase(),
+                new String[]{MovieContract.MovieEntry.COLUMN_MOVIE_BLOB},
+                MovieContract.MovieEntry.COLUMN_MOVIE_ID + "=?",
+                new String[]{movie_id},
                 null, null, null);
     }
 
     private Cursor getFavoriteMovies() { // Uri uri, String[] projection, String[] selectionArgs) {
         return mOpenHelper.getReadableDatabase().rawQuery("SELECT "
                 + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_ID + ", "
-                + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_JSON
+                + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_BLOB
                 + " FROM " + MovieContract.MovieEntry.TABLE_NAME
                 + " WHERE " + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_ID
                 + " IN (SELECT "
@@ -138,6 +157,8 @@ public class MovieProvider extends ContentProvider {
         matcher.addURI(authority, MovieContract.PATH_MOVIE, MOVIE);
         // Get a movie by id
         matcher.addURI(authority, MovieContract.PATH_MOVIE + "/#", MOVIE_WITH_ID);
+        // Get movie and also a row if its a favorite
+        matcher.addURI(authority, MovieContract.PATH_MOVIE + "/isFav/#", MOVIE_WITH_ID_AND_MAYBE_FAVORITE);
         // Get all movies marked favorite (should not be limited)
         matcher.addURI(authority, MovieContract.PATH_FAVORITE, MOVIE_FAVORITE);
         // Get a favorite movie
@@ -275,7 +296,7 @@ public class MovieProvider extends ContentProvider {
         try {
             return mOpenHelper.getWritableDatabase().insertOrThrow(MovieContract.PopularEntry.TABLE_NAME, null, values);
         } catch (android.database.sqlite.SQLiteConstraintException e) {
-            Log.e(LOG_TAG, Utils.f("Did not insert %d because of constraint (already exists)", values.getAsLong(MovieContract.PopularEntry.COLUMN_MOVIE_ID)));
+            Log.e(LOG_TAG, String.format("Did not insert %d because of constraint (already exists)", values.getAsLong(MovieContract.PopularEntry.COLUMN_MOVIE_ID)));
             return -2L;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -319,6 +340,9 @@ public class MovieProvider extends ContentProvider {
             case MOVIE:
                 retCursor = getAllMovies();
                 break;
+            case MOVIE_WITH_ID:
+                retCursor = getMovieById(uri.getLastPathSegment());
+                break;
             case MOVIE_RATING:
                 retCursor = getRatedMovies();
                 break;
@@ -327,6 +351,9 @@ public class MovieProvider extends ContentProvider {
                 break;
             case MOVIE_FAVORITE_WITH_ID:
                 retCursor = getFavoriteMovieId(uri.getLastPathSegment());
+                break;
+            case MOVIE_WITH_ID_AND_MAYBE_FAVORITE:
+                retCursor = getMovieWithIdAndMaybeFavorite(uri.getLastPathSegment());
                 break;
             case MOVIE_POPULAR:
                 retCursor = getPopularMovies();

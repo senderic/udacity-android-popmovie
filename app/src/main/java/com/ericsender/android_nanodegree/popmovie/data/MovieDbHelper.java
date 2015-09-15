@@ -24,7 +24,7 @@ public class MovieDbHelper extends SQLiteOpenHelper {
         SQL_CREATE_MOVIE_TABLE = "CREATE TABLE " + MovieContract.MovieEntry.TABLE_NAME + " (" +
                 MovieContract.MovieEntry._ID + " INTEGER PRIMARY KEY," +
                 MovieContract.MovieEntry.COLUMN_MOVIE_ID + " INTEGER UNIQUE NOT NULL, " +
-                MovieContract.MovieEntry.COLUMN_JSON + " BLOB NOT NULL, " +
+                MovieContract.MovieEntry.COLUMN_MOVIE_BLOB + " BLOB NOT NULL, " +
                 " UNIQUE (" + MovieContract.MovieEntry._ID + ") ON CONFLICT REPLACE);";
 
         SQL_CREATE_POPULAR_TABLE = "CREATE TABLE " + MovieContract.PopularEntry.TABLE_NAME + " (" +

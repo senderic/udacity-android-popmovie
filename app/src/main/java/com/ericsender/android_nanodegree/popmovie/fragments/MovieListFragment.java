@@ -7,8 +7,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcelable;
-import android.preference.ListPreference;
 import android.preference.PreferenceManager;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -19,7 +19,6 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
-import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.android.volley.Request;
@@ -92,12 +91,21 @@ public class MovieListFragment extends Fragment {
     }
 
     @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putParcelableArrayList(getString(R.string.GRIDVIEW_LIST_KEY), (ArrayList<? extends Parcelable>) mMovieList);
+    }
+
+    @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        getActivity().getContentResolver().delete(MovieContract.PopularEntry.buildPopularUri(), null, null);
-        getActivity().getContentResolver().delete(MovieContract.RatingEntry.buildRatingUri(), null, null);
-
+        if (savedInstanceState != null)
+            mMovieList = (List<MovieGridObj>) savedInstanceState.get(getString(R.string.GRIDVIEW_LIST_KEY));
+        else {
+            getActivity().getContentResolver().delete(MovieContract.PopularEntry.buildPopularUri(), null, null);
+            getActivity().getContentResolver().delete(MovieContract.RatingEntry.buildRatingUri(), null, null);
+        }
         // Add this line in order for this fragment to handle menu events.
         setHasOptionsMenu(true);
     }
@@ -160,9 +168,11 @@ public class MovieListFragment extends Fragment {
                     imageView.getLocationOnScreen(screenLocation);
 
                     //Pass the image title and url to DetailsActivity
-                    intent.putExtra("left", screenLocation[0]).
-                            putExtra("top", screenLocation[1]).
-                            putExtra("movieObj", item);
+                    // TODO: instead of putting the full movieObj in here, send just the movie_id and use a loader on the fragment to get the rest of the data.
+                    intent.putExtra("left", screenLocation[0])
+                            .putExtra("top", screenLocation[1])
+                            .putExtra(getString(R.string.movie_id_key), ((MovieGridObj) item).id.longValue())
+                            .putExtra(getString(R.string.movie_obj_key), item);
 
                     //Start details activity
                     startActivity(intent);
@@ -248,19 +258,19 @@ public class MovieListFragment extends Fragment {
             // TODO: Could the query handle loading live data isntead of the Fragment?
             if (rows == 0) {
                 if (isFav)
-                    Toast.makeText(getActivity(), "Cannot Refresh When Sorting Preference is Favorites. Please choose '"
+                    Snackbar.make(getView(), "Cannot Refresh When Sorting Preference is Favorites. Please choose '"
                             + getString(R.string.most_popular_title) + "' or '"
                             + getString(R.string.highest_rated_title)
-                            + "'", Toast.LENGTH_SHORT).show();
+                            + "'", Snackbar.LENGTH_SHORT).show();
                 else {
                     Log.d(LOG_TAG, "getting live data");
                     getLiveData(sort);
                 }
             } else if (cursor != null) {
-                Log.d(LOG_TAG, Utils.f("getting database data (rows returned = %d)", rows));
+                Log.d(LOG_TAG, String.format("getting database data (rows returned = %d)", rows));
                 getInternalData(cursor, sort);
             } else
-                throw new UnsupportedOperationException(Utils.f("Cursor is null but %d rows were expected", rows));
+                throw new UnsupportedOperationException(String.format("Cursor is null but %d rows were expected", rows));
         } finally {
             Utils.closeQuietly(cursor);
         }
@@ -279,7 +289,7 @@ public class MovieListFragment extends Fragment {
                 ContentValues movieCv = new ContentValues();
                 ContentValues idCv = new ContentValues();
                 movieCv.put(MovieContract.MovieEntry.COLUMN_MOVIE_ID, movie_id);
-                movieCv.put(MovieContract.MovieEntry.COLUMN_JSON, blob);
+                movieCv.put(MovieContract.MovieEntry.COLUMN_MOVIE_BLOB, blob);
                 idCv.put(MovieContract.MovieEntry.COLUMN_MOVIE_ID, movie_id);
                 cvs[i] = movieCv;
                 movie_ids[i++] = idCv;
