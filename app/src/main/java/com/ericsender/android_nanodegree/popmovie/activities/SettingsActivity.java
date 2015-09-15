@@ -11,7 +11,6 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 
-
 import com.ericsender.android_nanodegree.popmovie.R;
 
 import java.util.List;

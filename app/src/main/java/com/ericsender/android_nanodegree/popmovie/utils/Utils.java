@@ -5,25 +5,17 @@ import android.content.Context;
 import android.content.res.Configuration;
 import android.util.Log;
 
-import com.ericsender.android_nanodegree.popmovie.activities.MainActivity;
 import com.ericsender.android_nanodegree.popmovie.data.MovieContract;
-import com.ericsender.android_nanodegree.popmovie.fragments.MovieListFragment;
 import com.ericsender.android_nanodegree.popmovie.parcelable.MovieGridObj;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.internal.LinkedTreeMap;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;

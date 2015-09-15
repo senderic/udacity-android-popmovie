@@ -1,11 +1,8 @@
 package com.ericsender.android_nanodegree.popmovie.data;
 
 import android.content.ContentResolver;
-import android.content.ContentUris;
-import android.graphics.Movie;
 import android.net.Uri;
 import android.provider.BaseColumns;
-import android.text.format.Time;
 
 /**
  * Created by Eric K. Sender on 9/1/2015.
@@ -21,7 +18,7 @@ public class MovieContract {
     // Use CONTENT_AUTHORITY to create the base of all URI's which apps will use to contact
     // the content provider.
     public static final Uri BASE_CONTENT_URI = Uri.parse("content://" + CONTENT_AUTHORITY);
-    
+
     public static final String PATH_FAVORITE = "favorite";
     public static final String PATH_POPULAR = "popular";
     public static final String PATH_RATING = "rating";
@@ -77,7 +74,7 @@ public class MovieContract {
                 BASE_CONTENT_URI.buildUpon().appendPath(PATH_FAVORITE).build();
 
         public static final String CONTENT_TYPE =
-                ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY  + "/" + PATH_FAVORITE;
+                ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_FAVORITE;
         public static final String CONTENT_ITEM_TYPE =
                 ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_FAVORITE;
 

@@ -86,13 +86,13 @@ public class MovieProvider extends ContentProvider {
 
     private Cursor getMovieWithIdAndMaybeFavorite(String movie_id) {
         return mOpenHelper.getReadableDatabase().rawQuery("SELECT "
-                + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_BLOB
-                + " FROM " + MovieContract.MovieEntry.TABLE_NAME
-                + " WHERE " + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_ID + "=?"
-                + " UNION SELECT "
-                + MovieContract.FavoriteEntry.TABLE_NAME + "." + MovieContract.FavoriteEntry.COLUMN_MOVIE_ID
-                + " FROM " + MovieContract.FavoriteEntry.TABLE_NAME
-                + " WHERE " + MovieContract.FavoriteEntry.TABLE_NAME + "." + MovieContract.FavoriteEntry.COLUMN_MOVIE_ID + "=?",
+                        + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_BLOB
+                        + " FROM " + MovieContract.MovieEntry.TABLE_NAME
+                        + " WHERE " + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_ID + "=?"
+                        + " UNION SELECT "
+                        + MovieContract.FavoriteEntry.TABLE_NAME + "." + MovieContract.FavoriteEntry.COLUMN_MOVIE_ID
+                        + " FROM " + MovieContract.FavoriteEntry.TABLE_NAME
+                        + " WHERE " + MovieContract.FavoriteEntry.TABLE_NAME + "." + MovieContract.FavoriteEntry.COLUMN_MOVIE_ID + "=?",
                 new String[]{movie_id, movie_id});
     }
 

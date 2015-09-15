@@ -14,8 +14,7 @@
     <item
         android:id="@+id/action_delete_db"
         android:title="@string/action_delete_db"
-        app:showAsAction="never"
-    />
+        app:showAsAction="never" />
     <!--
     <item
         android:id="@+id/action_sort"

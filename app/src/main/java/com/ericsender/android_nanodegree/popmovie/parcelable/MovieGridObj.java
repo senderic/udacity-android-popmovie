@@ -26,7 +26,8 @@ public class MovieGridObj implements Parcelable, Serializable {
     public Double vote_average;
     public Integer vote_count;
 
-    public MovieGridObj() {}
+    public MovieGridObj() {
+    }
 
     protected MovieGridObj(Parcel in) {
         title = in.readString();
@@ -58,7 +59,7 @@ public class MovieGridObj implements Parcelable, Serializable {
         dest.writeString(release_date);
         dest.writeString(poster_path);
         dest.writeDouble(popularity);
-        dest.writeByte((byte) (video ?  1 : 0));
+        dest.writeByte((byte) (video ? 1 : 0));
         dest.writeDouble(vote_average);
         dest.writeInt(vote_count);
     }

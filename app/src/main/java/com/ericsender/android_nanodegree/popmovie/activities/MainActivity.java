@@ -6,10 +6,10 @@ import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import com.ericsender.android_nanodegree.popmovie.fragments.MovieDetailsFragment;
-import com.ericsender.android_nanodegree.popmovie.utils.Utils;
-import com.ericsender.android_nanodegree.popmovie.fragments.MovieListFragment;
 import com.ericsender.android_nanodegree.popmovie.R;
+import com.ericsender.android_nanodegree.popmovie.fragments.MovieDetailsFragment;
+import com.ericsender.android_nanodegree.popmovie.fragments.MovieListFragment;
+import com.ericsender.android_nanodegree.popmovie.utils.Utils;
 
 public class MainActivity extends ActionBarActivity {
 
