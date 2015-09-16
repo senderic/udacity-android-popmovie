@@ -17,7 +17,7 @@
     <string name="tmdb_arg_highestrating">vote_average.desc</string>
     <string name="tmdb_arg_favorite">_internal_favs</string>
 
-    <string name="const_trailer">Trailers</string>
+    <string name="trailers_title">Trailers</string>
     <string name="movie_details_frag_title">Movie Details</string>
     <string name="action_delete_db">Erase Database (Debug Only)</string>
     <string name="movie_obj_key">movieObj</string>
@@ -25,5 +25,8 @@
     <string name="GRIDVIEW_LIST_KEY">gridview_list_key</string>
     <string name="is_already_fav">Favorite!</string>
     <string name="is_no_longer_fav">No Longer Fav</string>
+    <string name="trailer_title_iter">Trailer %1$d - %2$s</string>
+    <string name="basic_trailer_name">Trailer</string>
+    <string name="youtube_url">http://www.youtube.com/watch?v=%1$s</string>
 
 </resources>

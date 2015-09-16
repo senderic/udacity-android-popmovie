@@ -25,7 +25,7 @@ public class GridViewAdapter extends ArrayAdapter<MovieGridObj> {
     private final Context mContext;
     private static final String LOG_TAG = GridViewAdapter.class.getSimpleName();
     private static final AtomicInteger count = new AtomicInteger();
-    private final int mResource;
+    private final int movieCellResource;
     private final String sImgUrl;
 
     public String getThumbUrl() {
@@ -44,53 +44,45 @@ public class GridViewAdapter extends ArrayAdapter<MovieGridObj> {
         // mMovieGrid.setAdapter(this);
     }
 
-    public GridViewAdapter(Context context, int resource, List<MovieGridObj> movies, GridView mMovieGrid) {
-        super(context, resource, movies);
+    public GridViewAdapter(Context context, int movieCellResource, List<MovieGridObj> movies, GridView mMovieGrid) {
+        super(context, movieCellResource, movies);
         mContext = context;
         mGridData = movies;
-        mResource = resource;
+        this.movieCellResource = movieCellResource;
         this.mMovieGrid = mMovieGrid;
         sImgUrl = context.getString(R.string.tmdb_image_base_url);
         sImgSize = context.getString(R.string.tmdb_image_size);
     }
 
     public int getCount() {
-        return mGridData.size() > 0 ? mGridData.size() : 20;
+        return mGridData.size();
     }
 
     public MovieGridObj getItem(int position) {
         return mGridData.get(position);
     }
 
-//    public long getItemId(int position) {
-//        return mMovieGrid.getItemIdAtPosition(position);
-//    }
 
     // create a new ImageView for each item referenced by the Adapter
-    public View getView(int position, View row, ViewGroup parent) {
-        MovieGridObj movie = null;
-        try {
-            movie = getItem(position);
-        } catch (IndexOutOfBoundsException e) {
-        }
+    public View getView(int position, View cell, ViewGroup parent) {
+        final MovieGridObj movie = getItem(position);
         ViewHolder holder;
-        ImageView imageView;
-        if (row == null || !((ViewHolder) row.getTag()).isSet) {
-            row = ((Activity) mContext).getLayoutInflater().inflate(mResource, parent, false);
+        if (cell == null || !((ViewHolder) cell.getTag()).isSet) {
+            cell = ((Activity) mContext).getLayoutInflater().inflate(movieCellResource, parent, false);
             holder = new ViewHolder();
-            holder.imageView = (ImageView) row.findViewById(R.id.grid_item_image);
+            holder.imageView = (ImageView) cell.findViewById(R.id.grid_item_image);
             if (Utils.isTablet(mContext)) holder.imageView.setAdjustViewBounds(true);
             holder.isSet = movie != null;
-            row.setTag(holder);
+            cell.setTag(holder);
             // Log.d(getClass().getSimpleName(), holder.isSet ? "Setting row for " + movie.title : "Setting row for null");
         } else {
-            holder = (ViewHolder) row.getTag();
+            holder = (ViewHolder) cell.getTag();
         }
 
         // TODO may need to handle null pointer exceptions here (or in fragment) if the server returns nothing.
         if (movie == null || movie.poster_path == null) {
             Log.e(LOG_TAG, "null movie value. either returned nothing from server or db is empty");
-            return row;
+            return cell;
         }
         String load = holder.isSet ? String.format(sImgUrl, sImgSize, movie.poster_path) : "null";
         String title = holder.isSet ? movie.title : "null";
@@ -108,7 +100,7 @@ public class GridViewAdapter extends ArrayAdapter<MovieGridObj> {
         // imageView.setImageResource(mThumbIds[position]);
         // return (ImageView) parent.view
 
-        return row;
+        return cell;
     }
 
     static class ViewHolder {

@@ -17,6 +17,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -28,8 +29,10 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.ericsender.android_nanodegree.popmovie.Application.PopMoviesApplication;
 import com.ericsender.android_nanodegree.popmovie.R;
+import com.ericsender.android_nanodegree.popmovie.adapters.TrailerListViewAdapter;
 import com.ericsender.android_nanodegree.popmovie.data.MovieContract;
 import com.ericsender.android_nanodegree.popmovie.parcelable.MovieGridObj;
+import com.ericsender.android_nanodegree.popmovie.parcelable.TrailerListObj;
 import com.ericsender.android_nanodegree.popmovie.utils.Utils;
 import com.google.gson.internal.LinkedTreeMap;
 import com.squareup.picasso.Picasso;
@@ -39,6 +42,8 @@ import org.json.JSONObject;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.ericsender.android_nanodegree.popmovie.Application.STATE.REFRESH_GRID;
@@ -71,6 +76,10 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     private String sImgSize;
     private String sNoLongerFav;
     private String sImgUrl;
+    private String sTrailerTitle;
+    private ListView mTrailerListView;
+    private List<TrailerListObj> mTrailerList = new ArrayList<>();
+    private TrailerListViewAdapter mTrailerListViewAdapter;
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
@@ -100,6 +109,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         sImgUrl = getString(R.string.tmdb_image_base_url);
         sImgSize = getString(R.string.tmdb_image_size);
         sNoLongerFav = getString(R.string.is_no_longer_fav);
+        sTrailerTitle = getString(R.string.trailer_title_iter);
     }
 
     @Override
@@ -108,6 +118,25 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         mIsLoadFinished = false;
         mRootView = inflater.inflate(R.layout.fragment_movie_details, container, false);
         mProgress = (FrameLayout) mRootView.findViewById(R.id.movie_details_progress_bar);
+        imageView = (ImageView) mRootView.findViewById(R.id.movie_thumb);
+        mDurationTextView = (TextView) mRootView.findViewById(R.id.movie_duration);
+        mDurationProgress = (ProgressBar) mRootView.findViewById(R.id.movie_duration_progressBar);
+        titleTextView = (TextView) mRootView.findViewById(R.id.movie_title);
+        yearTextView = (TextView) mRootView.findViewById(R.id.movie_year);
+        ratingTextView = (TextView) mRootView.findViewById(R.id.movie_rating);
+        overviewTextView = (TextView) mRootView.findViewById(R.id.movie_overview);
+        mTrailerListViewAdapter = new TrailerListViewAdapter(getActivity(), R.layout.trailer_cell, mTrailerList, mTrailerListView);
+        mTrailerListView = (ListView) mRootView.findViewById(R.id.list_trailers);
+        mTrailerListView.setAdapter(mTrailerListViewAdapter);
+        mFavButton = (Button) mRootView.findViewById(R.id.button_mark_fav);
+        mFavButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                handleFavoriteClick(v);
+            }
+        });
+
+        if (Utils.isTablet(getActivity())) imageView.setAdjustViewBounds(true);
         // runFragment();
         if (savedInstanceState != null) {
             mMovieObj = (MovieGridObj) savedInstanceState.getParcelable(sMovieObjKey);
@@ -132,23 +161,6 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
 
     private void handleFirst() {
         mMovieObj = getMovieObjFromIntent();
-        imageView = (ImageView) mRootView.findViewById(R.id.movie_thumb);
-        mDurationTextView = (TextView) mRootView.findViewById(R.id.movie_duration);
-        mDurationProgress = (ProgressBar) mRootView.findViewById(R.id.movie_duration_progressBar);
-        titleTextView = (TextView) mRootView.findViewById(R.id.movie_title);
-        yearTextView = (TextView) mRootView.findViewById(R.id.movie_year);
-        ratingTextView = (TextView) mRootView.findViewById(R.id.movie_rating);
-        overviewTextView = (TextView) mRootView.findViewById(R.id.movie_overview);
-
-        mFavButton = (Button) mRootView.findViewById(R.id.button_mark_fav);
-        mFavButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                handleFavoriteClick(v);
-            }
-        });
-
-        if (Utils.isTablet(getActivity())) imageView.setAdjustViewBounds(true);
     }
 
     private MovieGridObj getMovieObjFromIntent() {
@@ -158,13 +170,17 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
 
     private boolean handleLast() {
         // Picasso *should* be caching these poster images, so this call should not require network access
-        // TODO: (bonus if time) confirm picasso is using a cache to get this data by studying network logs?
-        Picasso.with(getActivity().getApplicationContext()).load(
-                String.format(sImgUrl, sImgSize, mMovieObj.poster_path))
+
+        // Picasso.with(getActivity().getApplicationContext()).setIndicatorsEnabled(true);
+        // Picasso.with(getActivity().getApplicationContext()).setLoggingEnabled(true);
+
+        Picasso.with(getActivity().getApplicationContext())
+                .load(String.format(sImgUrl, sImgSize, mMovieObj.poster_path))
                 .placeholder(R.drawable.blank)
                 .error(R.drawable.blank)
                 .resize(366, 516)
                 .into(imageView);
+
         titleTextView.setText(mMovieObj.title);
         yearTextView.setText(mMovieObj.release_date.substring(0, 4));
         overviewTextView.setText(mMovieObj.overview);
@@ -246,9 +262,17 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
                         Log.d("DetailsActivity", "Video Response received.");
                         LinkedTreeMap<String, Object> map = Utils.getGson().fromJson(response.toString(), LinkedTreeMap.class);
                         try {
-                            String rt = map.get("runtime").toString().trim();
-//                            mDurationProgress.setVisibility(View.GONE);
-//                            mDurationTextView.setText(Double.valueOf(rt).intValue() + " mins");
+                            List<LinkedTreeMap<String, String>> results = (ArrayList<LinkedTreeMap<String, String>>) map.get("results");
+                            int count = 0;
+                            List<TrailerListObj> th = new ArrayList<>(results.size());
+                            for (LinkedTreeMap<String, String> r : results) {
+                                String title = String.format(sTrailerTitle, ++count, r.get("name"));
+                                String youtube_key = r.get("key");
+                                th.add(new TrailerListObj(youtube_key, title));
+                            }
+                            mTrailerList.clear();
+                            mTrailerList = th;
+                            mTrailerListViewAdapter.setRowData(mTrailerList);
                         } catch (NumberFormatException | NullPointerException x) {
                         }
                     }
@@ -365,4 +389,5 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     public void onLoaderReset(Loader<Cursor> loader) {
 
     }
+
 }

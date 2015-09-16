@@ -251,7 +251,7 @@ public class MovieListFragment extends Fragment {
                 if (isFav && rows == 0) {
                     Toast.makeText(getActivity(), "No Favorites in Database. Please select a different sort!", Toast.LENGTH_SHORT).show();
                     mMovieList.clear();
-                    registeringData(sort);
+                    mGridViewAdapter.setGridData(mMovieList);
                     return;
                 }
             }
@@ -318,7 +318,7 @@ public class MovieListFragment extends Fragment {
         }
         mMovieList.clear();
         mMovieList = lMaps;
-        registeringData(sort);
+        mGridViewAdapter.setGridData(mMovieList);
     }
 
     private void getLiveData(final String sort) {
@@ -368,10 +368,6 @@ public class MovieListFragment extends Fragment {
     private void handleMap(LinkedTreeMap<String, Serializable> map, String sort) {
         mMovieList = Utils.covertMapToMovieObjList(map);
         Log.d(getClass().getSimpleName(), "Received a set of movies. Registering them.");
-        registeringData(sort);
-    }
-
-    private void registeringData(String sort) {
         mGridViewAdapter.setGridData(mMovieList);
     }
 }
