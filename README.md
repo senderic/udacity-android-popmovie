@@ -6,7 +6,7 @@ ____
 License
 ----
 
-None
+MIT
 
 Author
 ----

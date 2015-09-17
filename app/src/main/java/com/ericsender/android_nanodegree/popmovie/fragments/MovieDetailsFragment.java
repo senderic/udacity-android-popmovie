@@ -29,9 +29,11 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.ericsender.android_nanodegree.popmovie.Application.PopMoviesApplication;
 import com.ericsender.android_nanodegree.popmovie.R;
+import com.ericsender.android_nanodegree.popmovie.adapters.ReviewListViewAdapter;
 import com.ericsender.android_nanodegree.popmovie.adapters.TrailerListViewAdapter;
 import com.ericsender.android_nanodegree.popmovie.data.MovieContract;
 import com.ericsender.android_nanodegree.popmovie.parcelable.MovieGridObj;
+import com.ericsender.android_nanodegree.popmovie.parcelable.ReviewListObj;
 import com.ericsender.android_nanodegree.popmovie.parcelable.TrailerListObj;
 import com.ericsender.android_nanodegree.popmovie.utils.Utils;
 import com.google.gson.internal.LinkedTreeMap;
@@ -78,8 +80,11 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     private String sImgUrl;
     private String sTrailerTitle;
     private ListView mTrailerListView;
+    private ListView mReviewListView;
     private List<TrailerListObj> mTrailerList = new ArrayList<>();
+    private List<ReviewListObj> mReviewList = new ArrayList<>();
     private TrailerListViewAdapter mTrailerListViewAdapter;
+    private ReviewListViewAdapter mReviewListViewAdapter;
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
@@ -306,9 +311,18 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
                         Log.d("DetailsActivity", "Review Response received.");
                         LinkedTreeMap<String, Object> map = Utils.getGson().fromJson(response.toString(), LinkedTreeMap.class);
                         try {
-                            String rt = map.get("runtime").toString().trim();
-//                            mDurationProgress.setVisibility(View.GONE);
-//                            mDurationTextView.setText(Double.valueOf(rt).intValue() + " mins");
+                            List<LinkedTreeMap<String, String>> results = (ArrayList<LinkedTreeMap<String, String>>) map.get("results");
+                            int count = 0;
+                            List<ReviewListObj> rev = new ArrayList<>(results.size());
+                            for (LinkedTreeMap<String, String> r : results) {
+                                String content = r.get("content");
+                                String author = r.get("author");
+                                String url = r.get("url");
+                                rev.add(new ReviewListObj(content, author, url));
+                            }
+                            mReviewList.clear();
+                            mReviewList = rev;
+                            mReviewListViewAdapter.setRowData(mReviewList);
                         } catch (NumberFormatException | NullPointerException x) {
                         }
                     }
