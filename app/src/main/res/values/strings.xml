@@ -28,5 +28,7 @@
     <string name="trailer_title_iter">Trailer %1$d - %2$s</string>
     <string name="basic_trailer_name">Trailer</string>
     <string name="youtube_url">http://www.youtube.com/watch?v=%1$s</string>
+    <string name="youtube_img">http://img.youtube.com/vi/%1$s/0.jpg</string>
+    <string name="reviews_title">Reviews</string>
 
 </resources>

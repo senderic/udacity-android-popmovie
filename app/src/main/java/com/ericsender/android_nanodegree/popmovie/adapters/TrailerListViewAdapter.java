@@ -13,6 +13,7 @@ import android.widget.TextView;
 
 import com.ericsender.android_nanodegree.popmovie.R;
 import com.ericsender.android_nanodegree.popmovie.parcelable.TrailerListObj;
+import com.squareup.picasso.Picasso;
 
 import java.util.List;
 
@@ -28,6 +29,9 @@ public class TrailerListViewAdapter extends ArrayAdapter<TrailerListObj> {
     private final String strYouTubeUrl;
     private List<TrailerListObj> mRowObjs;
     private final String strTrailerTitleItr;
+    private final String strYouTubeImg;
+//    private final int thumb_w;
+//    private final int thumb_h;
 
 
     public TrailerListViewAdapter(Context context, int trailerCellRes, List<TrailerListObj> rowObjs, ListView trailerListView) {
@@ -38,6 +42,14 @@ public class TrailerListViewAdapter extends ArrayAdapter<TrailerListObj> {
         mTrailerListView = trailerListView;
         strTrailerTitleItr = mContext.getString(R.string.trailer_title_iter);
         strYouTubeUrl = mContext.getString(R.string.youtube_url);
+        strYouTubeImg = mContext.getString(R.string.youtube_img);
+        // Drawable playIcon = mContext.getDrawable(android.R.drawable.ic_media_play);
+//        BitmapFactory.Options o = new BitmapFactory.Options();
+//        o.inTargetDensity = DisplayMetrics.DENSITY_DEFAULT;
+//        Bitmap bmp = BitmapFactory.decodeResource(mContext.getResources(),
+//                android.R.drawable.ic_media_play, o);
+//        thumb_w = bmp.getWidth();
+//        thumb_h = bmp.getHeight();
     }
 
     public void setRowData(List<TrailerListObj> mRowObjs) {
@@ -56,9 +68,17 @@ public class TrailerListViewAdapter extends ArrayAdapter<TrailerListObj> {
             row = ((Activity) mContext).getLayoutInflater().inflate(mTrailerCellRes, parent, false);
             holder = new ViewHolder();
             holder.playIcon = (ImageView) row.findViewById(R.id.trailer_play);
+            holder.youTubeThump = (ImageView) row.findViewById(R.id.youtube_thumb);
             holder.trailerTitle = (TextView) row.findViewById(R.id.trailer_name);
             holder.trailerTitle.setText(trailer.title);
             holder.isSet = trailer != null;
+
+            Picasso.with(mContext.getApplicationContext())
+                    .load(String.format(strYouTubeImg, trailer.youtube_key))
+                    .placeholder(android.R.drawable.ic_media_next)
+                    .fit()
+                    .into(holder.youTubeThump);
+
             row.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -67,9 +87,9 @@ public class TrailerListViewAdapter extends ArrayAdapter<TrailerListObj> {
                 }
             });
             row.setTag(holder);
-        } else {
+        } else
             holder = (ViewHolder) row.getTag();
-        }
+
 
         return row;
     }
@@ -89,5 +109,6 @@ public class TrailerListViewAdapter extends ArrayAdapter<TrailerListObj> {
         boolean isSet;
         TextView trailerTitle;
         ImageView playIcon;
+        ImageView youTubeThump;
     }
 }

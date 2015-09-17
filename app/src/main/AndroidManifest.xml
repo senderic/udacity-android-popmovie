@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.ericsender.android_nanodegree.popmovie" >
+    package="com.ericsender.android_nanodegree.popmovie">
 
     <uses-permission android:name="android.permission.INTERNET" />
 
@@ -9,10 +9,10 @@
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@style/AppTheme" >
+        android:theme="@style/AppTheme">
         <activity
             android:name=".activities.MainActivity"
-            android:label="@string/title_activity_main" >
+            android:label="@string/title_activity_main">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -30,8 +30,7 @@
             android:name=".data.MovieProvider"
             android:authorities="com.ericsender.android_nanodegree.popmovie"
             android:enabled="true"
-            android:exported="true" >
-        </provider>
+            android:exported="true"></provider>
     </application>
 
 </manifest>

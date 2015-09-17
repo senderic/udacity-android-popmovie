@@ -42,8 +42,9 @@
             android:typeface="sans" />
 
         <RelativeLayout
+            android:id="@+id/layout_1"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="350dp"
             android:layout_below="@+id/movie_title">
 
             <ScrollView
@@ -55,7 +56,6 @@
                 <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent">
-
 
                     <ImageView
                         android:id="@+id/movie_thumb"
@@ -128,40 +128,39 @@
                         android:layout_alignParentStart="true"
                         android:layout_below="@+id/movie_thumb"
                         android:layout_marginTop="10dp"
-                        android:background="@drawable/textlines"
                         android:paddingLeft="30dp"
                         android:paddingRight="30dp"
                         android:text="Lorum ipson is cool! Lorum ipson is cool! a b c d"
                         android:textAppearance="?android:attr/textAppearanceMedium" />
-
-
                 </RelativeLayout>
             </ScrollView>
 
             <TextView
                 android:id="@+id/const_trailers"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentEnd="true"
-                android:layout_alignParentLeft="true"
-                android:layout_alignParentRight="true"
-                android:layout_alignParentStart="true"
+                style="@style/movie_detail_segment_title"
                 android:layout_below="@+id/movie_details_top_scroll"
-                android:paddingLeft="30dp"
-                android:paddingRight="30dp"
-                android:text="@string/trailers_title"
-                android:textAppearance="?android:attr/textAppearanceMedium" />
+                android:text="@string/trailers_title" />
 
             <ListView
                 android:id="@+id/list_trailers"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_below="@+id/const_trailers"
-                android:layout_centerHorizontal="true"
-                android:descendantFocusability="afterDescendants"
-                android:divider="@android:color/darker_gray"
-                android:dividerHeight="1dp"
-                android:listSelector="@null" />
+                style="@style/movie_detail_list"
+                android:layout_below="@+id/const_trailers" />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@+id/layout_1">
+
+            <TextView
+                android:id="@+id/textView"
+                style="@style/movie_detail_segment_title"
+                android:text="@string/reviews_title" />
+
+            <ListView
+                android:id="@+id/list_reviews"
+                style="@style/movie_detail_list"
+                android:layout_below="@+id/textView" />
         </RelativeLayout>
 
     </RelativeLayout>

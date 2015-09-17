@@ -3,16 +3,27 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="horizontal">
+
     <ImageView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
         android:id="@+id/trailer_play"
-        android:src="@android:drawable/ic_media_play" />
-    <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/basic_trailer_name"
+        android:src="@android:drawable/ic_media_play" />
+
+    <TextView
         android:id="@+id/trailer_name"
-        android:padding="5dp" />
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="5dp"
+        android:text="@string/basic_trailer_name"
+        android:textAppearance="?android:attr/textAppearanceListItem" />
+
+    <ImageView
+        android:id="@+id/youtube_thumb"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        android:baselineAlignBottom="false"
+        android:src="@android:drawable/ic_media_next" />
 
 </LinearLayout>
