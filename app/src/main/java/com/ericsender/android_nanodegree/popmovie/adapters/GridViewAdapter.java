@@ -62,7 +62,6 @@ public class GridViewAdapter extends ArrayAdapter<MovieGridObj> {
         return mGridData.get(position);
     }
 
-
     // create a new ImageView for each item referenced by the Adapter
     public View getView(int position, View cell, ViewGroup parent) {
         final MovieGridObj movie = getItem(position);

@@ -27,7 +27,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
-import com.ericsender.android_nanodegree.popmovie.Application.PopMoviesApplication;
+import com.ericsender.android_nanodegree.popmovie.application.PopMoviesApplication;
 import com.ericsender.android_nanodegree.popmovie.R;
 import com.ericsender.android_nanodegree.popmovie.activities.DetailsActivity;
 import com.ericsender.android_nanodegree.popmovie.adapters.GridViewAdapter;
@@ -50,7 +50,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.ericsender.android_nanodegree.popmovie.Application.STATE.REFRESH_GRID;
+import static com.ericsender.android_nanodegree.popmovie.application.STATE.REFRESH_GRID;
 
 /**
  * A placeholder fragment containing a simple view.

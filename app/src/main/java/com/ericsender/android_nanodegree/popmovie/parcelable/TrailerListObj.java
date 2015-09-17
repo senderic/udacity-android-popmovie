@@ -12,7 +12,28 @@ public class TrailerListObj implements Parcelable, Serializable {
     public final String youtube_key;
     public final String title;
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        TrailerListObj that = (TrailerListObj) o;
+
+        if (youtube_key != null ? !youtube_key.equals(that.youtube_key) : that.youtube_key != null)
+            return false;
+        return !(title != null ? !title.equals(that.title) : that.title != null);
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = youtube_key != null ? youtube_key.hashCode() : 0;
+        result = 31 * result + (title != null ? title.hashCode() : 0);
+        return result;
+    }
+
     protected TrailerListObj(Parcel in) {
+
         youtube_key = in.readString();
         title = in.readString();
     }

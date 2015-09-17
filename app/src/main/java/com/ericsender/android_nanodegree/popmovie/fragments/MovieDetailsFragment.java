@@ -19,6 +19,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.android.volley.Request;
@@ -27,10 +28,10 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
-import com.ericsender.android_nanodegree.popmovie.Application.PopMoviesApplication;
 import com.ericsender.android_nanodegree.popmovie.R;
 import com.ericsender.android_nanodegree.popmovie.adapters.ReviewListViewAdapter;
 import com.ericsender.android_nanodegree.popmovie.adapters.TrailerListViewAdapter;
+import com.ericsender.android_nanodegree.popmovie.application.PopMoviesApplication;
 import com.ericsender.android_nanodegree.popmovie.data.MovieContract;
 import com.ericsender.android_nanodegree.popmovie.parcelable.MovieGridObj;
 import com.ericsender.android_nanodegree.popmovie.parcelable.ReviewListObj;
@@ -45,10 +46,12 @@ import org.json.JSONObject;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.ericsender.android_nanodegree.popmovie.Application.STATE.REFRESH_GRID;
+import static com.ericsender.android_nanodegree.popmovie.application.STATE.REFRESH_GRID;
 
 public class MovieDetailsFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
     private static final String LOG_TAG = MovieDetailsFragment.class.getSimpleName();
@@ -85,6 +88,12 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     private List<ReviewListObj> mReviewList = new ArrayList<>();
     private TrailerListViewAdapter mTrailerListViewAdapter;
     private ReviewListViewAdapter mReviewListViewAdapter;
+    private RelativeLayout mMovieDetailsAsyncView;
+    private RelativeLayout mMovieDetailsBodyView;
+    private int mMovieDetailsBodyHeight;
+    private int mMovieDetailsBodyWidth;
+    private final AtomicBoolean isMovieDetailsBodyLayoutSet = new AtomicBoolean();
+    private ViewGroup.LayoutParams mMovieDetailsBodyLayout;
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
@@ -130,9 +139,20 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         yearTextView = (TextView) mRootView.findViewById(R.id.movie_year);
         ratingTextView = (TextView) mRootView.findViewById(R.id.movie_rating);
         overviewTextView = (TextView) mRootView.findViewById(R.id.movie_overview);
-        mTrailerListViewAdapter = new TrailerListViewAdapter(getActivity(), R.layout.trailer_cell, mTrailerList, mTrailerListView);
         mTrailerListView = (ListView) mRootView.findViewById(R.id.list_trailers);
+        mReviewListView = (ListView) mRootView.findViewById(R.id.list_reviews);
+        mTrailerListViewAdapter = new TrailerListViewAdapter(getActivity(), R.layout.trailer_cell, mTrailerList, mTrailerListView);
+        mReviewListViewAdapter = new ReviewListViewAdapter(getActivity(), R.layout.review_cell, mReviewList, mReviewListView);
         mTrailerListView.setAdapter(mTrailerListViewAdapter);
+        mReviewListView.setAdapter(mReviewListViewAdapter);
+        // TODO: when code is more hardened, maybe move this to the XML?
+        mMovieDetailsAsyncView = (RelativeLayout) mRootView.findViewById(R.id.movie_details_async_section);
+        mMovieDetailsBodyView = (RelativeLayout) mRootView.findViewById(R.id.movie_details_body);
+        mMovieDetailsAsyncView.setVisibility(View.GONE);
+        mMovieDetailsBodyView.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
+        mMovieDetailsBodyHeight = mMovieDetailsBodyView.getLayoutParams().width;
+        mMovieDetailsBodyWidth = RelativeLayout.LayoutParams.MATCH_PARENT;
+        mMovieDetailsBodyLayout = new RelativeLayout.LayoutParams(mMovieDetailsBodyWidth, mMovieDetailsBodyHeight);
         mFavButton = (Button) mRootView.findViewById(R.id.button_mark_fav);
         mFavButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -269,15 +289,20 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
                         try {
                             List<LinkedTreeMap<String, String>> results = (ArrayList<LinkedTreeMap<String, String>>) map.get("results");
                             int count = 0;
-                            List<TrailerListObj> th = new ArrayList<>(results.size());
+                            Set<TrailerListObj> th = new HashSet<>(results.size());
                             for (LinkedTreeMap<String, String> r : results) {
                                 String title = String.format(sTrailerTitle, ++count, r.get("name"));
                                 String youtube_key = r.get("key");
                                 th.add(new TrailerListObj(youtube_key, title));
                             }
                             mTrailerList.clear();
-                            mTrailerList = th;
-                            mTrailerListViewAdapter.setRowData(mTrailerList);
+                            mTrailerList.addAll(th);
+                            mTrailerListViewAdapter.setData(mTrailerList);
+                            if (!mTrailerList.isEmpty() && !isMovieDetailsBodyLayoutSet.get()) {
+                                mMovieDetailsAsyncView.setVisibility(View.VISIBLE);
+                                mMovieDetailsBodyView.setLayoutParams(mMovieDetailsBodyLayout);
+                                isMovieDetailsBodyLayoutSet.set(true);
+                            }
                         } catch (NumberFormatException | NullPointerException x) {
                         }
                     }
@@ -312,8 +337,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
                         LinkedTreeMap<String, Object> map = Utils.getGson().fromJson(response.toString(), LinkedTreeMap.class);
                         try {
                             List<LinkedTreeMap<String, String>> results = (ArrayList<LinkedTreeMap<String, String>>) map.get("results");
-                            int count = 0;
-                            List<ReviewListObj> rev = new ArrayList<>(results.size());
+                            Set<ReviewListObj> rev = new HashSet<>(results.size());
                             for (LinkedTreeMap<String, String> r : results) {
                                 String content = r.get("content");
                                 String author = r.get("author");
@@ -321,8 +345,13 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
                                 rev.add(new ReviewListObj(content, author, url));
                             }
                             mReviewList.clear();
-                            mReviewList = rev;
-                            mReviewListViewAdapter.setRowData(mReviewList);
+                            mReviewList.addAll(rev);
+                            mReviewListViewAdapter.setData(mReviewList);
+                            if (!mReviewList.isEmpty() && !isMovieDetailsBodyLayoutSet.get()) {
+                                mMovieDetailsAsyncView.setVisibility(View.VISIBLE);
+                                mMovieDetailsBodyView.setLayoutParams(mMovieDetailsBodyLayout);
+                                isMovieDetailsBodyLayoutSet.set(true);
+                            }
                         } catch (NumberFormatException | NullPointerException x) {
                         }
                     }

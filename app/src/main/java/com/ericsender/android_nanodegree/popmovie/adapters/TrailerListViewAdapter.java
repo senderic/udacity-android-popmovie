@@ -52,9 +52,16 @@ public class TrailerListViewAdapter extends ArrayAdapter<TrailerListObj> {
 //        thumb_h = bmp.getHeight();
     }
 
-    public void setRowData(List<TrailerListObj> mRowObjs) {
-        this.mRowObjs = mRowObjs;
+    public void setData(List<TrailerListObj> data) {
+        int v = data.isEmpty() ? View.GONE : View.VISIBLE;
+        mTrailerListView.setVisibility(v);
+        this.mRowObjs = data;
         notifyDataSetChanged();
+    }
+
+    @Override
+    public int getPosition(TrailerListObj item) {
+        return mRowObjs.indexOf(item);
     }
 
     @Override
@@ -105,7 +112,7 @@ public class TrailerListViewAdapter extends ArrayAdapter<TrailerListObj> {
         return mRowObjs.get(position);
     }
 
-    private class ViewHolder {
+    private static class ViewHolder {
         boolean isSet;
         TextView trailerTitle;
         ImageView playIcon;

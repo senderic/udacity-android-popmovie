@@ -14,6 +14,27 @@ public class ReviewListObj implements Parcelable, Serializable {
     public final String author;
     public final String url;
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ReviewListObj that = (ReviewListObj) o;
+
+        if (content != null ? !content.equals(that.content) : that.content != null) return false;
+        if (author != null ? !author.equals(that.author) : that.author != null) return false;
+        return !(url != null ? !url.equals(that.url) : that.url != null);
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = content != null ? content.hashCode() : 0;
+        result = 31 * result + (author != null ? author.hashCode() : 0);
+        result = 31 * result + (url != null ? url.hashCode() : 0);
+        return result;
+    }
+
     public ReviewListObj(String review, String author, String url) {
         this.content = review;
         this.author = author;
