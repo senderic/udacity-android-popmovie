@@ -14,9 +14,11 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
@@ -88,12 +90,20 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     private List<ReviewListObj> mReviewList = new ArrayList<>();
     private TrailerListViewAdapter mTrailerListViewAdapter;
     private ReviewListViewAdapter mReviewListViewAdapter;
-    private RelativeLayout mMovieDetailsAsyncView;
+    private LinearLayout mMovieDetailsAsyncView;
     private RelativeLayout mMovieDetailsBodyView;
     private int mMovieDetailsBodyHeight;
     private int mMovieDetailsBodyWidth;
-    private final AtomicBoolean isMovieDetailsBodyLayoutSet = new AtomicBoolean();
-    private ViewGroup.LayoutParams mMovieDetailsBodyLayout;
+    private RelativeLayout.LayoutParams mMovieDetailsInitialBodyLayout;
+    private RelativeLayout mMovieDetailsTrailerView;
+    private RelativeLayout mMovieDetailsReviewView;
+    private final AtomicBoolean isMovieDetailsAsycSectionNeeded = new AtomicBoolean();
+    private final AtomicBoolean isMovieDetailTrailersNeeded = new AtomicBoolean();
+    private final AtomicBoolean isMovieDetailReviewsNeeded = new AtomicBoolean();
+    private int mMovieDetailsReviewViewWidth;
+    private int mMovieDetailsReviewViewHeight;
+    private int mMovieDetailsTrailerViewWidth;
+    private int mMovieDetailsTrailerViewHeight;
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
@@ -135,7 +145,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         imageView = (ImageView) mRootView.findViewById(R.id.movie_thumb);
         mDurationTextView = (TextView) mRootView.findViewById(R.id.movie_duration);
         mDurationProgress = (ProgressBar) mRootView.findViewById(R.id.movie_duration_progressBar);
-        titleTextView = (TextView) mRootView.findViewById(R.id.movie_title);
+        titleTextView = (TextView) mRootView.findViewById(R.id.movie_details_top_title);
         yearTextView = (TextView) mRootView.findViewById(R.id.movie_year);
         ratingTextView = (TextView) mRootView.findViewById(R.id.movie_rating);
         overviewTextView = (TextView) mRootView.findViewById(R.id.movie_overview);
@@ -146,13 +156,25 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         mTrailerListView.setAdapter(mTrailerListViewAdapter);
         mReviewListView.setAdapter(mReviewListViewAdapter);
         // TODO: when code is more hardened, maybe move this to the XML?
-        mMovieDetailsAsyncView = (RelativeLayout) mRootView.findViewById(R.id.movie_details_async_section);
+        mMovieDetailsAsyncView = (LinearLayout) mRootView.findViewById(R.id.movie_details_async_section);
         mMovieDetailsBodyView = (RelativeLayout) mRootView.findViewById(R.id.movie_details_body);
+        mMovieDetailsReviewView = (RelativeLayout) mRootView.findViewById(R.id.movie_details_review_section);
+        mMovieDetailsTrailerView = (RelativeLayout) mRootView.findViewById(R.id.movie_details_trailer_section);
         mMovieDetailsAsyncView.setVisibility(View.GONE);
-        mMovieDetailsBodyView.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
-        mMovieDetailsBodyHeight = mMovieDetailsBodyView.getLayoutParams().width;
-        mMovieDetailsBodyWidth = RelativeLayout.LayoutParams.MATCH_PARENT;
-        mMovieDetailsBodyLayout = new RelativeLayout.LayoutParams(mMovieDetailsBodyWidth, mMovieDetailsBodyHeight);
+        mMovieDetailsTrailerView.setVisibility(View.GONE);
+        mMovieDetailsReviewView.setVisibility(View.GONE);
+        mMovieDetailsBodyView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                mMovieDetailsBodyWidth = RelativeLayout.LayoutParams.MATCH_PARENT;
+                mMovieDetailsBodyHeight = mMovieDetailsBodyView.getLayoutParams().height;
+                if (mMovieDetailsBodyHeight != RelativeLayout.LayoutParams.MATCH_PARENT && !isMovieDetailsAsycSectionNeeded.get()) {
+                    mMovieDetailsInitialBodyLayout = new RelativeLayout.LayoutParams(mMovieDetailsBodyWidth, mMovieDetailsBodyHeight);
+                    mMovieDetailsBodyView.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
+                }
+            }
+        });
+
         mFavButton = (Button) mRootView.findViewById(R.id.button_mark_fav);
         mFavButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -298,11 +320,9 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
                             mTrailerList.clear();
                             mTrailerList.addAll(th);
                             mTrailerListViewAdapter.setData(mTrailerList);
-                            if (!mTrailerList.isEmpty() && !isMovieDetailsBodyLayoutSet.get()) {
-                                mMovieDetailsAsyncView.setVisibility(View.VISIBLE);
-                                mMovieDetailsBodyView.setLayoutParams(mMovieDetailsBodyLayout);
-                                isMovieDetailsBodyLayoutSet.set(true);
-                            }
+                            Section section = Section.TRAILER;
+                            if (!mTrailerList.isEmpty() && !isMovieDetailTrailersNeeded.get())
+                                showMovieDetailsAsyncView(section);
                         } catch (NumberFormatException | NullPointerException x) {
                         }
                     }
@@ -347,11 +367,9 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
                             mReviewList.clear();
                             mReviewList.addAll(rev);
                             mReviewListViewAdapter.setData(mReviewList);
-                            if (!mReviewList.isEmpty() && !isMovieDetailsBodyLayoutSet.get()) {
-                                mMovieDetailsAsyncView.setVisibility(View.VISIBLE);
-                                mMovieDetailsBodyView.setLayoutParams(mMovieDetailsBodyLayout);
-                                isMovieDetailsBodyLayoutSet.set(true);
-                            }
+                            Section section = Section.REVIEW;
+                            if (!mReviewList.isEmpty() && !isMovieDetailReviewsNeeded.get())
+                                showMovieDetailsAsyncView(section);
                         } catch (NumberFormatException | NullPointerException x) {
                         }
                     }
@@ -364,6 +382,57 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
                     }
                 });
         return jsObjRequest;
+    }
+
+    private synchronized void showMovieDetailsAsyncView(Section section) {
+        if (!isMovieDetailsAsycSectionNeeded.get()) {
+            mMovieDetailsAsyncView.setVisibility(View.VISIBLE);
+          // mMovieDetailsInitialBodyLayout.addRule(RelativeLayout.BELOW, R.id.movie_details_top_title);
+            mMovieDetailsBodyView.setLayoutParams(mMovieDetailsInitialBodyLayout);
+            isMovieDetailsAsycSectionNeeded.set(true);
+        }
+        RelativeLayout.LayoutParams p;
+        switch (section) {
+            case REVIEW:
+                mMovieDetailsReviewView.setVisibility(View.VISIBLE);
+                p = (RelativeLayout.LayoutParams) mMovieDetailsReviewView.getLayoutParams();
+                if (!isMovieDetailTrailersNeeded.get()) {
+                    mMovieDetailsReviewViewWidth = p.width;
+                    mMovieDetailsReviewViewHeight = p.height;
+                    p.width = RelativeLayout.LayoutParams.MATCH_PARENT;
+                    p.height = RelativeLayout.LayoutParams.MATCH_PARENT;
+                //    p.addRule(RelativeLayout.BELOW, R.id.movie_details_body);
+                } else {
+                    RelativeLayout.LayoutParams p2 = (RelativeLayout.LayoutParams) mMovieDetailsTrailerView.getLayoutParams();
+                    p2.width = mMovieDetailsTrailerViewWidth;
+                    p2.height = mMovieDetailsTrailerViewHeight;
+                //    p2.addRule(RelativeLayout.BELOW, R.id.movie_details_trailer_section);
+                    mMovieDetailsTrailerView.setLayoutParams(p2);
+             //       p.addRule(RelativeLayout.BELOW, R.id.movie_details_trailer_section);
+                }
+                mMovieDetailsReviewView.setLayoutParams(p);
+                isMovieDetailReviewsNeeded.set(true);
+                break;
+            case TRAILER:
+                mMovieDetailsTrailerView.setVisibility(View.VISIBLE);
+                p = (RelativeLayout.LayoutParams) mMovieDetailsTrailerView.getLayoutParams();
+                //p.addRule(RelativeLayout.BELOW, R.id.movie_details_body);
+                if (isMovieDetailReviewsNeeded.get()) {
+                    RelativeLayout.LayoutParams p2 = (RelativeLayout.LayoutParams) mMovieDetailsReviewView.getLayoutParams();
+                    p2.width = mMovieDetailsReviewViewWidth;
+                    p2.height = mMovieDetailsReviewViewHeight;
+               //     p2.addRule(RelativeLayout.BELOW, R.id.movie_details_trailer_section);
+                    mMovieDetailsReviewView.setLayoutParams(p2);
+                } else {
+                    mMovieDetailsTrailerViewWidth = p.width;
+                    mMovieDetailsTrailerViewHeight = p.height;
+                    p.height = RelativeLayout.LayoutParams.MATCH_PARENT;
+                    p.width = RelativeLayout.LayoutParams.MATCH_PARENT;
+                }
+//                mMovieDetailsTrailerView.setLayoutParams(p);
+                isMovieDetailTrailersNeeded.set(true);
+                break;
+        }
     }
 
     @NonNull
@@ -433,4 +502,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
 
     }
 
+    private enum Section {
+        REVIEW, TRAILER, DETAILS;
+    }
 }

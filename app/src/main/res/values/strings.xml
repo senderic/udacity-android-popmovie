@@ -30,5 +30,12 @@
     <string name="youtube_url">http://www.youtube.com/watch?v=%1$s</string>
     <string name="youtube_img">http://img.youtube.com/vi/%1$s/0.jpg</string>
     <string name="reviews_title">Reviews</string>
+    <string name="default_movie_title">Movie-Title</string>
+    <string name="generic_long_text">Lorum ipson is cool! Lorum ipson is cool! a b c d</string>
+    <string name="generic_year">1969</string>
+    <string name="space" />
+    <string name="generic_rating">5.0</string>
+    <string name="mark_as_favorite">Mark as Favorite!</string>
+    <string name="movie_description_blind">Movie Thumbnail</string>
 
 </resources>
