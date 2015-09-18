@@ -14,7 +14,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -64,7 +63,6 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     private TextView ratingTextView;
     private TextView overviewTextView;
     private FrameLayout mProgress;
-
     private MovieGridObj mMovieObj;
     private ProgressBar mDurationProgress;
     private View mRootView;
@@ -91,19 +89,12 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     private TrailerListViewAdapter mTrailerListViewAdapter;
     private ReviewListViewAdapter mReviewListViewAdapter;
     private LinearLayout mMovieDetailsAsyncView;
-    private RelativeLayout mMovieDetailsBodyView;
-    private int mMovieDetailsBodyHeight;
-    private int mMovieDetailsBodyWidth;
-    private RelativeLayout.LayoutParams mMovieDetailsInitialBodyLayout;
-    private RelativeLayout mMovieDetailsTrailerView;
-    private RelativeLayout mMovieDetailsReviewView;
+    private LinearLayout mMovieDetailsTrailerView;
+    private LinearLayout mMovieDetailsReviewView;
     private final AtomicBoolean isMovieDetailsAsycSectionNeeded = new AtomicBoolean();
     private final AtomicBoolean isMovieDetailTrailersNeeded = new AtomicBoolean();
     private final AtomicBoolean isMovieDetailReviewsNeeded = new AtomicBoolean();
-    private int mMovieDetailsReviewViewWidth;
-    private int mMovieDetailsReviewViewHeight;
-    private int mMovieDetailsTrailerViewWidth;
-    private int mMovieDetailsTrailerViewHeight;
+    private final Object sync = new Object();
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
@@ -141,10 +132,11 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
                              Bundle savedInstanceState) {
         mIsLoadFinished = false;
         mRootView = inflater.inflate(R.layout.fragment_movie_details, container, false);
+        mDurationProgress = (ProgressBar) mRootView.findViewById(R.id.movie_duration_progressBar);
+        mDurationProgress.setVisibility(View.VISIBLE);
         mProgress = (FrameLayout) mRootView.findViewById(R.id.movie_details_progress_bar);
         imageView = (ImageView) mRootView.findViewById(R.id.movie_thumb);
         mDurationTextView = (TextView) mRootView.findViewById(R.id.movie_duration);
-        mDurationProgress = (ProgressBar) mRootView.findViewById(R.id.movie_duration_progressBar);
         titleTextView = (TextView) mRootView.findViewById(R.id.movie_details_top_title);
         yearTextView = (TextView) mRootView.findViewById(R.id.movie_year);
         ratingTextView = (TextView) mRootView.findViewById(R.id.movie_rating);
@@ -157,23 +149,11 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         mReviewListView.setAdapter(mReviewListViewAdapter);
         // TODO: when code is more hardened, maybe move this to the XML?
         mMovieDetailsAsyncView = (LinearLayout) mRootView.findViewById(R.id.movie_details_async_section);
-        mMovieDetailsBodyView = (RelativeLayout) mRootView.findViewById(R.id.movie_details_body);
-        mMovieDetailsReviewView = (RelativeLayout) mRootView.findViewById(R.id.movie_details_review_section);
-        mMovieDetailsTrailerView = (RelativeLayout) mRootView.findViewById(R.id.movie_details_trailer_section);
+        mMovieDetailsReviewView = (LinearLayout) mRootView.findViewById(R.id.movie_details_review_section);
+        mMovieDetailsTrailerView = (LinearLayout) mRootView.findViewById(R.id.movie_details_trailer_section);
         mMovieDetailsAsyncView.setVisibility(View.GONE);
         mMovieDetailsTrailerView.setVisibility(View.GONE);
         mMovieDetailsReviewView.setVisibility(View.GONE);
-        mMovieDetailsBodyView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-            @Override
-            public void onGlobalLayout() {
-                mMovieDetailsBodyWidth = RelativeLayout.LayoutParams.MATCH_PARENT;
-                mMovieDetailsBodyHeight = mMovieDetailsBodyView.getLayoutParams().height;
-                if (mMovieDetailsBodyHeight != RelativeLayout.LayoutParams.MATCH_PARENT && !isMovieDetailsAsycSectionNeeded.get()) {
-                    mMovieDetailsInitialBodyLayout = new RelativeLayout.LayoutParams(mMovieDetailsBodyWidth, mMovieDetailsBodyHeight);
-                    mMovieDetailsBodyView.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
-                }
-            }
-        });
 
         mFavButton = (Button) mRootView.findViewById(R.id.button_mark_fav);
         mFavButton.setOnClickListener(new View.OnClickListener() {
@@ -384,52 +364,22 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         return jsObjRequest;
     }
 
-    private synchronized void showMovieDetailsAsyncView(Section section) {
-        if (!isMovieDetailsAsycSectionNeeded.get()) {
-            mMovieDetailsAsyncView.setVisibility(View.VISIBLE);
-          // mMovieDetailsInitialBodyLayout.addRule(RelativeLayout.BELOW, R.id.movie_details_top_title);
-            mMovieDetailsBodyView.setLayoutParams(mMovieDetailsInitialBodyLayout);
-            isMovieDetailsAsycSectionNeeded.set(true);
+    // TODO: if only one of the layouts (review xor trailer) show up, alter gravity to reduce white space
+    private void showMovieDetailsAsyncView(Section section) {
+        synchronized (sync) {
+            if (!isMovieDetailsAsycSectionNeeded.get()) {
+                mMovieDetailsAsyncView.setVisibility(View.VISIBLE);
+                isMovieDetailsAsycSectionNeeded.set(true);
+            }
         }
         RelativeLayout.LayoutParams p;
         switch (section) {
             case REVIEW:
                 mMovieDetailsReviewView.setVisibility(View.VISIBLE);
-                p = (RelativeLayout.LayoutParams) mMovieDetailsReviewView.getLayoutParams();
-                if (!isMovieDetailTrailersNeeded.get()) {
-                    mMovieDetailsReviewViewWidth = p.width;
-                    mMovieDetailsReviewViewHeight = p.height;
-                    p.width = RelativeLayout.LayoutParams.MATCH_PARENT;
-                    p.height = RelativeLayout.LayoutParams.MATCH_PARENT;
-                //    p.addRule(RelativeLayout.BELOW, R.id.movie_details_body);
-                } else {
-                    RelativeLayout.LayoutParams p2 = (RelativeLayout.LayoutParams) mMovieDetailsTrailerView.getLayoutParams();
-                    p2.width = mMovieDetailsTrailerViewWidth;
-                    p2.height = mMovieDetailsTrailerViewHeight;
-                //    p2.addRule(RelativeLayout.BELOW, R.id.movie_details_trailer_section);
-                    mMovieDetailsTrailerView.setLayoutParams(p2);
-             //       p.addRule(RelativeLayout.BELOW, R.id.movie_details_trailer_section);
-                }
-                mMovieDetailsReviewView.setLayoutParams(p);
                 isMovieDetailReviewsNeeded.set(true);
                 break;
             case TRAILER:
                 mMovieDetailsTrailerView.setVisibility(View.VISIBLE);
-                p = (RelativeLayout.LayoutParams) mMovieDetailsTrailerView.getLayoutParams();
-                //p.addRule(RelativeLayout.BELOW, R.id.movie_details_body);
-                if (isMovieDetailReviewsNeeded.get()) {
-                    RelativeLayout.LayoutParams p2 = (RelativeLayout.LayoutParams) mMovieDetailsReviewView.getLayoutParams();
-                    p2.width = mMovieDetailsReviewViewWidth;
-                    p2.height = mMovieDetailsReviewViewHeight;
-               //     p2.addRule(RelativeLayout.BELOW, R.id.movie_details_trailer_section);
-                    mMovieDetailsReviewView.setLayoutParams(p2);
-                } else {
-                    mMovieDetailsTrailerViewWidth = p.width;
-                    mMovieDetailsTrailerViewHeight = p.height;
-                    p.height = RelativeLayout.LayoutParams.MATCH_PARENT;
-                    p.width = RelativeLayout.LayoutParams.MATCH_PARENT;
-                }
-//                mMovieDetailsTrailerView.setLayoutParams(p);
                 isMovieDetailTrailersNeeded.set(true);
                 break;
         }
