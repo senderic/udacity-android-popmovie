@@ -48,8 +48,11 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.ericsender.android_nanodegree.popmovie.application.STATE.REFRESH_GRID;
@@ -301,9 +304,9 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
                         try {
                             List<LinkedTreeMap<String, String>> results = (ArrayList<LinkedTreeMap<String, String>>) map.get("results");
                             int count = 0;
-                            Set<TrailerListObj> th = new HashSet<>(results.size());
+                            Set<TrailerListObj> th = new LinkedHashSet<>();
                             for (LinkedTreeMap<String, String> r : results) {
-                                String title = String.format(sTrailerTitle, ++count, r.get("name"));
+                                String title = r.get("name");
                                 String youtube_key = r.get("key");
                                 th.add(new TrailerListObj(youtube_key, title));
                             }
@@ -346,7 +349,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
                         LinkedTreeMap<String, Object> map = Utils.getGson().fromJson(response.toString(), LinkedTreeMap.class);
                         try {
                             List<LinkedTreeMap<String, String>> results = (ArrayList<LinkedTreeMap<String, String>>) map.get("results");
-                            Set<ReviewListObj> rev = new HashSet<>(results.size());
+                            Set<ReviewListObj> rev = new LinkedHashSet<>();
                             for (LinkedTreeMap<String, String> r : results) {
                                 String content = r.get("content");
                                 String author = r.get("author");

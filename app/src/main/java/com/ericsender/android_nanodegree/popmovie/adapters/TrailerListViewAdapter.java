@@ -30,8 +30,6 @@ public class TrailerListViewAdapter extends ArrayAdapter<TrailerListObj> {
     private List<TrailerListObj> mRowObjs;
     private final String strTrailerTitleItr;
     private final String strYouTubeImg;
-//    private final int thumb_w;
-//    private final int thumb_h;
 
 
     public TrailerListViewAdapter(Context context, int trailerCellRes, List<TrailerListObj> rowObjs, ListView trailerListView) {
@@ -59,19 +57,19 @@ public class TrailerListViewAdapter extends ArrayAdapter<TrailerListObj> {
 
     @Override
     public View getView(int position, View row, ViewGroup parent) {
-        final TrailerListObj trailer = getItem(position);
 //        Log.d(LOG_TAG, String.format("row is being set for position (%d/%d), trailer: (%s)",
 //                position, getCount() - 1, trailer.title));
         // Log.v(LOG_TAG, String.format("Full movie list: %s", mRowObjs));
-        ViewHolder holder;
-        if (row == null || !((ViewHolder) row.getTag()).isSet) {
+        if (checkRowAndObj(row, position)) {
+            final TrailerListObj trailer = getItem(position);
             row = ((Activity) mContext).getLayoutInflater().inflate(mTrailerCellRes, parent, false);
-            holder = new ViewHolder();
+            ViewHolder holder = new ViewHolder();
             holder.playIcon = (ImageView) row.findViewById(R.id.trailer_play);
             holder.youTubeThump = (ImageView) row.findViewById(R.id.youtube_thumb);
             holder.trailerTitle = (TextView) row.findViewById(R.id.trailer_name);
             holder.trailerTitle.setText(trailer.title);
-            holder.isSet = trailer != null;
+            holder.position = position;
+            holder.trailerHashCode = trailer.hashCode();
 
             Picasso.with(mContext.getApplicationContext())
                     .load(String.format(strYouTubeImg, trailer.youtube_key))
@@ -87,13 +85,17 @@ public class TrailerListViewAdapter extends ArrayAdapter<TrailerListObj> {
                 }
             });
             row.setTag(holder);
-        } else
-            holder = (ViewHolder) row.getTag();
-
-
+        }
         return row;
     }
 
+    private boolean checkRowAndObj(View row, int position) {
+        if (row != null) {
+            ViewHolder vh = (ViewHolder) row.getTag();
+            return vh.position != position || vh.trailerHashCode != getItem(position).hashCode();
+        } else
+            return true;
+    }
 
     @Override
     public int getCount() {
@@ -106,9 +108,10 @@ public class TrailerListViewAdapter extends ArrayAdapter<TrailerListObj> {
     }
 
     private static class ViewHolder {
-        boolean isSet;
+        int position = -1;
         TextView trailerTitle;
         ImageView playIcon;
         ImageView youTubeThump;
+        int trailerHashCode;
     }
 }

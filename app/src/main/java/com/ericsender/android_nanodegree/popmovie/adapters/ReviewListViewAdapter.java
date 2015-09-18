@@ -76,7 +76,7 @@ public class ReviewListViewAdapter extends ArrayAdapter<ReviewListObj> {
     private boolean checkRowAndObj(View row, int position) {
         if (row != null) {
             ViewHolder vh = (ViewHolder) row.getTag();
-            return vh.position != position || vh.hashCode() != getItem(position).hashCode();
+            return vh.position != position || vh.reviewHashCode != getItem(position).hashCode();
         } else
             return true;
     }
