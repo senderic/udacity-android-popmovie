@@ -49,19 +49,19 @@ public class ReviewListViewAdapter extends ArrayAdapter<ReviewListObj> {
 
     @Override
     public View getView(int position, View row, ViewGroup parent) {
-        final ReviewListObj rev = getItem(position);
 //        Log.d(LOG_TAG, String.format("row is being set for position (%d/%d), trailer: (%s)",
 //                position, getCount() - 1, trailer.title));
         // Log.v(LOG_TAG, String.format("Full movie list: %s", mRowObjs));
-        ViewHolder holder;
-        if (row == null || !((ViewHolder) row.getTag()).isSet) {
+        if (checkRowAndObj(row, position)) {
+            final ReviewListObj rev = getItem(position);
+            ViewHolder holder = new ViewHolder();
+            holder.reviewHashCode = rev.hashCode();
             row = ((Activity) mContext).getLayoutInflater().inflate(mReviewCellRes, parent, false);
-            holder = new ViewHolder();
             holder.contentText = (TextView) row.findViewById(R.id.review_content);
             holder.authorText = (TextView) row.findViewById(R.id.review_author);
             holder.contentText.setText(rev.content);
             holder.authorText.setText(rev.author);
-            holder.isSet = rev != null;
+            holder.position = position;
             holder.authorText.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -69,24 +69,27 @@ public class ReviewListViewAdapter extends ArrayAdapter<ReviewListObj> {
                 }
             });
             row.setTag(holder);
-        } else
-            holder = (ViewHolder) row.getTag();
-
-
+        }
         return row;
     }
 
+    private boolean checkRowAndObj(View row, int position) {
+        if (row != null) {
+            ViewHolder vh = (ViewHolder) row.getTag();
+            return vh.position != position || vh.hashCode() != getItem(position).hashCode();
+        } else
+            return true;
+    }
+
     public void setData(List<ReviewListObj> data) {
-        int v = data.isEmpty() ? View.GONE : View.VISIBLE;
-        mReviewListView.setVisibility(v);
         mRowObjs = data;
         notifyDataSetChanged();
-
     }
 
     private static class ViewHolder {
-        boolean isSet;
+        int position = -1;
         TextView contentText;
         TextView authorText;
+        int reviewHashCode;
     }
 }

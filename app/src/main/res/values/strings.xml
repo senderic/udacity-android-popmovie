@@ -37,5 +37,6 @@
     <string name="generic_rating">5.0</string>
     <string name="mark_as_favorite">Mark as Favorite!</string>
     <string name="movie_description_blind">Movie Thumbnail</string>
+    <string name="generic_author">Clint Eastwood</string>
 
 </resources>

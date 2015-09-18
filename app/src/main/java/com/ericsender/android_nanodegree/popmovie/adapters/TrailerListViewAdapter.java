@@ -43,13 +43,6 @@ public class TrailerListViewAdapter extends ArrayAdapter<TrailerListObj> {
         strTrailerTitleItr = mContext.getString(R.string.trailer_title_iter);
         strYouTubeUrl = mContext.getString(R.string.youtube_url);
         strYouTubeImg = mContext.getString(R.string.youtube_img);
-        // Drawable playIcon = mContext.getDrawable(android.R.drawable.ic_media_play);
-//        BitmapFactory.Options o = new BitmapFactory.Options();
-//        o.inTargetDensity = DisplayMetrics.DENSITY_DEFAULT;
-//        Bitmap bmp = BitmapFactory.decodeResource(mContext.getResources(),
-//                android.R.drawable.ic_media_play, o);
-//        thumb_w = bmp.getWidth();
-//        thumb_h = bmp.getHeight();
     }
 
     public void setData(List<TrailerListObj> data) {

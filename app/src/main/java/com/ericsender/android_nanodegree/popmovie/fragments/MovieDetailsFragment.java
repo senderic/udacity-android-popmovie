@@ -91,10 +91,14 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     private LinearLayout mMovieDetailsAsyncView;
     private LinearLayout mMovieDetailsTrailerView;
     private LinearLayout mMovieDetailsReviewView;
-    private final AtomicBoolean isMovieDetailsAsycSectionNeeded = new AtomicBoolean();
-    private final AtomicBoolean isMovieDetailTrailersNeeded = new AtomicBoolean();
-    private final AtomicBoolean isMovieDetailReviewsNeeded = new AtomicBoolean();
     private final Object sync = new Object();
+    private LinearLayout.LayoutParams mMovieDetailsReviewViewDefaultLayout;
+    private LinearLayout.LayoutParams mMovieDetailsTrailerViewDefaultLayout;
+    private RelativeLayout mMovieDetailsBodyView;
+    private LinearLayout.LayoutParams mMovieDetailsBodyViewDefaultLayout;
+    private LinearLayout.LayoutParams mMovieDetailsAsyncViewDefaultLayout;
+    private TextView mMovieDetailsTitleView;
+    private LinearLayout.LayoutParams mMovieDetailsTitleViewDefaultLayout;
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
@@ -143,17 +147,23 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         overviewTextView = (TextView) mRootView.findViewById(R.id.movie_overview);
         mTrailerListView = (ListView) mRootView.findViewById(R.id.list_trailers);
         mReviewListView = (ListView) mRootView.findViewById(R.id.list_reviews);
+        mMovieDetailsBodyView = (RelativeLayout) mRootView.findViewById(R.id.movie_details_body);
         mTrailerListViewAdapter = new TrailerListViewAdapter(getActivity(), R.layout.trailer_cell, mTrailerList, mTrailerListView);
         mReviewListViewAdapter = new ReviewListViewAdapter(getActivity(), R.layout.review_cell, mReviewList, mReviewListView);
         mTrailerListView.setAdapter(mTrailerListViewAdapter);
         mReviewListView.setAdapter(mReviewListViewAdapter);
         // TODO: when code is more hardened, maybe move this to the XML?
+        mMovieDetailsTitleView = (TextView) mRootView.findViewById(R.id.movie_details_top_title);
         mMovieDetailsAsyncView = (LinearLayout) mRootView.findViewById(R.id.movie_details_async_section);
         mMovieDetailsReviewView = (LinearLayout) mRootView.findViewById(R.id.movie_details_review_section);
         mMovieDetailsTrailerView = (LinearLayout) mRootView.findViewById(R.id.movie_details_trailer_section);
         mMovieDetailsAsyncView.setVisibility(View.GONE);
         mMovieDetailsTrailerView.setVisibility(View.GONE);
         mMovieDetailsReviewView.setVisibility(View.GONE);
+        LinearLayout.LayoutParams foo =
+                mMovieDetailsBodyViewDefaultLayout =
+                        (LinearLayout.LayoutParams) mMovieDetailsBodyView.getLayoutParams();
+        mMovieDetailsBodyView.setLayoutParams(new LinearLayout.LayoutParams(foo.width, foo.height, foo.weight * 2));
 
         mFavButton = (Button) mRootView.findViewById(R.id.button_mark_fav);
         mFavButton.setOnClickListener(new View.OnClickListener() {
@@ -300,9 +310,8 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
                             mTrailerList.clear();
                             mTrailerList.addAll(th);
                             mTrailerListViewAdapter.setData(mTrailerList);
-                            Section section = Section.TRAILER;
-                            if (!mTrailerList.isEmpty() && !isMovieDetailTrailersNeeded.get())
-                                showMovieDetailsAsyncView(section);
+                            if (!mTrailerList.isEmpty() && mMovieDetailsTrailerView.getVisibility() == View.GONE)
+                                showMovieDetailsAsyncView(Section.TRAILER);
                         } catch (NumberFormatException | NullPointerException x) {
                         }
                     }
@@ -347,9 +356,8 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
                             mReviewList.clear();
                             mReviewList.addAll(rev);
                             mReviewListViewAdapter.setData(mReviewList);
-                            Section section = Section.REVIEW;
-                            if (!mReviewList.isEmpty() && !isMovieDetailReviewsNeeded.get())
-                                showMovieDetailsAsyncView(section);
+                            if (!mReviewList.isEmpty() && mMovieDetailsReviewView.getVisibility() == View.GONE)
+                                showMovieDetailsAsyncView(Section.REVIEW);
                         } catch (NumberFormatException | NullPointerException x) {
                         }
                     }
@@ -365,24 +373,56 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     }
 
     // TODO: if only one of the layouts (review xor trailer) show up, alter gravity to reduce white space
-    private void showMovieDetailsAsyncView(Section section) {
-        synchronized (sync) {
-            if (!isMovieDetailsAsycSectionNeeded.get()) {
-                mMovieDetailsAsyncView.setVisibility(View.VISIBLE);
-                isMovieDetailsAsycSectionNeeded.set(true);
-            }
+
+    /**
+     * Synchronized to ensure this method is running at only one given time for a given fragment.
+     *
+     * @param section - Review or Trailer section
+     */
+    private synchronized void showMovieDetailsAsyncView(Section section) {
+        if (mMovieDetailsAsyncView.getVisibility() == View.GONE) {
+            mMovieDetailsAsyncView.setVisibility(View.VISIBLE);
+            mMovieDetailsBodyView.setLayoutParams(mMovieDetailsBodyViewDefaultLayout);
+            mMovieDetailsTitleViewDefaultLayout = (LinearLayout.LayoutParams) mMovieDetailsTitleView.getLayoutParams();
+            mMovieDetailsAsyncViewDefaultLayout = (LinearLayout.LayoutParams) mMovieDetailsAsyncView.getLayoutParams();
+            mMovieDetailsReviewViewDefaultLayout = (LinearLayout.LayoutParams) mMovieDetailsReviewView.getLayoutParams();
+            mMovieDetailsTrailerViewDefaultLayout = (LinearLayout.LayoutParams) mMovieDetailsTrailerView.getLayoutParams();
         }
-        RelativeLayout.LayoutParams p;
+
         switch (section) {
             case REVIEW:
                 mMovieDetailsReviewView.setVisibility(View.VISIBLE);
-                isMovieDetailReviewsNeeded.set(true);
+                if (mMovieDetailsTrailerView.getVisibility() == View.GONE)
+                    setAsynFieldToFillWeight(mMovieDetailsReviewViewDefaultLayout, mMovieDetailsReviewView);
+                else
+                    setAsyncSectionToDefaults();
                 break;
             case TRAILER:
                 mMovieDetailsTrailerView.setVisibility(View.VISIBLE);
-                isMovieDetailTrailersNeeded.set(true);
+                if (mMovieDetailsReviewView.getVisibility() == View.GONE)
+                    setAsynFieldToFillWeight(mMovieDetailsTrailerViewDefaultLayout, mMovieDetailsTrailerView);
+                else
+                    setAsyncSectionToDefaults();
                 break;
         }
+    }
+
+    private void setAsynFieldToFillWeight(LinearLayout.LayoutParams lp, LinearLayout l) {
+        l.setLayoutParams(new LinearLayout.LayoutParams(lp.width, lp.height, lp.weight * 2f));
+        mMovieDetailsAsyncView.setLayoutParams(new LinearLayout.LayoutParams(
+                mMovieDetailsAsyncViewDefaultLayout.width,
+                mMovieDetailsAsyncViewDefaultLayout.height,
+                mMovieDetailsAsyncViewDefaultLayout.weight / 2f));
+        mMovieDetailsTitleView.setLayoutParams(new LinearLayout.LayoutParams(
+                mMovieDetailsTitleViewDefaultLayout.width,
+                mMovieDetailsTitleViewDefaultLayout.height,
+                mMovieDetailsTitleViewDefaultLayout.weight/2f));
+    }
+
+    private void setAsyncSectionToDefaults() {
+        mMovieDetailsReviewView.setLayoutParams(mMovieDetailsReviewViewDefaultLayout);
+        mMovieDetailsTrailerView.setLayoutParams(mMovieDetailsTrailerViewDefaultLayout);
+        mMovieDetailsAsyncView.setLayoutParams(mMovieDetailsAsyncViewDefaultLayout);
     }
 
     @NonNull

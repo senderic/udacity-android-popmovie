@@ -4,31 +4,11 @@
     android:layout_height="match_parent"
     tools:context="MovieDetailsFragment">
 
-    <FrameLayout
-        android:id="@+id/movie_details_progress_bar"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_gravity="center|start"
-        android:background="#9e010101"
-        android:orientation="vertical"
-        android:padding="0dp"
-        android:visibility="gone">
-
-        <ProgressBar
-            style="?android:attr/progressBarStyleLarge"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_gravity="center|start" />
-
-    </FrameLayout>
-
-
     <LinearLayout
         android:id="@+id/movie_details_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:weightSum="12">
+        android:orientation="vertical">
 
         <TextView
             android:id="@+id/movie_details_top_title"
@@ -143,8 +123,7 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="5"
-            android:orientation="vertical"
-            android:weightSum="2">
+            android:orientation="vertical">
 
             <LinearLayout
                 android:id="@+id/movie_details_trailer_section"
@@ -182,4 +161,21 @@
         </LinearLayout>
 
     </LinearLayout>
+
+    <FrameLayout
+        android:id="@+id/movie_details_progress_bar"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center|start"
+        android:background="#9e010101"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <ProgressBar
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center|start" />
+
+    </FrameLayout>
 </FrameLayout>
