@@ -38,5 +38,10 @@
     <string name="mark_as_favorite">Mark as Favorite!</string>
     <string name="movie_description_blind">Movie Thumbnail</string>
     <string name="generic_author">Clint Eastwood</string>
+    <string name="title_activity_base">BaseActivity</string>
+
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="share_youtube_menu">SHARE</string>
 
 </resources>

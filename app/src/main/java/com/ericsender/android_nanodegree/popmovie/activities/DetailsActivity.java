@@ -1,17 +1,16 @@
 package com.ericsender.android_nanodegree.popmovie.activities;
 
-import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.view.Window;
 
 import com.ericsender.android_nanodegree.popmovie.R;
 import com.ericsender.android_nanodegree.popmovie.fragments.MovieDetailsFragment;
 
 
-public class DetailsActivity extends ActionBarActivity {
+public class DetailsActivity extends BaseActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -19,7 +18,7 @@ public class DetailsActivity extends ActionBarActivity {
         setProgressBarIndeterminateVisibility(true);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_details);
-        getSupportActionBar().hide();
+        // getSupportActionBar().hide();
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
                     .add(R.id.details_activity_container, new MovieDetailsFragment())
@@ -27,20 +26,14 @@ public class DetailsActivity extends ActionBarActivity {
         }
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_settings:
-                startActivity(new Intent(this, SettingsActivity.class));
-                return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
+    protected boolean onPrepareOptionsPanel(View view, Menu menu) {
+        MenuItem share = menu.findItem(R.id.action_share_youtube);
+        if (share == null)
+            menu.add(Menu.NONE, R.id.action_share_youtube, 3, getString(R.string.share_youtube_menu));
+        return super.onPrepareOptionsPanel(view, menu);
     }
+
+
 }

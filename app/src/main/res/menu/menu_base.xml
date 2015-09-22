@@ -1,0 +1,26 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.ericsender.android_nanodegree.popmovie.activities.BaseActivity">
+    <item
+        android:id="@+id/action_settings"
+        android:orderInCategory="100"
+        android:title="@string/settings_pref_title"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_refresh"
+        android:orderInCategory="101"
+        android:title="@string/action_refresh"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/action_delete_db"
+        android:title="@string/action_delete_db"
+        app:showAsAction="never" />
+    <!--
+    <item
+        android:id="@+id/action_sort"
+        android:title="@string/spinner_title_sort"
+        app:showAsAction="ifRoom" />
+        -->
+
+</menu>

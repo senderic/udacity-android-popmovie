@@ -1,6 +1,7 @@
 package com.ericsender.android_nanodegree.popmovie.fragments;
 
 import android.content.ContentValues;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -12,6 +13,9 @@ import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -47,12 +51,9 @@ import org.json.JSONObject;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.ericsender.android_nanodegree.popmovie.application.STATE.REFRESH_GRID;
@@ -102,6 +103,8 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     private LinearLayout.LayoutParams mMovieDetailsAsyncViewDefaultLayout;
     private TextView mMovieDetailsTitleView;
     private LinearLayout.LayoutParams mMovieDetailsTitleViewDefaultLayout;
+    private String sYoutubeUrl;
+    private TrailerListObj oFirstTrailer = null;
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
@@ -115,7 +118,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         init();
-        setHasOptionsMenu(false);
+        setHasOptionsMenu(true);
     }
 
     // Limit use of getString since seeing a random null pointer crash regarding one of them.
@@ -132,6 +135,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         sImgSize = getString(R.string.tmdb_image_size);
         sNoLongerFav = getString(R.string.is_no_longer_fav);
         sTrailerTitle = getString(R.string.trailer_title_iter);
+        sYoutubeUrl = getString(R.string.youtube_url);
     }
 
     @Override
@@ -313,6 +317,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
                             mTrailerList.clear();
                             mTrailerList.addAll(th);
                             mTrailerListViewAdapter.setData(mTrailerList);
+                            setFirstTrailer();
                             if (!mTrailerList.isEmpty() && mMovieDetailsTrailerView.getVisibility() == View.GONE)
                                 showMovieDetailsAsyncView(Section.TRAILER);
                         } catch (NumberFormatException | NullPointerException x) {
@@ -419,7 +424,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         mMovieDetailsTitleView.setLayoutParams(new LinearLayout.LayoutParams(
                 mMovieDetailsTitleViewDefaultLayout.width,
                 mMovieDetailsTitleViewDefaultLayout.height,
-                mMovieDetailsTitleViewDefaultLayout.weight/2f));
+                mMovieDetailsTitleViewDefaultLayout.weight / 2f));
     }
 
     private void setAsyncSectionToDefaults() {
@@ -497,5 +502,36 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
 
     private enum Section {
         REVIEW, TRAILER, DETAILS;
+    }
+
+    private void setFirstTrailer() {
+        if (!mTrailerList.isEmpty())
+            oFirstTrailer = mTrailerList.get(0);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_share_youtube:
+                if (oFirstTrailer == null) {
+                    Snackbar.make(mRootView, "No trailer loaded; Can't share.", Snackbar.LENGTH_SHORT).show();
+                    return false;
+                } else {
+                    Intent intent = new Intent(Intent.ACTION_SEND);
+                    intent.setType("test/plain");
+                    intent.putExtra(Intent.EXTRA_TEXT, String.format(sYoutubeUrl, oFirstTrailer.youtube_key));
+                    startActivity(Intent.createChooser(intent, "Share"));
+                    return true;
+                }
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        getActivity().invalidateOptionsMenu();
+        menu.add(Menu.NONE, R.id.action_share_youtube, 3, getString(R.string.share_youtube_menu));
+
+        super.onCreateOptionsMenu(menu, inflater);
     }
 }
