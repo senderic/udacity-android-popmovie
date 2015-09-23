@@ -11,6 +11,8 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.support.v4.view.MenuItemCompat;
+import android.support.v7.widget.ShareActionProvider;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -105,6 +107,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     private LinearLayout.LayoutParams mMovieDetailsTitleViewDefaultLayout;
     private String sYoutubeUrl;
     private TrailerListObj oFirstTrailer = null;
+    private ShareActionProvider mShareActionProvider;
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
@@ -505,33 +508,36 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     }
 
     private void setFirstTrailer() {
-        if (!mTrailerList.isEmpty())
+        if (!mTrailerList.isEmpty()) {
             oFirstTrailer = mTrailerList.get(0);
+            mShareActionProvider.setShareIntent(createShareYoutubeIntent());
+        }
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_share_youtube:
-                if (oFirstTrailer == null) {
-                    Snackbar.make(mRootView, "No trailer loaded; Can't share.", Snackbar.LENGTH_SHORT).show();
-                    return false;
-                } else {
-                    Intent intent = new Intent(Intent.ACTION_SEND);
-                    intent.setType("test/plain");
-                    intent.putExtra(Intent.EXTRA_TEXT, String.format(sYoutubeUrl, oFirstTrailer.youtube_key));
-                    startActivity(Intent.createChooser(intent, "Share"));
-                    return true;
-                }
-        }
-        return super.onOptionsItemSelected(item);
+    private Intent createShareYoutubeIntent() {
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
+        shareIntent.setType("test/plain");
+        shareIntent.putExtra(Intent.EXTRA_TEXT, String.format(sYoutubeUrl, oFirstTrailer.youtube_key));
+        return shareIntent;
     }
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        getActivity().invalidateOptionsMenu();
-        menu.add(Menu.NONE, R.id.action_share_youtube, 3, getString(R.string.share_youtube_menu));
+        inflater.inflate(R.menu.menu_details, menu);
+        MenuItem menuItem = menu.findItem(R.id.action_share_youtube);
+        mShareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(menuItem);
+    }
 
-        super.onCreateOptionsMenu(menu, inflater);
+    /**
+     * A callback interface that all activities containing this fragment must
+     * implement. This mechanism allows activities to be notified of item
+     * selections.
+     */
+    public interface Callback {
+        /**
+         * DetailFragmentCallback for when an item has been selected.
+         */
+        public void onItemSelected(Uri dateUri);
     }
 }
