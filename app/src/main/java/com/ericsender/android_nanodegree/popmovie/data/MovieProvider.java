@@ -72,7 +72,7 @@ public class MovieProvider extends ContentProvider {
 
     private Cursor getPopularMovies() {
         return mOpenHelper.getReadableDatabase().rawQuery("SELECT "
-                + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_ID + ", "
+                + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_ID + " AS _id, "
                 + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_BLOB
                 + " FROM " + MovieContract.MovieEntry.TABLE_NAME
                 + " WHERE " + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_ID
@@ -98,7 +98,7 @@ public class MovieProvider extends ContentProvider {
 
     private Cursor getRatedMovies() {
         return mOpenHelper.getReadableDatabase().rawQuery("SELECT "
-                + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_ID + ", "
+                + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_ID + " AS _id, "
                 + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_BLOB
                 + " FROM " + MovieContract.MovieEntry.TABLE_NAME
                 + " WHERE " + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_ID
@@ -127,7 +127,7 @@ public class MovieProvider extends ContentProvider {
 
     private Cursor getFavoriteMovies() { // Uri uri, String[] projection, String[] selectionArgs) {
         return mOpenHelper.getReadableDatabase().rawQuery("SELECT "
-                + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_ID + ", "
+                + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_ID + " AS _id, "
                 + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_BLOB
                 + " FROM " + MovieContract.MovieEntry.TABLE_NAME
                 + " WHERE " + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_ID

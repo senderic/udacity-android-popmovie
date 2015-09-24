@@ -10,6 +10,8 @@ import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -55,7 +57,7 @@ import static com.ericsender.android_nanodegree.popmovie.application.STATE.REFRE
 /**
  * A placeholder fragment containing a simple view.
  */
-public class MovieListFragment extends Fragment {
+public class MovieListFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
 
     public static final String LOG_TAG = MovieListFragment.class.getSimpleName();
     private ArrayAdapter<MovieGridObj> mMovieAdapter;
@@ -63,6 +65,7 @@ public class MovieListFragment extends Fragment {
     private GridViewAdapter mGridViewAdapter;
     private GridView mMovieGridView;
     private String mCurrSortOrder;
+    private MovieListFragment mThis;
 
     private String getCurrentSortPref() {
         return PreferenceManager
@@ -119,11 +122,12 @@ public class MovieListFragment extends Fragment {
         PopMoviesApplication Me = ((PopMoviesApplication) getActivity().getApplication());
         AtomicBoolean refreshGrid = (AtomicBoolean) Me.getStateManager().getState(REFRESH_GRID);
         Log.d(LOG_TAG, "Forced RefreshGrid status is: " + refreshGrid);
-        if (refreshGrid.get() == true || !foo.equals(mCurrSortOrder)) { // This will also be true on inital loading.
+        if (refreshGrid.get() || !foo.equals(mCurrSortOrder)) { // This will also be true on inital loading.
             mCurrSortOrder = foo;
             Log.d(getClass().getSimpleName(), "Sorting on: " + mCurrSortOrder);
-            // sortMovieList();
-            updateMovieListVolley(false);
+            Bundle b = new Bundle();
+            b.putString("sort", foo);
+            getLoaderManager().initLoader(0, b, this);
             setTitle();
             refreshGrid.set(false);
         }
@@ -137,11 +141,14 @@ public class MovieListFragment extends Fragment {
 
         View rootView = inflater.inflate(R.layout.movie_list_fragment, container, false);
         mMovieGridView = (GridView) rootView.findViewById(R.id.movie_grid);
-        mGridViewAdapter = new GridViewAdapter(getActivity(), R.layout.movie_cell, mMovieList, mMovieGridView);
+        mGridViewAdapter = new GridViewAdapter(getActivity(), null, 0);
         mMovieGridView.setAdapter(mGridViewAdapter);
         // mMovieAdapter = new ArrayAdapter<String>(getActivity(), R.layout.grid_movie_posters,
         createGridItemClickCallbacks();
-
+        Bundle b = new Bundle();
+        b.putString("sort", getApiSortPref());
+        getLoaderManager().initLoader(0, b, this);
+        mThis = this;
         return rootView;
     }
 
@@ -150,12 +157,10 @@ public class MovieListFragment extends Fragment {
         mMovieGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
                 //Get item at position
-                Parcelable item = null;
-                try {
-                    item = (MovieGridObj) parent.getItemAtPosition(position);
-                } catch (IndexOutOfBoundsException e) {
-                }
-                if (item != null) {
+                Cursor cursor = (Cursor) parent.getItemAtPosition(position);
+                if (cursor != null) {
+                    byte[] b = cursor.getBlob(1);
+                    Parcelable item = SerializationUtils.deserialize(b);
                     Intent intent = new Intent(getActivity(), DetailsActivity.class);
                     ImageView imageView = (ImageView) v.findViewById(R.id.grid_item_image);
 
@@ -188,8 +193,10 @@ public class MovieListFragment extends Fragment {
         switch (item.getItemId()) {
             case R.id.action_refresh:
                 Log.d(LOG_TAG, "Refreshing!");
-                updateMovieListVolley(true);
-                //updateMovieList();
+                Bundle b = new Bundle();
+                b.putString("sort", getApiSortPref());
+                b.putBoolean("refresh", true);
+                getLoaderManager().initLoader(0, b, this);
                 return true;
 //            case R.id.action_sort:
 //                Log.d(LOG_TAG, "Sort Spinner");
@@ -228,52 +235,6 @@ public class MovieListFragment extends Fragment {
             return MovieContract.FavoriteEntry.buildFavoriteUri();
         else
             throw new UnsupportedOperationException("Sort not identified: " + sort);
-    }
-
-    private void updateMovieListVolley(boolean hardRefresh) {
-        int rows = 0;
-        final String sort = getApiSortPref();
-        boolean isFav = getString(R.string.tmdb_arg_favorite).equals(sort);
-        Cursor cursor = null;
-        try {
-            if (hardRefresh == false) {  // Get data internally
-                Uri uri = determineUri(sort);
-
-                cursor = getActivity().getContentResolver().query(
-                        uri,
-                        null,
-                        null,
-                        null,
-                        null
-                );
-                rows = cursor.getCount();
-                Log.d(LOG_TAG, "Queried this number of rows: " + rows);
-                if (isFav && rows == 0) {
-                    Toast.makeText(getActivity(), "No Favorites in Database. Please select a different sort!", Toast.LENGTH_SHORT).show();
-                    mMovieList.clear();
-                    mGridViewAdapter.setGridData(mMovieList);
-                    return;
-                }
-            }
-            // TODO: Could the query handle loading live data isntead of the Fragment?
-            if (rows == 0) {
-                if (isFav)
-                    Snackbar.make(getView(), "Cannot Refresh When Sorting Preference is Favorites. Please choose '"
-                            + getString(R.string.most_popular_title) + "' or '"
-                            + getString(R.string.highest_rated_title)
-                            + "'", Snackbar.LENGTH_SHORT).show();
-                else {
-                    Log.d(LOG_TAG, "getting live data");
-                    getLiveData(sort);
-                }
-            } else if (cursor != null) {
-                Log.d(LOG_TAG, String.format("getting database data (rows returned = %d)", rows));
-                getInternalData(cursor, sort);
-            } else
-                throw new UnsupportedOperationException(String.format("Cursor is null but %d rows were expected", rows));
-        } finally {
-            Utils.closeQuietly(cursor);
-        }
     }
 
     private void insertMovieListIntoDatabase(final String sort) {
@@ -321,7 +282,12 @@ public class MovieListFragment extends Fragment {
         mGridViewAdapter.setGridData(mMovieList);
     }
 
-    private void getLiveData(final String sort) {
+    private void getLiveDataAndCallLoader(final String sort) {
+        if (isFav(sort))
+            Snackbar.make(getView(), "Cannot Refresh When Sorting Preference is Favorites. Please choose '"
+                    + getString(R.string.most_popular_title) + "' or '"
+                    + getString(R.string.highest_rated_title)
+                    + "'", Snackbar.LENGTH_SHORT).show();
         RequestQueue queue = Volley.newRequestQueue(getActivity());
         Uri builtUri = Uri.parse(getString(R.string.tmdb_api_base_discover_url)).buildUpon()
                 .appendQueryParameter(getString(R.string.tmdb_param_sortby), sort)
@@ -351,6 +317,9 @@ public class MovieListFragment extends Fragment {
                         handleMap(map, sort);
                         insertMovieListIntoDatabase(sort);
                         t.setText("Loading Finished in: " + sw);
+                        Bundle b = new Bundle();
+                        b.putString("sort", sort);
+                        getLoaderManager().initLoader(0, b, mThis);
                     }
 
                 }, new Response.ErrorListener() {
@@ -365,10 +334,50 @@ public class MovieListFragment extends Fragment {
         queue.add(jsObjRequest);
     }
 
+    private boolean isFav(String sort) {
+        return getString(R.string.tmdb_arg_favorite).equals(sort);
+    }
+
     private void handleMap(LinkedTreeMap<String, Serializable> map, String sort) {
         mMovieList = Utils.covertMapToMovieObjList(map);
         Log.d(getClass().getSimpleName(), "Received a set of movies. Registering them.");
         mGridViewAdapter.setGridData(mMovieList);
+    }
+
+    @Override
+    public android.support.v4.content.Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        final String sort = args.getString("sort");
+        Uri uri = determineUri(sort);
+        Boolean isRefresh = args.getBoolean("refresh");
+        if (isRefresh) {
+            getLiveDataAndCallLoader(sort);
+            return null;
+        } else
+            return new CursorLoader(getActivity(), uri, null, null, null, null);
+    }
+
+    @Override
+    public void onLoadFinished(android.support.v4.content.Loader<Cursor> loader, Cursor data) {
+        String sort = getApiSortPref();
+
+        if (!isFav(sort) && !data.moveToFirst())
+            getLiveDataAndCallLoader(sort);
+        if (isFav(sort) && !data.moveToFirst())
+            Snackbar.make(getView(), "Cannot Refresh When Sorting Preference is Favorites. Please choose '"
+                    + getString(R.string.most_popular_title) + "' or '"
+                    + getString(R.string.highest_rated_title)
+                    + "'", Snackbar.LENGTH_SHORT).show();
+        else
+            mGridViewAdapter.swapCursor(data);
+        // TODO: Implement position
+//        if (mPosition != GridView.INVALID_POSITION) {
+//            mMovieGridView.smoothScrollToPosition(mPosition);
+//        }
+    }
+
+    @Override
+    public void onLoaderReset(android.support.v4.content.Loader<Cursor> loader) {
+
     }
 }
 

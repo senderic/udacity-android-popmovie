@@ -1,32 +1,32 @@
 package com.ericsender.android_nanodegree.popmovie.adapters;
 
-import android.app.Activity;
 import android.content.Context;
-import android.util.Log;
+import android.database.Cursor;
+import android.support.v4.widget.CursorAdapter;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.GridView;
 import android.widget.ImageView;
 
 import com.ericsender.android_nanodegree.popmovie.R;
 import com.ericsender.android_nanodegree.popmovie.parcelable.MovieGridObj;
-import com.ericsender.android_nanodegree.popmovie.utils.Utils;
 import com.squareup.picasso.Picasso;
+
+import org.apache.commons.lang3.SerializationUtils;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class GridViewAdapter extends ArrayAdapter<MovieGridObj> {
+public class GridViewAdapter extends CursorAdapter {
 
-    private final GridView mMovieGrid;
+    //    private final GridView mMovieGrid;
     private final String sImgSize;
+    //    private final Context mContext;
+//    private final int movieCellResource;
+    private final String sImgUrl;
     private List<MovieGridObj> mGridData;
-    private final Context mContext;
     private static final String LOG_TAG = GridViewAdapter.class.getSimpleName();
     private static final AtomicInteger count = new AtomicInteger();
-    private final int movieCellResource;
-    private final String sImgUrl;
 
     public String getThumbUrl() {
         return thumbUrl;
@@ -44,66 +44,47 @@ public class GridViewAdapter extends ArrayAdapter<MovieGridObj> {
         // mMovieGrid.setAdapter(this);
     }
 
-    public GridViewAdapter(Context context, int movieCellResource, List<MovieGridObj> movies, GridView mMovieGrid) {
-        super(context, movieCellResource, movies);
-        mContext = context;
-        mGridData = movies;
-        this.movieCellResource = movieCellResource;
-        this.mMovieGrid = mMovieGrid;
+    public GridViewAdapter(Context context, Cursor cursor, int flag) {
+        super(context, cursor, flag);
         sImgUrl = context.getString(R.string.tmdb_image_base_url);
         sImgSize = context.getString(R.string.tmdb_image_size);
     }
 
-    public int getCount() {
-        return mGridData.size();
+
+    @Override
+    public View newView(Context context, Cursor cursor, ViewGroup parent) {
+
+        int layoutId = R.layout.movie_cell;
+
+        View view = LayoutInflater.from(context).inflate(layoutId, parent, false);
+
+        ViewHolder viewHolder = new ViewHolder(view);
+        view.setTag(viewHolder);
+
+        return view;
     }
 
-    public MovieGridObj getItem(int position) {
-        return mGridData.get(position);
-    }
-
-    // create a new ImageView for each item referenced by the Adapter
-    public View getView(int position, View cell, ViewGroup parent) {
-        final MovieGridObj movie = getItem(position);
-        ViewHolder holder;
-        if (cell == null || !((ViewHolder) cell.getTag()).isSet) {
-            cell = ((Activity) mContext).getLayoutInflater().inflate(movieCellResource, parent, false);
-            holder = new ViewHolder();
-            holder.imageView = (ImageView) cell.findViewById(R.id.grid_item_image);
-            if (Utils.isTablet(mContext)) holder.imageView.setAdjustViewBounds(true);
-            holder.isSet = movie != null;
-            cell.setTag(holder);
-            // Log.d(getClass().getSimpleName(), holder.isSet ? "Setting row for " + movie.title : "Setting row for null");
-        } else {
-            holder = (ViewHolder) cell.getTag();
-        }
-
-        // TODO may need to handle null pointer exceptions here (or in fragment) if the server returns nothing.
-        if (movie == null || movie.poster_path == null) {
-            Log.e(LOG_TAG, "null movie value. either returned nothing from server or db is empty");
-            return cell;
-        }
-        String load = holder.isSet ? String.format(sImgUrl, sImgSize, movie.poster_path) : "null";
-        String title = holder.isSet ? movie.title : "null";
-
-        // Picasso.with(getContext()).setLoggingEnabled(true);
-        // Log.d(getClass().getSimpleName(), String.format("%d>> Loading image: %s - %s", count.incrementAndGet(), title, load));
+    @Override
+    public void bindView(View view, Context context, Cursor cursor) {
+        ViewHolder viewHolder = (ViewHolder) view.getTag();
+        byte[] bMovieObj = cursor.getBlob(1);
+        MovieGridObj movie = (MovieGridObj) SerializationUtils.deserialize(bMovieObj);
+        String load = String.format(sImgUrl, sImgSize, movie.poster_path);
 
         Picasso.with(mContext.getApplicationContext())
                 .load(load)
                 .placeholder(R.drawable.abc_btn_rating_star_on_mtrl_alpha)
                 .error(R.drawable.abc_btn_rating_star_off_mtrl_alpha)
                 .resize(550, 775)
-                .into(holder.imageView);
+                .into(viewHolder.imageView);
 
-        // imageView.setImageResource(mThumbIds[position]);
-        // return (ImageView) parent.view
-
-        return cell;
     }
 
-    static class ViewHolder {
-        ImageView imageView;
-        boolean isSet = false;
+    public static class ViewHolder {
+        public final ImageView imageView;
+
+        public ViewHolder(View view) {
+            imageView = (ImageView) view.findViewById(R.id.grid_item_image);
+        }
     }
 }
