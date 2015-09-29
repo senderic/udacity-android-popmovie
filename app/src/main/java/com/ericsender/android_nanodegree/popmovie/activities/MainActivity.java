@@ -1,14 +1,18 @@
 package com.ericsender.android_nanodegree.popmovie.activities;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.support.annotation.Nullable;
+import android.util.AttributeSet;
 import android.util.Log;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 
 import com.ericsender.android_nanodegree.popmovie.R;
+import com.ericsender.android_nanodegree.popmovie.animation.ShowAnimation;
 import com.ericsender.android_nanodegree.popmovie.application.PopMoviesApplication;
 import com.ericsender.android_nanodegree.popmovie.fragments.MovieDetailsFragment;
 import com.ericsender.android_nanodegree.popmovie.parcelable.MovieGridObj;
@@ -20,16 +24,30 @@ public class MainActivity extends BaseActivity implements MovieDetailsFragment.C
     private static final String LOG_TAG = MainActivity.class.getSimpleName();
     private boolean mTwoPane;
     private PopMoviesApplication.State appState;
+    private View mMovieDetailsContainer;
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        if (mMovieDetailsContainer != null &&
+                ((LinearLayout.LayoutParams) mMovieDetailsContainer.getLayoutParams()).weight != 0f) {
+            Log.d(LOG_TAG, "Back button hit - shrinking details fragment");
+
+            // TODO this animation is instant.. Guessing the 0f weight is short circuiting the animation? 
+            mMovieDetailsContainer.startAnimation(new ShowAnimation(mMovieDetailsContainer, 0f, 1000L));
+            appState.setDetailsPaneShown(false);
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         appState = ((PopMoviesApplication) getApplication()).STATE;
-        mTwoPane = findViewById(R.id.fragment_moviedetails_double) != null;
+        mTwoPane = (mMovieDetailsContainer = findViewById(R.id.fragment_moviedetails_double)) != null;
         appState.setTwoPane(mTwoPane);
         Log.d(LOG_TAG, (mTwoPane ? "two" : "single") + " pane mode");
-        Log.d(LOG_TAG, (findViewById(R.id.I_AM_TWOPANE) == null ? "SINGLE " : "TWO ") + "PANE FOR SURE");
+        Log.d(LOG_TAG, (findViewById(R.id.I_AM_TWOPANE) == null ? "SINGLE" : "TWO") + " PANE FOR SURE");
         if (mTwoPane && savedInstanceState == null) {
             appState.setDetailsPaneShown(false);
 //            getSupportFragmentManager()
@@ -41,6 +59,13 @@ public class MainActivity extends BaseActivity implements MovieDetailsFragment.C
         }
     }
 
+    @Nullable
+    @Override
+    public View onCreateView(String name, Context context, AttributeSet attrs) {
+        mMovieDetailsContainer = findViewById(R.id.fragment_moviedetails_double);
+        return super.onCreateView(name, context, attrs);
+    }
+
     @Override
     public void onItemSelected(MovieGridObj item) {
         if (mTwoPane) {
@@ -49,15 +74,13 @@ public class MainActivity extends BaseActivity implements MovieDetailsFragment.C
             args.putLong(MovieDetailsFragment.MOVIE_ID_KEY, item.id);
             fragment.setArguments(args);
             if (!appState.isDetailsPaneShown()) {
-                findViewById(R.id.fragment_moviedetails_double)
-                        .setLayoutParams(
-                                new LinearLayout.LayoutParams(
-                                        0, RelativeLayout.LayoutParams.MATCH_PARENT, 4f));
+                mMovieDetailsContainer.startAnimation(new ShowAnimation(mMovieDetailsContainer, 4f, 1000L));
                 appState.setDetailsPaneShown(true);
             }
             getSupportFragmentManager()
                     .beginTransaction()
                     .replace(R.id.fragment_moviedetails_double, fragment, DETAILFRAGMENT_TAG)
+                    .addToBackStack(DETAILFRAGMENT_TAG)
                     .commit();
         } else {
             Intent intent = new Intent(this, DetailsActivity.class);

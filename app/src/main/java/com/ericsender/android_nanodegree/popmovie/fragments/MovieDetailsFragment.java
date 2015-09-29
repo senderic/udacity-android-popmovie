@@ -189,6 +189,13 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         mMovieDetailsAsyncView = (LinearLayout) mRootView.findViewById(R.id.movie_details_async_section);
         mMovieDetailsReviewView = (LinearLayout) mRootView.findViewById(R.id.movie_details_review_section);
         mMovieDetailsTrailerView = (LinearLayout) mRootView.findViewById(R.id.movie_details_trailer_section);
+        // runFragment();
+        return mRootView;
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
         mMovieDetailsAsyncView.setVisibility(View.GONE);
         mMovieDetailsTrailerView.setVisibility(View.GONE);
         mMovieDetailsReviewView.setVisibility(View.GONE);
@@ -206,8 +213,6 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         });
 
         if (Utils.isTablet(getActivity())) imageView.setAdjustViewBounds(true);
-        // runFragment();
-        return mRootView;
     }
 
     private void runFragment() {
