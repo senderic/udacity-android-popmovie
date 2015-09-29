@@ -5,6 +5,8 @@ import android.os.Bundle;
 import android.os.Parcelable;
 import android.util.Log;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 
 import com.ericsender.android_nanodegree.popmovie.R;
 import com.ericsender.android_nanodegree.popmovie.application.PopMoviesApplication;
@@ -28,6 +30,7 @@ public class MainActivity extends BaseActivity implements MovieDetailsFragment.C
         appState.setTwoPane(mTwoPane);
         Log.d(LOG_TAG, (mTwoPane ? "two" : "single") + " pane mode");
         if (mTwoPane && savedInstanceState == null) {
+            appState.setDetailsPaneShown(false);
 //            getSupportFragmentManager()
 //                    .beginTransaction()
 //                    .replace(R.id.fragment_moviedetails_double, new MovieDetailsFragment(), DETAILFRAGMENT_TAG)
@@ -44,7 +47,14 @@ public class MainActivity extends BaseActivity implements MovieDetailsFragment.C
             MovieDetailsFragment fragment = new MovieDetailsFragment();
             args.putLong(MovieDetailsFragment.MOVIE_ID_KEY, item.id);
             fragment.setArguments(args);
+            if (!appState.isDetailsPaneShown()) {
+                findViewById(R.id.fragment_moviedetails_double)
+                        .setLayoutParams(
+                                new LinearLayout.LayoutParams(
+                                        0, RelativeLayout.LayoutParams.MATCH_PARENT, 4f));
 
+                appState.setDetailsPaneShown(true);
+            }
             getSupportFragmentManager()
                     .beginTransaction()
                     .replace(R.id.fragment_moviedetails_double, fragment, DETAILFRAGMENT_TAG)

@@ -56,6 +56,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MovieDetailsFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
     private static final String LOG_TAG = MovieDetailsFragment.class.getSimpleName();
@@ -74,18 +75,20 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     private Button mFavButton;
     private Long mMovieId;
     private boolean mIsAlreadyFav = false;
-    private String sIsAlreadyFav;
-    private String sMovieObjKey;
-    private String sMovieIdKey;
-    private String sVideoUrl;
-    private String sParamApi;
-    private String sApiKey;
-    private String sReviewKey;
-    private String sBaseUrl;
-    private String sImgSize;
-    private String sNoLongerFav;
-    private String sImgUrl;
-    private String sTrailerTitle;
+    private static final AtomicBoolean isInit = new AtomicBoolean();
+    private static String sIsAlreadyFav;
+    private static String sMovieObjKey;
+    private static String sMovieIdKey;
+    private static String sVideoUrl;
+    private static String sParamApi;
+    private static String sApiKey;
+    private static String sReviewKey;
+    private static String sBaseUrl;
+    private static String sImgSize;
+    private static String sNoLongerFav;
+    private static String sImgUrl;
+    private static String sTrailerTitle;
+    private static volatile PopMoviesApplication.State appState;
     private ListView mTrailerListView;
     private ListView mReviewListView;
     private List<TrailerListObj> mTrailerList = new ArrayList<>();
@@ -106,7 +109,6 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     private String sYoutubeUrl;
     private TrailerListObj oFirstTrailer = null;
     private ShareActionProvider mShareActionProvider;
-    private PopMoviesApplication.State appState;
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
@@ -119,7 +121,6 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        appState = ((PopMoviesApplication) getActivity().getApplication()).STATE;
         init();
         setHasOptionsMenu(true);
         Bundle args = getArguments();
@@ -139,19 +140,25 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
 
     // Limit use of getString since seeing a random null pointer crash regarding one of them.
     private void init() {
-        sIsAlreadyFav = getString(R.string.is_already_fav);
-        sMovieObjKey = getString(R.string.movie_obj_key);
-        sMovieIdKey = getString(R.string.movie_id_key);
-        sVideoUrl = getString(R.string.tmdb_api_movie_videos_url);
-        sParamApi = getString(R.string.tmdb_param_api);
-        sApiKey = getString(R.string.private_tmdb_api);
-        sReviewKey = getString(R.string.tmdb_api_movie_review_url);
-        sBaseUrl = getString(R.string.tmdb_api_base_movie_url);
-        sImgUrl = getString(R.string.tmdb_image_base_url);
-        sImgSize = getString(R.string.tmdb_image_size);
-        sNoLongerFav = getString(R.string.is_no_longer_fav);
-        sTrailerTitle = getString(R.string.trailer_title_iter);
-        sYoutubeUrl = getString(R.string.youtube_url);
+        synchronized (MovieDetailsFragment.class) {
+            if (!isInit.get()) {
+                appState = ((PopMoviesApplication) getActivity().getApplication()).STATE;
+                sIsAlreadyFav = getString(R.string.is_already_fav);
+                sMovieObjKey = getString(R.string.movie_obj_key);
+                sMovieIdKey = getString(R.string.movie_id_key);
+                sVideoUrl = getString(R.string.tmdb_api_movie_videos_url);
+                sParamApi = getString(R.string.tmdb_param_api);
+                sApiKey = getString(R.string.private_tmdb_api);
+                sReviewKey = getString(R.string.tmdb_api_movie_review_url);
+                sBaseUrl = getString(R.string.tmdb_api_base_movie_url);
+                sImgUrl = getString(R.string.tmdb_image_base_url);
+                sImgSize = getString(R.string.tmdb_image_size);
+                sNoLongerFav = getString(R.string.is_no_longer_fav);
+                sTrailerTitle = getString(R.string.trailer_title_iter);
+                sYoutubeUrl = getString(R.string.youtube_url);
+                isInit.set(true);
+            }
+        }
     }
 
     @Override
@@ -166,8 +173,10 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         mDurationTextView = (TextView) mRootView.findViewById(R.id.movie_duration);
         titleTextView = (TextView) mRootView.findViewById(R.id.movie_details_top_title);
         yearTextView = (TextView) mRootView.findViewById(R.id.movie_year);
+        //yearTextView.setText("");
         ratingTextView = (TextView) mRootView.findViewById(R.id.movie_rating);
         overviewTextView = (TextView) mRootView.findViewById(R.id.movie_overview);
+        //overviewTextView.setText("");
         mTrailerListView = (ListView) mRootView.findViewById(R.id.list_trailers);
         mReviewListView = (ListView) mRootView.findViewById(R.id.list_reviews);
         mMovieDetailsBodyView = (RelativeLayout) mRootView.findViewById(R.id.movie_details_body);
