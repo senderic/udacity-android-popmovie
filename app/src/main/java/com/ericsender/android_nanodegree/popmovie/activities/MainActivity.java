@@ -29,6 +29,7 @@ public class MainActivity extends BaseActivity implements MovieDetailsFragment.C
         mTwoPane = findViewById(R.id.fragment_moviedetails_double) != null;
         appState.setTwoPane(mTwoPane);
         Log.d(LOG_TAG, (mTwoPane ? "two" : "single") + " pane mode");
+        Log.d(LOG_TAG, (findViewById(R.id.I_AM_TWOPANE) == null ? "SINGLE " : "TWO ") + "PANE FOR SURE");
         if (mTwoPane && savedInstanceState == null) {
             appState.setDetailsPaneShown(false);
 //            getSupportFragmentManager()
@@ -52,7 +53,6 @@ public class MainActivity extends BaseActivity implements MovieDetailsFragment.C
                         .setLayoutParams(
                                 new LinearLayout.LayoutParams(
                                         0, RelativeLayout.LayoutParams.MATCH_PARENT, 4f));
-
                 appState.setDetailsPaneShown(true);
             }
             getSupportFragmentManager()
