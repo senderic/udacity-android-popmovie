@@ -7,7 +7,6 @@ import android.view.View;
 import android.view.Window;
 
 import com.ericsender.android_nanodegree.popmovie.R;
-import com.ericsender.android_nanodegree.popmovie.fragments.MovieDetailsFragment;
 
 
 public class DetailsActivity extends BaseActivity {
@@ -19,11 +18,11 @@ public class DetailsActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_details);
         // getSupportActionBar().hide();
-        if (savedInstanceState == null) {
-            getSupportFragmentManager().beginTransaction()
-                    .add(R.id.details_activity_container, new MovieDetailsFragment())
-                    .commit();
-        }
+//        if (savedInstanceState == null) {
+//            getSupportFragmentManager().beginTransaction()
+//                    .add(R.id.details_activity_container, new MovieDetailsFragment())
+//                    .commit();
+//        }
     }
 
 

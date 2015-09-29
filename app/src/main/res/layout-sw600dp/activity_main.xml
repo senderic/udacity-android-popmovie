@@ -1,8 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main_activity_container"
+    android:id="@+id/activity_main_2pane"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:baselineAligned="false"
     android:orientation="horizontal">
 
     <fragment
@@ -13,16 +15,12 @@
         android:layout_weight="1"
         tools:layout="@layout/fragment_movie_list" />
 
-    <!--
-    <Spinner
-        android:id="@+id/sort_spinner"
+    <fragment
+        android:id="@+id/fragment_moviedetails"
+        android:name="com.ericsender.android_nanodegree.popmovie.fragments.MovieDetailsFragment"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:layout_marginTop="5dp"
-        android:paddingLeft="8dp"
-        android:popupBackground="@android:color/white"
-        android:scrollbars="none"
-        android:spinnerMode="dropdown" />
-    -->
+        android:layout_height="match_parent"
+        android:layout_weight="4"
+        tools:layout="@layout/fragment_movie_details" />
+
 </LinearLayout>

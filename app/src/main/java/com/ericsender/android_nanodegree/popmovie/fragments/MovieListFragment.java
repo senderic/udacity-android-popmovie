@@ -139,7 +139,7 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        View rootView = inflater.inflate(R.layout.movie_list_fragment, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_movie_list, container, false);
         mMovieGridView = (GridView) rootView.findViewById(R.id.movie_grid);
         mGridViewAdapter = new GridViewAdapter(getActivity(), null, 0);
         mMovieGridView.setAdapter(mGridViewAdapter);
