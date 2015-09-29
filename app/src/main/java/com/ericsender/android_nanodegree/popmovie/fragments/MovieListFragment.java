@@ -50,9 +50,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import static com.ericsender.android_nanodegree.popmovie.application.STATE.REFRESH_GRID;
 
 /**
  * A placeholder fragment containing a simple view.
@@ -66,6 +63,7 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
     private GridView mMovieGridView;
     private String mCurrSortOrder;
     private MovieListFragment mThis;
+    private PopMoviesApplication.State appState;
 
     private String getCurrentSortPref() {
         return PreferenceManager
@@ -102,7 +100,7 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        appState = ((PopMoviesApplication) getActivity().getApplication()).STATE;
         if (savedInstanceState != null)
             mMovieList = (List<MovieGridObj>) savedInstanceState.get(getString(R.string.GRIDVIEW_LIST_KEY));
         else {
@@ -119,17 +117,16 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
         String foo = getCurrentSortPref();
         Log.d(getClass().getSimpleName(), "onResume with Sort =  " + foo);
         // If a change to the sort order is seen, resort the gridview and redistplay
-        PopMoviesApplication Me = ((PopMoviesApplication) getActivity().getApplication());
-        AtomicBoolean refreshGrid = (AtomicBoolean) Me.getStateManager().getState(REFRESH_GRID);
+        boolean refreshGrid = appState.getIsRefreshGrid();
         Log.d(LOG_TAG, "Forced RefreshGrid status is: " + refreshGrid);
-        if (refreshGrid.get() || !foo.equals(mCurrSortOrder)) { // This will also be true on inital loading.
+        if (refreshGrid || !foo.equals(mCurrSortOrder)) { // This will also be true on inital loading.
             mCurrSortOrder = foo;
             Log.d(getClass().getSimpleName(), "Sorting on: " + mCurrSortOrder);
             Bundle b = new Bundle();
             b.putString("sort", foo);
             getLoaderManager().initLoader(0, b, this);
             setTitle();
-            refreshGrid.set(false);
+            appState.setIsRefreshGrid(false);
         }
         super.onResume();
     }
@@ -160,27 +157,8 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
                 Cursor cursor = (Cursor) parent.getItemAtPosition(position);
                 if (cursor != null) {
                     byte[] b = cursor.getBlob(1);
-                    Parcelable item = SerializationUtils.deserialize(b);
-                    Intent intent = new Intent(getActivity(), DetailsActivity.class);
-                    ImageView imageView = (ImageView) v.findViewById(R.id.grid_item_image);
-
-                    // Interesting data to pass across are the thumbnail size/location, the
-                    // resourceId of the source bitmap, the picture description, and the
-                    // orientation (to avoid returning back to an obsolete configuration if
-                    // the device rotates again in the meantime)
-
-                    int[] screenLocation = new int[2];
-                    imageView.getLocationOnScreen(screenLocation);
-
-                    //Pass the image title and url to DetailsActivity
-                    // TODO: instead of putting the full movieObj in here, send just the movie_id and use a loader on the fragment to get the rest of the data.
-                    intent.putExtra("left", screenLocation[0])
-                            .putExtra("top", screenLocation[1])
-                            .putExtra(getString(R.string.movie_id_key), ((MovieGridObj) item).id.longValue())
-                            .putExtra(getString(R.string.movie_obj_key), item);
-
-                    //Start details activity
-                    startActivity(intent);
+                    ((MovieDetailsFragment.Callback) getActivity())
+                            .onItemSelected((MovieGridObj) SerializationUtils.deserialize(b));
                 } else
                     Toast.makeText(getActivity(), "No Movie Selected!", Toast.LENGTH_SHORT).show();
             }

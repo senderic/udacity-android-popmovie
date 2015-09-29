@@ -157,7 +157,7 @@ public class MovieProvider extends ContentProvider {
         matcher.addURI(authority, MovieContract.PATH_MOVIE, MOVIE);
         // Get a movie by id
         matcher.addURI(authority, MovieContract.PATH_MOVIE + "/#", MOVIE_WITH_ID);
-        // Get movie and also a row if its a favorite
+        // Get movie and also a row if its a favorite // TODO using "*" instead of "#" to handle negatives
         matcher.addURI(authority, MovieContract.PATH_MOVIE + "/isFav/#", MOVIE_WITH_ID_AND_MAYBE_FAVORITE);
         // Get all movies marked favorite (should not be limited)
         matcher.addURI(authority, MovieContract.PATH_FAVORITE, MOVIE_FAVORITE);

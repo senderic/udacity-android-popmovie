@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/activity_main_2pane"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:baselineAligned="false"
@@ -16,7 +15,7 @@
         tools:layout="@layout/fragment_movie_list" />
 
     <fragment
-        android:id="@+id/fragment_moviedetails"
+        android:id="@+id/fragment_moviedetails_double"
         android:name="com.ericsender.android_nanodegree.popmovie.fragments.MovieDetailsFragment"
         android:layout_width="0dp"
         android:layout_height="match_parent"

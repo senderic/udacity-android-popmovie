@@ -56,12 +56,10 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import static com.ericsender.android_nanodegree.popmovie.application.STATE.REFRESH_GRID;
 
 public class MovieDetailsFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
     private static final String LOG_TAG = MovieDetailsFragment.class.getSimpleName();
+    public static final String MOVIE_ID_KEY = "movie_id_key";
     private TextView titleTextView;
     private ImageView imageView;
     private TextView yearTextView;
@@ -108,6 +106,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     private String sYoutubeUrl;
     private TrailerListObj oFirstTrailer = null;
     private ShareActionProvider mShareActionProvider;
+    private PopMoviesApplication.State appState;
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
@@ -120,8 +119,22 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        appState = ((PopMoviesApplication) getActivity().getApplication()).STATE;
         init();
         setHasOptionsMenu(true);
+        Bundle args = getArguments();
+        if (savedInstanceState != null) {
+            mMovieObj = (MovieGridObj) savedInstanceState.getParcelable(sMovieObjKey);
+            mMovieId = savedInstanceState.getLong(sMovieIdKey);
+            runFragment();
+        } else {
+            mMovieId = args == null ?
+                    getActivity().getIntent().getLongExtra(sMovieIdKey, -1L) :
+                    args.getLong(sMovieIdKey, -1L);
+            Bundle b = new Bundle();
+            b.putLong(sMovieIdKey, mMovieId);
+            getLoaderManager().initLoader(0, b, this);
+        }
     }
 
     // Limit use of getString since seeing a random null pointer crash regarding one of them.
@@ -185,16 +198,6 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
 
         if (Utils.isTablet(getActivity())) imageView.setAdjustViewBounds(true);
         // runFragment();
-        if (savedInstanceState != null) {
-            mMovieObj = (MovieGridObj) savedInstanceState.getParcelable(sMovieObjKey);
-            mMovieId = savedInstanceState.getLong(sMovieIdKey);
-            runFragment();
-        } else {
-            mMovieId = getActivity().getIntent().getLongExtra(sMovieIdKey, -1L);
-            Bundle b = new Bundle();
-            b.putLong(sMovieIdKey, mMovieId);
-            getLoaderManager().initLoader(0, b, this);
-        }
         return mRootView;
     }
 
@@ -271,9 +274,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         } else
             Snackbar.make(mRootView, "Please Wait... still loading", Snackbar.LENGTH_SHORT).show();
 
-        PopMoviesApplication Me = ((PopMoviesApplication) getActivity().getApplication());
-        AtomicBoolean o = (AtomicBoolean) Me.getStateManager().getState(REFRESH_GRID);
-        o.set(true);
+        appState.setIsRefreshGrid(true);
     }
 
     private void handleOffThread() {
@@ -477,9 +478,10 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        return new CursorLoader(getActivity(), MovieContract.MovieEntry
-                .buildMovieUnionFavoriteUri(args.getLong(sMovieIdKey)),
-                null, null, null, null);
+        long mid = args.getLong(sMovieIdKey);
+        return mid > -1 ? new CursorLoader(getActivity(), MovieContract.MovieEntry
+                .buildMovieUnionFavoriteUri(mid),
+                null, null, null, null) : null;
     }
 
     @Override
@@ -538,6 +540,6 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         /**
          * DetailFragmentCallback for when an item has been selected.
          */
-        public void onItemSelected(Uri dateUri);
+        public void onItemSelected(MovieGridObj movieObj);
     }
 }

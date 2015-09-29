@@ -10,7 +10,7 @@ import com.ericsender.android_nanodegree.popmovie.R;
 import com.ericsender.android_nanodegree.popmovie.fragments.MovieDetailsFragment;
 import com.ericsender.android_nanodegree.popmovie.utils.Utils;
 
-public class BaseActivity extends ActionBarActivity implements MovieDetailsFragment.Callback {
+public class BaseActivity extends ActionBarActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -30,10 +30,5 @@ public class BaseActivity extends ActionBarActivity implements MovieDetailsFragm
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_base, menu);
         return true;
-    }
-
-    @Override
-    public void onItemSelected(Uri dateUri) {
-
     }
 }
