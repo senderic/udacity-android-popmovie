@@ -33,7 +33,7 @@ public class MainActivity extends BaseActivity implements MovieDetailsFragment.C
                 ((LinearLayout.LayoutParams) mMovieDetailsContainer.getLayoutParams()).weight != 0f) {
             Log.d(LOG_TAG, "Back button hit - shrinking details fragment");
 
-            // TODO this animation is instant.. Guessing the 0f weight is short circuiting the animation? 
+            // TODO this animation is instant.. Guessing the 0f weight is short circuiting the animation?
             mMovieDetailsContainer.startAnimation(new ShowAnimation(mMovieDetailsContainer, 0f, 1000L));
             appState.setDetailsPaneShown(false);
         }

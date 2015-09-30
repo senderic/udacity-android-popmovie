@@ -88,6 +88,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     private static String sNoLongerFav;
     private static String sImgUrl;
     private static String sTrailerTitle;
+    private static String sYoutubeUrl;
     private static volatile PopMoviesApplication.State appState;
     private ListView mTrailerListView;
     private ListView mReviewListView;
@@ -106,7 +107,6 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     private LinearLayout.LayoutParams mMovieDetailsAsyncViewDefaultLayout;
     private TextView mMovieDetailsTitleView;
     private LinearLayout.LayoutParams mMovieDetailsTitleViewDefaultLayout;
-    private String sYoutubeUrl;
     private TrailerListObj oFirstTrailer = null;
     private ShareActionProvider mShareActionProvider;
 
@@ -338,7 +338,8 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
                             setFirstTrailer();
                             if (!mTrailerList.isEmpty() && mMovieDetailsTrailerView.getVisibility() == View.GONE)
                                 showMovieDetailsAsyncView(Section.TRAILER);
-                        } catch (NumberFormatException | NullPointerException x) {
+                        } catch (NumberFormatException | NullPointerException e) {
+                            Log.e(LOG_TAG, e.getMessage(), e);
                         }
                     }
                 }, new Response.ErrorListener() {
@@ -384,7 +385,8 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
                             mReviewListViewAdapter.setData(mReviewList);
                             if (!mReviewList.isEmpty() && mMovieDetailsReviewView.getVisibility() == View.GONE)
                                 showMovieDetailsAsyncView(Section.REVIEW);
-                        } catch (NumberFormatException | NullPointerException x) {
+                        } catch (NumberFormatException | NullPointerException e) {
+                            Log.e(LOG_TAG, e.getMessage(), e);
                         }
                     }
                 }, new Response.ErrorListener() {
@@ -474,7 +476,8 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
                             String rt = map.get("runtime").toString().trim();
                             mDurationProgress.setVisibility(View.GONE);
                             mDurationTextView.setText(Double.valueOf(rt).intValue() + " mins");
-                        } catch (NumberFormatException | NullPointerException x) {
+                        } catch (NumberFormatException | NullPointerException e) {
+                            Log.e(LOG_TAG, e.getMessage(), e);
                         }
                     }
                 }, new Response.ErrorListener() {

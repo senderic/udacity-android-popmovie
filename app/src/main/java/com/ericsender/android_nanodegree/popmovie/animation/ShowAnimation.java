@@ -7,7 +7,7 @@ import android.widget.LinearLayout;
 
 /**
  * Created by Eric K. Sender on 9/29/2015.
- * Adapter from http://stackoverflow.com/a/9704820/1582712
+ * Adapted from http://stackoverflow.com/a/9704820/1582712
  */
 public class ShowAnimation extends Animation {
     float targetWeight;
