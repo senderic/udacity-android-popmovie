@@ -24,6 +24,9 @@ public class MovieProvider extends ContentProvider {
     public static final int MOVIE = 100;
     public static final int MOVIE_WITH_ID = 101;
     public static final int MOVIE_WITH_ID_AND_MAYBE_FAVORITE = 102;
+    public static final int MOVIE_MINUTES = 103;
+    public static final int MOVIE_REVIEWS = 104;
+    public static final int MOVIE_TRAILERS = 105;
     public static final int MOVIE_FAVORITE = 200;
     public static final int MOVIE_FAVORITE_WITH_ID = 201;
     public static final int MOVIE_RATING = 300;
@@ -34,13 +37,18 @@ public class MovieProvider extends ContentProvider {
     private static final SQLiteQueryBuilder sFavoriteMovies;
     private static final SQLiteQueryBuilder sHighRatedMovies;
     private static final SQLiteQueryBuilder sPopularMovies;
-
     private static final SQLiteQueryBuilder sFavoriteMovie;
+    private static final SQLiteQueryBuilder sMovieReviews;
+    private static final SQLiteQueryBuilder sMovieMinutes;
+    private static final SQLiteQueryBuilder sMovieTrailers;
 
     static {
         // TODO: do I need to implement this?
         sMoviesAll = new SQLiteQueryBuilder();
         sMovieById = new SQLiteQueryBuilder();
+        sMovieReviews = new SQLiteQueryBuilder();
+        sMovieMinutes = new SQLiteQueryBuilder();
+        sMovieTrailers = new SQLiteQueryBuilder();
         sFavoriteMovies = new SQLiteQueryBuilder();
         sFavoriteMovie = new SQLiteQueryBuilder();
         // TODO: implement below two once I know sFavoriteMovies is working
@@ -48,9 +56,10 @@ public class MovieProvider extends ContentProvider {
         sPopularMovies = new SQLiteQueryBuilder();
 
         sMoviesAll.setTables(MovieContract.MovieEntry.TABLE_NAME);
-
+        sMovieTrailers.setTables(MovieContract.MovieEntry.TABLE_NAME);
+        sMovieReviews.setTables(MovieContract.MovieEntry.TABLE_NAME);
+        sMovieMinutes.setTables(MovieContract.MovieEntry.TABLE_NAME);
         sFavoriteMovie.setTables(MovieContract.FavoriteEntry.TABLE_NAME);
-
         sFavoriteMovies.setTables(MovieContract.MovieEntry.TABLE_NAME
                 + " INNER JOIN " +
                 MovieContract.FavoriteEntry.TABLE_NAME
@@ -58,7 +67,6 @@ public class MovieProvider extends ContentProvider {
                 + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_ID
                 + " = "
                 + MovieContract.FavoriteEntry.TABLE_NAME + "." + MovieContract.FavoriteEntry.COLUMN_MOVIE_ID);
-
         sMovieById.setTables(MovieContract.MovieEntry.TABLE_NAME);
     }
 
@@ -117,6 +125,30 @@ public class MovieProvider extends ContentProvider {
                 null, null, null);
     }
 
+    private Cursor getMovieTrailers(String movie_id) {
+        return sMovieTrailers.query(mOpenHelper.getReadableDatabase(),
+                new String[]{MovieContract.MovieEntry._ID, MovieContract.MovieEntry.COLUMN_MOVIE_TRAILERS},
+                MovieContract.MovieEntry.COLUMN_MOVIE_ID + "=?",
+                new String[]{movie_id},
+                null, null, null);
+    }
+
+    private Cursor getMovieReviews(String movie_id) {
+        return sMovieReviews.query(mOpenHelper.getReadableDatabase(),
+                new String[]{MovieContract.MovieEntry._ID, MovieContract.MovieEntry.COLUMN_MOVIE_REVIEWS},
+                MovieContract.MovieEntry.COLUMN_MOVIE_ID + "=?",
+                new String[]{movie_id},
+                null, null, null);
+    }
+
+    private Cursor getMovieMinutes(String movie_id) {
+        return sMovieMinutes.query(mOpenHelper.getReadableDatabase(),
+                new String[]{MovieContract.MovieEntry._ID, MovieContract.MovieEntry.COLUMN_MOVIE_MINUTES},
+                MovieContract.MovieEntry.COLUMN_MOVIE_ID + "=?",
+                new String[]{movie_id},
+                null, null, null);
+    }
+
     private Cursor getMovieById(String movie_id) {
         return sMovieById.query(mOpenHelper.getReadableDatabase(),
                 new String[]{MovieContract.MovieEntry.COLUMN_MOVIE_BLOB},
@@ -159,6 +191,12 @@ public class MovieProvider extends ContentProvider {
         matcher.addURI(authority, MovieContract.PATH_MOVIE + "/#", MOVIE_WITH_ID);
         // Get movie and also a row if its a favorite // TODO using "*" instead of "#" to handle negatives
         matcher.addURI(authority, MovieContract.PATH_MOVIE + "/isFav/#", MOVIE_WITH_ID_AND_MAYBE_FAVORITE);
+        // Get a movie's review(s)
+        matcher.addURI(authority, MovieContract.PATH_MOVIE + "/review/#", MOVIE_REVIEWS);
+        // Get a movie's trailer(s)
+        matcher.addURI(authority, MovieContract.PATH_MOVIE + "/trailer/#", MOVIE_TRAILERS);
+        // Get a movie's minutes
+        matcher.addURI(authority, MovieContract.PATH_MOVIE + "/minutes/#", MOVIE_MINUTES);
         // Get all movies marked favorite (should not be limited)
         matcher.addURI(authority, MovieContract.PATH_FAVORITE, MOVIE_FAVORITE);
         // Get a favorite movie
@@ -209,6 +247,9 @@ public class MovieProvider extends ContentProvider {
         final int match = sUriMatcher.match(uri);
         switch (match) {
             case MOVIE_WITH_ID:
+            case MOVIE_MINUTES:
+            case MOVIE_TRAILERS:
+            case MOVIE_REVIEWS:
                 return MovieContract.MovieEntry.CONTENT_ITEM_TYPE;
             case MOVIE:
                 return MovieContract.MovieEntry.CONTENT_TYPE;
@@ -234,34 +275,53 @@ public class MovieProvider extends ContentProvider {
                 _id = insertMovie(values);
                 if (_id == -1)
                     throw new RuntimeException("Failed insert of values: " + values);
-                returnUri = MovieContract.MovieEntry.buildMovieUri();
+                returnUri = MovieContract.MovieEntry.buildUri();
                 break;
             case MOVIE_WITH_ID:
                 _id = insertMovie(values);
                 if (_id == -1)
                     throw new RuntimeException("Failed insert of values: " + values);
-                returnUri = MovieContract.MovieEntry.buildMovieUri(values.getAsLong(MovieContract.MovieEntry.COLUMN_MOVIE_ID));
+                returnUri = MovieContract.MovieEntry.buildUri(values.getAsLong(MovieContract.MovieEntry.COLUMN_MOVIE_ID));
+                break;
+            case MOVIE_REVIEWS:
+                long values_mid = values.getAsLong(MovieContract.MovieEntry.COLUMN_MOVIE_ID);
+                _id = insertMovieReview(values);
+                if (_id == -1)
+                    throw new RuntimeException("Failed insert of values: " + values);
+                returnUri = MovieContract.MovieEntry.buildUriReviews(values_mid);
+                break;
+            case MOVIE_TRAILERS:
+                _id = insertMovieTrailer(values);
+                if (_id == -1)
+                    throw new RuntimeException("Failed insert of values: " + values);
+                returnUri = MovieContract.MovieEntry.buildUriTrailers(values.getAsLong(MovieContract.MovieEntry._ID));
+                break;
+            case MOVIE_MINUTES:
+                _id = insertMovieMinutes(values);
+                if (_id == -1)
+                    throw new RuntimeException("Failed insert of values: " + values);
+                returnUri = MovieContract.MovieEntry.buildUriTrailers(values.getAsLong(MovieContract.MovieEntry._ID));
                 break;
             case MOVIE_RATING:
                 _id = insertRated(values);
                 if (_id == -1)
                     throw new android.database.SQLException("Failed to insert row into into movies " + uri);
-                returnUri = MovieContract.RatingEntry.buildRatingUri();
+                returnUri = MovieContract.RatingEntry.buildUri();
                 break;
             case MOVIE_POPULAR:
                 _id = insertPopular(values);
                 if (_id == -1)
                     throw new android.database.SQLException("Failed to insert row into into movies " + uri);
-                returnUri = MovieContract.PopularEntry.buildPopularUri();
+                returnUri = MovieContract.PopularEntry.buildUri();
                 break;
             case MOVIE_FAVORITE:
                 _id = insertFavorite(values);
                 if (_id == -1)
                     throw new android.database.SQLException("Failed to insert row into into movies " + uri);
-                returnUri = MovieContract.FavoriteEntry.buildFavoriteUri();
+                returnUri = MovieContract.FavoriteEntry.buildUri();
                 break;
             default:
-                throw new UnsupportedOperationException("Unknown/Unimplemented uri " + uri);
+                throw new UnsupportedOperationException(String.format("Unknown/Unimplemented match (%d) & uri (%s)", match, uri));
         }
         getContext().getContentResolver().notifyChange(uri, null);
         return returnUri;
@@ -326,6 +386,28 @@ public class MovieProvider extends ContentProvider {
         }
     }
 
+    private long insertMovieReview(ContentValues values) {
+        try {
+            String where = MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_ID + "=?";
+            String[] whereArgs = new String[]{values.getAsLong(MovieContract.MovieEntry.COLUMN_MOVIE_ID).toString()};
+            values.remove(MovieContract.MovieEntry._ID);
+            return mOpenHelper.getWritableDatabase().update(MovieContract.MovieEntry.TABLE_NAME, values, where, whereArgs);
+        } catch (SQLiteConstraintException e) {
+            return -2L;
+        } catch (SQLException e) {
+            Log.e(LOG_TAG, e.getMessage(), e);
+            return -1L;
+        }
+    }
+
+    private long insertMovieTrailer(ContentValues values) {
+        return insertMovie(values);
+    }
+
+    private long insertMovieMinutes(ContentValues values) {
+        return insertMovie(values);
+    }
+
     @Override
     public boolean onCreate() {
         mOpenHelper = new MovieDbHelper(getContext());
@@ -342,6 +424,15 @@ public class MovieProvider extends ContentProvider {
                 break;
             case MOVIE_WITH_ID:
                 retCursor = getMovieById(uri.getLastPathSegment());
+                break;
+            case MOVIE_MINUTES:
+                retCursor = getMovieMinutes(uri.getLastPathSegment());
+                break;
+            case MOVIE_REVIEWS:
+                retCursor = getMovieReviews(uri.getLastPathSegment());
+                break;
+            case MOVIE_TRAILERS:
+                retCursor = getMovieTrailers(uri.getLastPathSegment());
                 break;
             case MOVIE_RATING:
                 retCursor = getRatedMovies();

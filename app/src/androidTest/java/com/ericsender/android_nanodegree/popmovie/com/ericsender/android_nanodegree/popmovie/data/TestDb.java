@@ -15,16 +15,12 @@ import com.ericsender.android_nanodegree.popmovie.data.MovieDbHelper;
 
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public class TestDb extends AndroidTestCase {
-
-    public static final String LOG_TAG = TestDb.class.getSimpleName();
 
     // Since we want each test to start with a clean slate
     void deleteTheDatabase() {
@@ -95,13 +91,13 @@ public class TestDb extends AndroidTestCase {
     }
 
     public void testMovieTable() {
-        insertMovies();
+        TestUtilities.insertMovies(this, mContext);
     }
 
     public void testFavorites() {
         MovieDbHelper dbHelper = new MovieDbHelper(mContext);
         SQLiteDatabase db = dbHelper.getWritableDatabase();
-        Map<Long, ContentValues> orderedInserts = insertMovies();
+        Map<Long, ContentValues> orderedInserts = TestUtilities.insertMovies(this, mContext);
         try {
             for (int i = 0; i < 2; i++) {
                 dbHelper.emptyFavorites(db);
@@ -132,56 +128,7 @@ public class TestDb extends AndroidTestCase {
         }
     }
 
-    public Map<Long, ContentValues> insertMovies() {
-        // First step: Get reference to writable database
-        // If there's an error in those massive SQL table creation Strings,
-        // errors will be thrown here when you try to get a writable database.
-        MovieDbHelper dbHelper = new MovieDbHelper(mContext);
-        SQLiteDatabase db = dbHelper.getWritableDatabase();
-
-        // Second Step: Create ContentValues of what you want to insert
-        // (you can use the createSortedMovieValues if you wish)
-
-        Map<Long, ContentValues> testValues = TestUtilities.createSortedMovieValues(mContext, "popular");
-        List<ContentValues> lTestValues = Arrays.asList(testValues.values().toArray(new ContentValues[0]));
-        Map<Long, ContentValues> insertOrderedTestValues = new HashMap<>();
-        // Third Step: Insert ContentValues into database and get a row ID back
-
-        insertMovieValues(db, lTestValues, insertOrderedTestValues, "popular");
-
-        // Fourth Step: Query the database and receive a Cursor back
-        // A cursor is your primary interface to the query results.
-        Cursor cursor = db.query(
-                MovieContract.MovieEntry.TABLE_NAME,  // Table to Query
-                null, // all columns
-                null, // Columns for the "where" clause
-                null, // Values for the "where" clause
-                null, // columns to group by
-                null, // columns to filter by row groups
-                null // sort order
-        );
-
-        // Move the cursor to a valid database row and check to see if we got any records back
-        // from the query
-        assertTrue("Error: No Records returned from movie query", cursor.moveToFirst());
-
-        // Fifth Step: Validate data in resulting Cursor with the original ContentValues
-        // (you can use the validateRecordsToDatabase function in TestUtilities to validate the
-        // query if you like)
-        TestUtilities.validateRecordsToDatabase("Error: Location Query Validation Failed",
-                cursor, insertOrderedTestValues);
-
-        // Move the cursor to demonstrate that there is only one record in the database
-//        assertFalse("Error: More than one record returned from location query",
-//                cursor.moveToNext());
-
-        // Sixth Step: Close Cursor and Database
-        cursor.close();
-        db.close();
-        return insertOrderedTestValues;
-    }
-
-    private void insertMovieValues(SQLiteDatabase db, List<ContentValues> lTestValues, Map<Long, ContentValues> insertOrderedTestValues, String sort) {
+    void insertMovieValues(SQLiteDatabase db, List<ContentValues> lTestValues, Map<Long, ContentValues> insertOrderedTestValues, String sort) {
         int insertCount = 0;
         db.beginTransaction();
         try {

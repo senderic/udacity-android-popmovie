@@ -143,10 +143,10 @@ public class Utils {
     }
 
     public static void eraseDatabase(Activity activity) {
-        activity.getContentResolver().delete(MovieContract.MovieEntry.buildMovieUri(), null, null);
-        activity.getContentResolver().delete(MovieContract.FavoriteEntry.buildFavoriteUri(), null, null);
-        activity.getContentResolver().delete(MovieContract.RatingEntry.buildRatingUri(), null, null);
-        activity.getContentResolver().delete(MovieContract.PopularEntry.buildPopularUri(), null, null);
+        activity.getContentResolver().delete(MovieContract.MovieEntry.buildUri(), null, null);
+        activity.getContentResolver().delete(MovieContract.FavoriteEntry.buildUri(), null, null);
+        activity.getContentResolver().delete(MovieContract.RatingEntry.buildUri(), null, null);
+        activity.getContentResolver().delete(MovieContract.PopularEntry.buildUri(), null, null);
         Log.d(LOG_TAG, "Erased databased!");
     }
 }

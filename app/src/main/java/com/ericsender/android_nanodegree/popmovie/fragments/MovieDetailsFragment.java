@@ -109,6 +109,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     private LinearLayout.LayoutParams mMovieDetailsTitleViewDefaultLayout;
     private TrailerListObj oFirstTrailer = null;
     private ShareActionProvider mShareActionProvider;
+    private RequestQueue mVolleyRequestQueue;
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
@@ -121,25 +122,20 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        init();
+        mVolleyRequestQueue = Volley.newRequestQueue(getActivity());
+        staticInits();
         setHasOptionsMenu(true);
-        Bundle args = getArguments();
         if (savedInstanceState != null) {
             mMovieObj = (MovieGridObj) savedInstanceState.getParcelable(sMovieObjKey);
             mMovieId = savedInstanceState.getLong(sMovieIdKey);
             runFragment();
         } else {
-            mMovieId = args == null ?
-                    getActivity().getIntent().getLongExtra(sMovieIdKey, -1L) :
-                    args.getLong(sMovieIdKey, -1L);
-            Bundle b = new Bundle();
-            b.putLong(sMovieIdKey, mMovieId);
-            getLoaderManager().initLoader(0, b, this);
+            loaderDetails();
         }
     }
 
     // Limit use of getString since seeing a random null pointer crash regarding one of them.
-    private void init() {
+    private void staticInits() {
         synchronized (MovieDetailsFragment.class) {
             if (!isInit.get()) {
                 appState = ((PopMoviesApplication) getActivity().getApplication()).STATE;
@@ -262,20 +258,20 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     public void handleFavoriteClick(View view) {
         if (mIsLoadFinished) {
             // check if its already pressed
-            Cursor c = getActivity().getContentResolver().query(MovieContract.FavoriteEntry.buildFavoriteUri(mMovieObj.id),
+            Cursor c = getActivity().getContentResolver().query(MovieContract.FavoriteEntry.buildUri(mMovieObj.id),
                     null, null, null, null);
             if (!c.moveToFirst()) {
                 // add to favorites
                 ContentValues cv = new ContentValues();
                 cv.put(MovieContract.FavoriteEntry.COLUMN_MOVIE_ID, mMovieObj.id);
-                Uri u = getActivity().getContentResolver().insert(MovieContract.FavoriteEntry.buildFavoriteUri(), cv);
+                Uri u = getActivity().getContentResolver().insert(MovieContract.FavoriteEntry.buildUri(), cv);
                 mIsAlreadyFav = true;
                 mFavButton.setText(sIsAlreadyFav);
                 Snackbar.make(mRootView, String.format("%s %s to Favorites", "Added", mMovieObj.title),
                         Snackbar.LENGTH_SHORT).show();
             } else {
                 // remove from favorites?
-                getActivity().getContentResolver().delete(MovieContract.FavoriteEntry.buildFavoriteUri(),
+                getActivity().getContentResolver().delete(MovieContract.FavoriteEntry.buildUri(),
                         MovieContract.FavoriteEntry.COLUMN_MOVIE_ID + "=?",
                         new String[]{mMovieObj.id.toString()});
                 mIsAlreadyFav = false;
@@ -296,13 +292,47 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     }
 
     private void getMoreMovieDetails() {
-        RequestQueue queue = Volley.newRequestQueue(getActivity());
-
-        queue.add(getVideoDataAsync());
-        queue.add(getReviewDataAsync());
-        queue.add(getMinutesDataAsync());
-
+        loaderVideoData();
+        loaderReviewData();
+        loaderVideoData();
         Log.d(getClass().getSimpleName(), String.format("getMoreMovieDetails() - movie %s", mMovieObj.title));// .substring(0, url.length() - 16));
+    }
+
+    private static enum TYPES {
+        review, trailer, minute, details;
+        public static final String KEY = "type_key";
+    }
+
+    private void loaderDetails() {
+        Bundle args = getArguments();
+        mMovieId = args == null ?
+                getActivity().getIntent().getLongExtra(sMovieIdKey, -1L) :
+                args.getLong(sMovieIdKey, -1L);
+        Bundle b = new Bundle();
+        b.putSerializable(TYPES.KEY, TYPES.details);
+        b.putLong(sMovieIdKey, mMovieId);
+        getLoaderManager().initLoader(0, b, this);
+    }
+
+    private void loaderVideoData() {
+        Bundle b = new Bundle();
+        b.putSerializable(TYPES.KEY, TYPES.trailer);
+        getLoaderManager().initLoader(0, b, this);
+        // mVolleyRequestQueue.add(getVideoDataAsync());
+    }
+
+    private void loaderReviewData() {
+        Bundle b = new Bundle();
+        b.putSerializable(TYPES.KEY, TYPES.review);
+        getLoaderManager().initLoader(0, b, this);
+        // mVolleyRequestQueue.add(getReviewDataAsync());
+    }
+
+    private void loaderMinutesData() {
+        Bundle b = new Bundle();
+        b.putSerializable(TYPES.KEY, TYPES.minute);
+        getLoaderManager().initLoader(0, b, this);
+        // mVolleyRequestQueue.add(getMinutesDataAsync());
     }
 
     private JsonObjectRequest getVideoDataAsync() {
@@ -495,10 +525,27 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        TYPES type = (TYPES) args.getSerializable(TYPES.KEY);
         long mid = args.getLong(sMovieIdKey);
-        return mid > -1 ? new CursorLoader(getActivity(), MovieContract.MovieEntry
-                .buildMovieUnionFavoriteUri(mid),
-                null, null, null, null) : null;
+        if (mid > -1)
+            switch (type) {
+                case review:
+                    return new CursorLoader(getActivity(), MovieContract.MovieEntry.buildUriReviews(mid),
+                            null, null, null, null);
+                case trailer:
+                    return new CursorLoader(getActivity(), MovieContract.MovieEntry.buildUriTrailers(mid),
+                            null, null, null, null);
+                case minute:
+                    return new CursorLoader(getActivity(), MovieContract.MovieEntry.buildUriMinutes(mid),
+                            null, null, null, null);
+                case details:
+                    return new CursorLoader(getActivity(), MovieContract.MovieEntry.buildUriUnionFavorite(mid),
+                            null, null, null, null);
+                default:
+                    throw new RuntimeException("Invalid type: " + type);
+            }
+        else return null;
+
     }
 
     @Override

@@ -35,7 +35,7 @@ public class TestMovieContract extends AndroidTestCase {
      */
     public void testBuildWeatherLocation() {
         String expected = "0";
-        Uri locationUri = MovieContract.MovieEntry.buildMovieUri(Long.valueOf(expected));
+        Uri locationUri = MovieContract.MovieEntry.buildUri(Long.valueOf(expected));
         assertNotNull("Error: Null Uri returned.  You must fill-in buildWeatherLocation in " +
                         "WeatherContract.",
                 locationUri);

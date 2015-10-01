@@ -37,17 +37,32 @@ public class MovieContract {
 
         public static final String TABLE_NAME = PATH_MOVIE;
         public static final String COLUMN_MOVIE_ID = "movie_id";
-        public static final String COLUMN_MOVIE_BLOB = "serializedParseableJson";
+        public static final String COLUMN_MOVIE_BLOB = "details_serializedParseableJson";
+        public static final String COLUMN_MOVIE_TRAILERS = "trailers_serializedParseableJson";
+        public static final String COLUMN_MOVIE_REVIEWS = "reviews_serializedParseableJson";
+        public static final String COLUMN_MOVIE_MINUTES = "minutes";
 
-        public static Uri buildMovieUri(Long movie_id) {
+        public static Uri buildUri(Long movie_id) {
             return CONTENT_URI.buildUpon().appendPath(movie_id.toString()).build();
         }
 
-        public static Uri buildMovieUnionFavoriteUri(Long movie_id) {
+        public static Uri buildUriUnionFavorite(Long movie_id) {
             return CONTENT_URI.buildUpon().appendPath("isFav").appendPath(movie_id.toString()).build();
         }
 
-        public static Uri buildMovieUri() {
+        public static Uri buildUriReviews(Long movie_id) {
+            return CONTENT_URI.buildUpon().appendPath("review").appendPath(movie_id.toString()).build();
+        }
+
+        public static Uri buildUriTrailers(Long movie_id) {
+            return CONTENT_URI.buildUpon().appendPath("trailer").appendPath(movie_id.toString()).build();
+        }
+
+        public static Uri buildUriMinutes(Long movie_id) {
+            return CONTENT_URI.buildUpon().appendPath("minute").appendPath(movie_id.toString()).build();
+        }
+
+        public static Uri buildUri() {
             return CONTENT_URI;
         }
     }
@@ -63,7 +78,7 @@ public class MovieContract {
         public static final String TABLE_NAME = PATH_POPULAR;
         public static final String COLUMN_MOVIE_ID = MovieEntry.COLUMN_MOVIE_ID;
 
-        public static Uri buildPopularUri() {
+        public static Uri buildUri() {
             return CONTENT_URI;
         }
     }
@@ -81,11 +96,11 @@ public class MovieContract {
         public static final String TABLE_NAME = PATH_FAVORITE;
         public static final String COLUMN_MOVIE_ID = MovieEntry.COLUMN_MOVIE_ID;
 
-        public static Uri buildFavoriteUri() {
+        public static Uri buildUri() {
             return CONTENT_URI; // This will return all the favorites.
         }
 
-        public static Uri buildFavoriteUri(Long movie_id) {
+        public static Uri buildUri(Long movie_id) {
             return CONTENT_URI.buildUpon().appendPath(movie_id.toString()).build();
         }
     }
@@ -101,7 +116,7 @@ public class MovieContract {
         public static final String TABLE_NAME = PATH_RATING;
         public static final String COLUMN_MOVIE_ID = MovieEntry.COLUMN_MOVIE_ID;
 
-        public static Uri buildRatingUri() {
+        public static Uri buildUri() {
             return CONTENT_URI;
         }
 

@@ -1,7 +1,6 @@
 package com.ericsender.android_nanodegree.popmovie.fragments;
 
 import android.content.ContentValues;
-import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
@@ -20,7 +19,6 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
-import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.android.volley.Request;
@@ -30,7 +28,6 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.ericsender.android_nanodegree.popmovie.R;
-import com.ericsender.android_nanodegree.popmovie.activities.DetailsActivity;
 import com.ericsender.android_nanodegree.popmovie.adapters.GridViewAdapter;
 import com.ericsender.android_nanodegree.popmovie.application.PopMoviesApplication;
 import com.ericsender.android_nanodegree.popmovie.data.MovieContract;
@@ -104,8 +101,8 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
         if (savedInstanceState != null)
             mMovieList = (List<MovieGridObj>) savedInstanceState.get(getString(R.string.GRIDVIEW_LIST_KEY));
         else {
-            getActivity().getContentResolver().delete(MovieContract.PopularEntry.buildPopularUri(), null, null);
-            getActivity().getContentResolver().delete(MovieContract.RatingEntry.buildRatingUri(), null, null);
+            getActivity().getContentResolver().delete(MovieContract.PopularEntry.buildUri(), null, null);
+            getActivity().getContentResolver().delete(MovieContract.RatingEntry.buildUri(), null, null);
         }
         // Add this line in order for this fragment to handle menu events.
         setHasOptionsMenu(true);
@@ -206,11 +203,11 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
 
     private Uri determineUri(String sort) {
         if (StringUtils.containsIgnoreCase(sort, "popular"))
-            return MovieContract.PopularEntry.buildPopularUri();
+            return MovieContract.PopularEntry.buildUri();
         else if (StringUtils.containsIgnoreCase(sort, "vote"))
-            return MovieContract.RatingEntry.buildRatingUri();
+            return MovieContract.RatingEntry.buildUri();
         else if (StringUtils.containsIgnoreCase(sort, "fav"))
-            return MovieContract.FavoriteEntry.buildFavoriteUri();
+            return MovieContract.FavoriteEntry.buildUri();
         else
             throw new UnsupportedOperationException("Sort not identified: " + sort);
     }
@@ -233,7 +230,7 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
                 cvs[i] = movieCv;
                 movie_ids[i++] = idCv;
             }
-            getActivity().getContentResolver().bulkInsert(MovieContract.MovieEntry.buildMovieUri(), cvs);
+            getActivity().getContentResolver().bulkInsert(MovieContract.MovieEntry.buildUri(), cvs);
             // Deleted whatever is in rating/poppular
             if (StringUtils.containsIgnoreCase(sort, "rate") ||
                     StringUtils.containsIgnoreCase(sort, "popular")) {

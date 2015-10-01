@@ -10,7 +10,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class MovieDbHelper extends SQLiteOpenHelper {
 
     // If you change the database schema, you must increment the database version.
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     public static final String DATABASE_NAME = "movies.db";
     private final String SQL_CREATE_MOVIE_TABLE;
@@ -25,6 +25,9 @@ public class MovieDbHelper extends SQLiteOpenHelper {
                 MovieContract.MovieEntry._ID + " INTEGER PRIMARY KEY," +
                 MovieContract.MovieEntry.COLUMN_MOVIE_ID + " INTEGER UNIQUE NOT NULL, " +
                 MovieContract.MovieEntry.COLUMN_MOVIE_BLOB + " BLOB NOT NULL, " +
+                MovieContract.MovieEntry.COLUMN_MOVIE_TRAILERS + " BLOB, " +
+                MovieContract.MovieEntry.COLUMN_MOVIE_REVIEWS + " BLOB, " +
+                MovieContract.MovieEntry.COLUMN_MOVIE_MINUTES + " INTEGER, " +
                 " UNIQUE (" + MovieContract.MovieEntry._ID + ") ON CONFLICT REPLACE);";
 
         SQL_CREATE_POPULAR_TABLE = "CREATE TABLE " + MovieContract.PopularEntry.TABLE_NAME + " (" +

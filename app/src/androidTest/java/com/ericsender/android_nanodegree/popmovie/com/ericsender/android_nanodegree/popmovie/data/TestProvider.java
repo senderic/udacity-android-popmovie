@@ -21,13 +21,19 @@ import android.content.pm.PackageManager;
 import android.content.pm.ProviderInfo;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.Uri;
 import android.os.Build;
 import android.test.AndroidTestCase;
 
 import com.ericsender.android_nanodegree.popmovie.data.MovieContract;
 import com.ericsender.android_nanodegree.popmovie.data.MovieDbHelper;
 import com.ericsender.android_nanodegree.popmovie.data.MovieProvider;
+import com.google.gson.internal.LinkedTreeMap;
 
+import org.apache.commons.lang3.SerializationUtils;
+
+import java.io.Serializable;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -43,6 +49,8 @@ import java.util.Set;
 public class TestProvider extends AndroidTestCase {
 
     public static final String LOG_TAG = TestProvider.class.getSimpleName();
+    private long curr_movie_id;
+    private byte[] bReviews;
 
     /*
        This helper function deletes all records from both database tables using the ContentProvider.
@@ -146,13 +154,13 @@ public class TestProvider extends AndroidTestCase {
         Long movie_id = (Long) raw.values().toArray(new ContentValues[0])[0].get(MovieContract.MovieEntry.COLUMN_MOVIE_ID);
         // content://com.example.android.sunshine.app/movie/#
         type = mContext.getContentResolver().getType(
-                MovieContract.MovieEntry.buildMovieUri(movie_id));
+                MovieContract.MovieEntry.buildUri(movie_id));
         // vnd.android.cursor.dir/com.example.android.sunshine.app/weather
         assertEquals("Content Type", MovieContract.MovieEntry.CONTENT_ITEM_TYPE, type);
 
         // content://com.example.android.sunshine.app/movie/favorite
         type = mContext.getContentResolver().getType(
-                MovieContract.FavoriteEntry.buildFavoriteUri());
+                MovieContract.FavoriteEntry.buildUri());
         // vnd.android.cursor.item/com.example.android.sunshine.app/weather/1419120000
         assertEquals("Error: the MovieContract.MovieEntry CONTENT_URI with location and date should return MovieContract.MovieEntry.CONTENT_ITEM_TYPE",
                 MovieContract.FavoriteEntry.CONTENT_TYPE, type);
@@ -227,7 +235,7 @@ public class TestProvider extends AndroidTestCase {
         // level 19 or greater because getNotificationUri was added in API level 19.
         if (Build.VERSION.SDK_INT >= 19) {
             assertEquals("Error: Favoriate Query did not properly set NotificationUri",
-                    favCursor.getNotificationUri(), MovieContract.FavoriteEntry.CONTENT_URI);
+                    favCursor.getNotificationUri(), MovieContract.FavoriteEntry.buildUri());
         }
     }
 
@@ -246,7 +254,7 @@ public class TestProvider extends AndroidTestCase {
             (movie_ids[i] = new ContentValues()).put(MovieContract.PopularEntry.COLUMN_MOVIE_ID,
                     arr[i].getAsLong(MovieContract.MovieEntry.COLUMN_MOVIE_ID));
 
-        mContext.getContentResolver().bulkInsert(MovieContract.PopularEntry.CONTENT_URI, movie_ids);
+        mContext.getContentResolver().bulkInsert(MovieContract.PopularEntry.buildUri(), movie_ids);
 
         TestUtilities.verifyPopularValuesInDatabase(listContentValues, mContext);
     }
@@ -264,14 +272,14 @@ public class TestProvider extends AndroidTestCase {
             (movie_ids[i] = new ContentValues()).put(MovieContract.RatingEntry.COLUMN_MOVIE_ID,
                     arr[i].getAsLong(MovieContract.MovieEntry.COLUMN_MOVIE_ID));
 
-        mContext.getContentResolver().bulkInsert(MovieContract.RatingEntry.CONTENT_URI, movie_ids);
+        mContext.getContentResolver().bulkInsert(MovieContract.RatingEntry.buildUri(), movie_ids);
 
         TestUtilities.verifyRatingValuesInDatabase(listContentValues, mContext);
     }
 
     public void testAddingFavoriteMoviesToTable() {
         mContext.getContentResolver().delete(MovieContract.FavoriteEntry.CONTENT_URI, null, null);
-        Map<Long, ContentValues> listContentValues = TestUtilities.createSortedMovieValues(getContext(), "rating");
+        Map<Long, ContentValues> listContentValues = TestUtilities.createSortedMovieValues(getContext(), "popular");
 
         ContentValues[] arr = (ContentValues[]) listContentValues.values().toArray(new ContentValues[0]);
 
@@ -282,14 +290,14 @@ public class TestProvider extends AndroidTestCase {
             (movie_ids[i] = new ContentValues()).put(MovieContract.RatingEntry.COLUMN_MOVIE_ID,
                     arr[i].getAsLong(MovieContract.MovieEntry.COLUMN_MOVIE_ID));
 
-        mContext.getContentResolver().bulkInsert(MovieContract.FavoriteEntry.CONTENT_URI, movie_ids);
+        mContext.getContentResolver().bulkInsert(MovieContract.FavoriteEntry.buildUri(), movie_ids);
 
         TestUtilities.verifyFavoriteValuesInDatabase(listContentValues, mContext);
     }
 
     public void testGettingMovieAndMaybeFavorite() {
         mContext.getContentResolver().delete(MovieContract.FavoriteEntry.CONTENT_URI, null, null);
-        Map<Long, ContentValues> listContentValues = TestUtilities.createSortedMovieValues(getContext(), "rating");
+        Map<Long, ContentValues> listContentValues = TestUtilities.createSortedMovieValues(getContext(), "popular");
 
         ContentValues[] arr = (ContentValues[]) listContentValues.values().toArray(new ContentValues[0]);
 
@@ -305,7 +313,7 @@ public class TestProvider extends AndroidTestCase {
         TestUtilities.verifyFavoriteValuesInDatabase(listContentValues, mContext);
 
         Long expected = movie_ids[0].getAsLong(MovieContract.MovieEntry.COLUMN_MOVIE_ID);
-        Cursor c = mContext.getContentResolver().query(MovieContract.MovieEntry.buildMovieUnionFavoriteUri(expected),
+        Cursor c = mContext.getContentResolver().query(MovieContract.MovieEntry.buildUriUnionFavorite(expected),
                 null, null, null, null);
 
         assertTrue(c.moveToFirst());
@@ -315,14 +323,41 @@ public class TestProvider extends AndroidTestCase {
         assertTrue(c.getBlob(0).length > 0);
         c.close();
 
-        mContext.getContentResolver().delete(MovieContract.FavoriteEntry.CONTENT_URI, MovieContract.FavoriteEntry.COLUMN_MOVIE_ID + "=?", new String[]{expected.toString()});
+        mContext.getContentResolver().delete(MovieContract.FavoriteEntry.buildUri(), MovieContract.FavoriteEntry.COLUMN_MOVIE_ID + "=?", new String[]{expected.toString()});
 
-        c = mContext.getContentResolver().query(MovieContract.MovieEntry.buildMovieUnionFavoriteUri(expected),
+        c = mContext.getContentResolver().query(MovieContract.MovieEntry.buildUriUnionFavorite(expected),
                 null, null, null, null);
 
         assertTrue(c.moveToFirst());
         assertEquals(1, c.getCount());
         assertTrue(c.getBlob(0).length > 0);
+    }
+
+    public void testAddingReviewToMovieRow() {
+        final TestDb testDb = new TestDb();
+        TestUtilities.insertMovies(testDb, mContext);
+        testAddingPopularMoviesToTable(); // add the popular movies
+        LinkedTreeMap<String, Serializable> listContentValues = TestUtilities.getDataAsMap(getContext(), "review");
+        curr_movie_id = Double.valueOf(listContentValues.get("id").toString()).longValue();
+        Serializable reviews = listContentValues.get("results");
+        bReviews = SerializationUtils.serialize(reviews);
+        ContentValues cv = new ContentValues();
+        cv.put(MovieContract.MovieEntry.COLUMN_MOVIE_ID, curr_movie_id);
+        cv.put(MovieContract.MovieEntry.COLUMN_MOVIE_REVIEWS, bReviews);
+        Uri uri = MovieContract.MovieEntry.buildUriReviews(curr_movie_id);
+        assertNotNull(mContext.getContentResolver().insert(uri, cv).toString());
+    }
+
+    public void testGettingReviews() {
+        testAddingReviewToMovieRow();
+        Cursor c = mContext.getContentResolver().query(MovieContract.MovieEntry.buildUriReviews(curr_movie_id),
+                null, null, null, null);
+        assertTrue("cursor returned for movie id = " + curr_movie_id, c.moveToFirst());
+        byte[] blob = c.getBlob(1);
+        assertNotNull("ensure object returned", blob);
+        for (int i = 0; i < bReviews.length; i++)
+            assertEquals(bReviews[i], blob[i]);
+        c.close();
     }
 
 //    /*

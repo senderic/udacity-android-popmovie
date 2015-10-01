@@ -31,11 +31,11 @@ import com.ericsender.android_nanodegree.popmovie.data.MovieProvider;
 public class TestUriMatcher extends AndroidTestCase {
 
     // content://com.ericsender.android_nanodegree.popmovie/movie/0
-    private static final Uri TEST_MOVIE_ITEM = MovieContract.MovieEntry.buildMovieUri(0L);
+    private static final Uri TEST_MOVIE_ITEM = MovieContract.MovieEntry.buildUri(0L);
     // content://com.ericsender.android_nanodegree.popmovie/movie
-    private static final Uri TEST_MOVIE_DIR = MovieContract.MovieEntry.buildMovieUri();
+    private static final Uri TEST_MOVIE_DIR = MovieContract.MovieEntry.buildUri();
     // content://com.ericsender.android_nanodegree.popmovie/favorite
-    private static final Uri TEST_FAVORITE_DIR = MovieContract.FavoriteEntry.buildFavoriteUri();
+    private static final Uri TEST_FAVORITE_DIR = MovieContract.FavoriteEntry.buildUri();
 
 
     public void testUriMatcher() {
