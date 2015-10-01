@@ -33,7 +33,6 @@ import com.google.gson.internal.LinkedTreeMap;
 import org.apache.commons.lang3.SerializationUtils;
 
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -50,7 +49,8 @@ public class TestProvider extends AndroidTestCase {
 
     public static final String LOG_TAG = TestProvider.class.getSimpleName();
     private long curr_movie_id;
-    private byte[] bReviews;
+    private byte[] expected_reviews, expected_trailer;
+    private int expected_mins;
 
     /*
        This helper function deletes all records from both database tables using the ContentProvider.
@@ -340,12 +340,13 @@ public class TestProvider extends AndroidTestCase {
         LinkedTreeMap<String, Serializable> listContentValues = TestUtilities.getDataAsMap(getContext(), "review");
         curr_movie_id = Double.valueOf(listContentValues.get("id").toString()).longValue();
         Serializable reviews = listContentValues.get("results");
-        bReviews = SerializationUtils.serialize(reviews);
+        expected_reviews = SerializationUtils.serialize(reviews);
+        assertTrue(expected_reviews.length > 0);
         ContentValues cv = new ContentValues();
         cv.put(MovieContract.MovieEntry.COLUMN_MOVIE_ID, curr_movie_id);
-        cv.put(MovieContract.MovieEntry.COLUMN_MOVIE_REVIEWS, bReviews);
+        cv.put(MovieContract.MovieEntry.COLUMN_MOVIE_REVIEWS, expected_reviews);
         Uri uri = MovieContract.MovieEntry.buildUriReviews(curr_movie_id);
-        assertNotNull(mContext.getContentResolver().insert(uri, cv).toString());
+        assertNotNull(mContext.getContentResolver().insert(uri, cv));
     }
 
     public void testGettingReviews() {
@@ -355,8 +356,63 @@ public class TestProvider extends AndroidTestCase {
         assertTrue("cursor returned for movie id = " + curr_movie_id, c.moveToFirst());
         byte[] blob = c.getBlob(1);
         assertNotNull("ensure object returned", blob);
-        for (int i = 0; i < bReviews.length; i++)
-            assertEquals(bReviews[i], blob[i]);
+        assertEquals(expected_reviews.length, blob.length);
+        for (int i = 0; i < expected_reviews.length; i++)
+            assertEquals(expected_reviews[i], blob[i]);
+        c.close();
+    }
+
+    public void testAddingTrailersToMovieRow() {
+        final TestDb testDb = new TestDb();
+        TestUtilities.insertMovies(testDb, mContext);
+        testAddingPopularMoviesToTable(); // add the popular movies
+        LinkedTreeMap<String, Serializable> listContentValues = TestUtilities.getDataAsMap(getContext(), "trailer");
+        curr_movie_id = Double.valueOf(listContentValues.get("id").toString()).longValue();
+        Serializable trailers = listContentValues.get("results");
+        expected_trailer = SerializationUtils.serialize(trailers);
+        assertTrue(expected_trailer.length > 0);
+        ContentValues cv = new ContentValues();
+        cv.put(MovieContract.MovieEntry.COLUMN_MOVIE_ID, curr_movie_id);
+        cv.put(MovieContract.MovieEntry.COLUMN_MOVIE_TRAILERS, expected_trailer);
+        Uri uri = MovieContract.MovieEntry.buildUriTrailers(curr_movie_id);
+        assertNotNull(mContext.getContentResolver().insert(uri, cv));
+    }
+
+    public void testGettingTrailers() {
+        testAddingTrailersToMovieRow();
+        Cursor c = mContext.getContentResolver().query(MovieContract.MovieEntry.buildUriTrailers(curr_movie_id),
+                null, null, null, null);
+        assertTrue("cursor returned for movie id = " + curr_movie_id, c.moveToFirst());
+        byte[] blob = c.getBlob(1);
+        assertNotNull("ensure object returned", blob);
+        assertEquals(expected_trailer.length, blob.length);
+        for (int i = 0; i < expected_trailer.length; i++)
+            assertEquals(expected_trailer[i], blob[i]);
+        c.close();
+    }
+
+    public void testAddingMinutesToMovieRow() {
+        final TestDb testDb = new TestDb();
+        TestUtilities.insertMovies(testDb, mContext);
+        testAddingPopularMoviesToTable(); // add the popular movies
+        LinkedTreeMap<String, Serializable> listContentValues = TestUtilities.getDataAsMap(getContext(), "minute");
+        curr_movie_id = Double.valueOf(listContentValues.get("id").toString()).longValue();
+        expected_mins = Double.valueOf(listContentValues.get("runtime").toString()).intValue();
+        assertTrue(expected_mins > 0);
+        ContentValues cv = new ContentValues();
+        cv.put(MovieContract.MovieEntry.COLUMN_MOVIE_ID, curr_movie_id);
+        cv.put(MovieContract.MovieEntry.COLUMN_MOVIE_MINUTES, expected_mins);
+        Uri uri = MovieContract.MovieEntry.buildUriMinutes(curr_movie_id);
+        assertNotNull(mContext.getContentResolver().insert(uri, cv));
+    }
+
+    public void testGettingMinutes() {
+        testAddingMinutesToMovieRow();
+        Cursor c = mContext.getContentResolver().query(MovieContract.MovieEntry.buildUriMinutes(curr_movie_id),
+                null, null, null, null);
+        assertTrue(c.moveToFirst());
+        int mins = c.getInt(1);
+        assertEquals(expected_mins, mins);
         c.close();
     }
 
