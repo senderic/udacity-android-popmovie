@@ -320,7 +320,7 @@ public class TestProvider extends AndroidTestCase {
         assertEquals(2, c.getCount());
         assertEquals(expected.longValue(), c.getLong(0));
         assertTrue(c.moveToNext());
-        assertTrue(c.getBlob(0).length > 0);
+        assertTrue(c.getBlob(1).length > 0);
         c.close();
 
         mContext.getContentResolver().delete(MovieContract.FavoriteEntry.buildUri(), MovieContract.FavoriteEntry.COLUMN_MOVIE_ID + "=?", new String[]{expected.toString()});
@@ -330,7 +330,7 @@ public class TestProvider extends AndroidTestCase {
 
         assertTrue(c.moveToFirst());
         assertEquals(1, c.getCount());
-        assertTrue(c.getBlob(0).length > 0);
+        assertTrue(c.getBlob(1).length > 0);
     }
 
     public void testAddingReviewToMovieRow() {
@@ -343,10 +343,11 @@ public class TestProvider extends AndroidTestCase {
         expected_reviews = SerializationUtils.serialize(reviews);
         assertTrue(expected_reviews.length > 0);
         ContentValues cv = new ContentValues();
-        cv.put(MovieContract.MovieEntry.COLUMN_MOVIE_ID, curr_movie_id);
         cv.put(MovieContract.MovieEntry.COLUMN_MOVIE_REVIEWS, expected_reviews);
         Uri uri = MovieContract.MovieEntry.buildUriReviews(curr_movie_id);
-        assertNotNull(mContext.getContentResolver().insert(uri, cv));
+        String selection = MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_ID + "=?";
+        String[] selectionArgs = new String[]{Long.valueOf(curr_movie_id).toString()};
+        assertNotNull(mContext.getContentResolver().update(uri, cv, selection, selectionArgs));
     }
 
     public void testGettingReviews() {
@@ -372,10 +373,11 @@ public class TestProvider extends AndroidTestCase {
         expected_trailer = SerializationUtils.serialize(trailers);
         assertTrue(expected_trailer.length > 0);
         ContentValues cv = new ContentValues();
-        cv.put(MovieContract.MovieEntry.COLUMN_MOVIE_ID, curr_movie_id);
         cv.put(MovieContract.MovieEntry.COLUMN_MOVIE_TRAILERS, expected_trailer);
         Uri uri = MovieContract.MovieEntry.buildUriTrailers(curr_movie_id);
-        assertNotNull(mContext.getContentResolver().insert(uri, cv));
+        String selection = MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_ID + "=?";
+        String[] selectionArgs = new String[]{Long.valueOf(curr_movie_id).toString()};
+        assertNotNull(mContext.getContentResolver().update(uri, cv, selection, selectionArgs));
     }
 
     public void testGettingTrailers() {
@@ -400,10 +402,11 @@ public class TestProvider extends AndroidTestCase {
         expected_mins = Double.valueOf(listContentValues.get("runtime").toString()).intValue();
         assertTrue(expected_mins > 0);
         ContentValues cv = new ContentValues();
-        cv.put(MovieContract.MovieEntry.COLUMN_MOVIE_ID, curr_movie_id);
         cv.put(MovieContract.MovieEntry.COLUMN_MOVIE_MINUTES, expected_mins);
         Uri uri = MovieContract.MovieEntry.buildUriMinutes(curr_movie_id);
-        assertNotNull(mContext.getContentResolver().insert(uri, cv));
+        String selection = MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_ID + "=?";
+        String[] selectionArgs = new String[]{Long.valueOf(curr_movie_id).toString()};
+        assertNotNull(mContext.getContentResolver().update(uri, cv, selection, selectionArgs));
     }
 
     public void testGettingMinutes() {

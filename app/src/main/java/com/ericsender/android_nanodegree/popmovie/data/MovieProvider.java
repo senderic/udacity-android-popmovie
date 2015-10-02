@@ -94,10 +94,12 @@ public class MovieProvider extends ContentProvider {
 
     private Cursor getMovieWithIdAndMaybeFavorite(String movie_id) {
         return mOpenHelper.getReadableDatabase().rawQuery("SELECT "
+                        + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_ID + " AS _id, "
                         + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_BLOB
                         + " FROM " + MovieContract.MovieEntry.TABLE_NAME
                         + " WHERE " + MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_ID + "=?"
                         + " UNION SELECT "
+                        + MovieContract.FavoriteEntry.TABLE_NAME + "." + MovieContract.FavoriteEntry.COLUMN_MOVIE_ID + " AS _id, "
                         + MovieContract.FavoriteEntry.TABLE_NAME + "." + MovieContract.FavoriteEntry.COLUMN_MOVIE_ID
                         + " FROM " + MovieContract.FavoriteEntry.TABLE_NAME
                         + " WHERE " + MovieContract.FavoriteEntry.TABLE_NAME + "." + MovieContract.FavoriteEntry.COLUMN_MOVIE_ID + "=?",
@@ -268,63 +270,35 @@ public class MovieProvider extends ContentProvider {
     public Uri insert(Uri uri, ContentValues values) {
         final SQLiteDatabase db = mOpenHelper.getWritableDatabase();
         final int match = sUriMatcher.match(uri);
-        long _id, value_mid;
+        long _id;
+        Long value_mid = values.getAsLong(MovieContract.MovieEntry.COLUMN_MOVIE_ID);
         Uri returnUri;
         switch (match) {
             case MOVIE:
                 _id = insertMovie(values);
-                if (_id == -1)
-                    throw new RuntimeException("Failed insert of values: " + values);
                 returnUri = MovieContract.MovieEntry.buildUri();
                 break;
             case MOVIE_WITH_ID:
                 _id = insertMovie(values);
-                if (_id == -1)
-                    throw new RuntimeException("Failed insert of values: " + values);
                 returnUri = MovieContract.MovieEntry.buildUri(values.getAsLong(MovieContract.MovieEntry.COLUMN_MOVIE_ID));
-                break;
-            case MOVIE_REVIEWS:
-                value_mid = values.getAsLong(MovieContract.MovieEntry.COLUMN_MOVIE_ID);
-                _id = insertMovieReview(values);
-                if (_id == -1)
-                    throw new RuntimeException("Failed insert of values: " + values);
-                returnUri = MovieContract.MovieEntry.buildUriReviews(value_mid);
-                break;
-            case MOVIE_TRAILERS:
-                value_mid = values.getAsLong(MovieContract.MovieEntry.COLUMN_MOVIE_ID);
-                _id = insertMovieTrailer(values);
-                if (_id == -1)
-                    throw new RuntimeException("Failed insert of values: " + values);
-                returnUri = MovieContract.MovieEntry.buildUriTrailers(value_mid);
-                break;
-            case MOVIE_MINUTES:
-                value_mid = values.getAsLong(MovieContract.MovieEntry.COLUMN_MOVIE_ID);
-                _id = insertMovieMinutes(values);
-                if (_id == -1)
-                    throw new RuntimeException("Failed insert of values: " + values);
-                returnUri = MovieContract.MovieEntry.buildUriMinutes(value_mid);
                 break;
             case MOVIE_RATING:
                 _id = insertRated(values);
-                if (_id == -1)
-                    throw new android.database.SQLException("Failed to insert row into into movies " + uri);
                 returnUri = MovieContract.RatingEntry.buildUri();
                 break;
             case MOVIE_POPULAR:
                 _id = insertPopular(values);
-                if (_id == -1)
-                    throw new android.database.SQLException("Failed to insert row into into movies " + uri);
                 returnUri = MovieContract.PopularEntry.buildUri();
                 break;
             case MOVIE_FAVORITE:
                 _id = insertFavorite(values);
-                if (_id == -1)
-                    throw new android.database.SQLException("Failed to insert row into into movies " + uri);
                 returnUri = MovieContract.FavoriteEntry.buildUri();
                 break;
             default:
                 throw new UnsupportedOperationException(String.format("Unknown/Unimplemented match (%d) & uri (%s)", match, uri));
         }
+        if (_id == -1)
+            throw new android.database.SQLException(String.format("Failed to insert values (%s) with uri (%s)", values, uri));
         getContext().getContentResolver().notifyChange(uri, null);
         return returnUri;
     }
@@ -388,32 +362,6 @@ public class MovieProvider extends ContentProvider {
         }
     }
 
-    private long insertMovieExtras(ContentValues values) {
-        try {
-            String where = MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.COLUMN_MOVIE_ID + "=?";
-            String[] whereArgs = new String[]{values.getAsLong(MovieContract.MovieEntry.COLUMN_MOVIE_ID).toString()};
-            values.remove(MovieContract.MovieEntry.COLUMN_MOVIE_ID);
-            return mOpenHelper.getWritableDatabase().update(MovieContract.MovieEntry.TABLE_NAME, values, where, whereArgs);
-        } catch (SQLiteConstraintException e) {
-            return -2L;
-        } catch (SQLException e) {
-            Log.e(LOG_TAG, e.getMessage(), e);
-            return -1L;
-        }
-    }
-
-    private long insertMovieReview(ContentValues values) {
-        return insertMovieExtras(values);
-    }
-
-    private long insertMovieTrailer(ContentValues values) {
-        return insertMovieExtras(values);
-    }
-
-    private long insertMovieMinutes(ContentValues values) {
-        return insertMovieExtras(values);
-    }
-
     @Override
     public boolean onCreate() {
         mOpenHelper = new MovieDbHelper(getContext());
@@ -465,8 +413,23 @@ public class MovieProvider extends ContentProvider {
     @Override
     public int update(Uri uri, ContentValues values, String selection,
                       String[] selectionArgs) {
-        // TODO: Implement this to handle requests to update one or more rows.
-        throw new UnsupportedOperationException("Not yet implemented");
+        final SQLiteDatabase db = mOpenHelper.getWritableDatabase();
+        final int match = sUriMatcher.match(uri);
+        int rows;
+        // long value_mid = values.getAsLong(MovieContract.MovieEntry.COLUMN_MOVIE_ID);
+        switch (match) {
+            case MOVIE_REVIEWS:
+            case MOVIE_TRAILERS:
+            case MOVIE_MINUTES:
+                rows = mOpenHelper.getWritableDatabase().update(MovieContract.MovieEntry.TABLE_NAME, values, selection, selectionArgs);
+                break;
+            default:
+                throw new UnsupportedOperationException(String.format("Unknown/Unimplemented match (%d) & uri (%s)", match, uri));
+        }
+        if (rows == -1)
+            throw new RuntimeException("Failed insert of values: " + values);
+        getContext().getContentResolver().notifyChange(uri, null);
+        return rows;
     }
 
     // You do not need to call this method. This is a method specifically to assist the testing

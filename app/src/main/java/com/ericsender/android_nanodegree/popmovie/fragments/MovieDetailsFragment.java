@@ -2,6 +2,7 @@ package com.ericsender.android_nanodegree.popmovie.fragments;
 
 import android.content.ContentValues;
 import android.content.Intent;
+import android.content.UriMatcher;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -40,6 +41,7 @@ import com.ericsender.android_nanodegree.popmovie.adapters.ReviewListViewAdapter
 import com.ericsender.android_nanodegree.popmovie.adapters.TrailerListViewAdapter;
 import com.ericsender.android_nanodegree.popmovie.application.PopMoviesApplication;
 import com.ericsender.android_nanodegree.popmovie.data.MovieContract;
+import com.ericsender.android_nanodegree.popmovie.data.MovieProvider;
 import com.ericsender.android_nanodegree.popmovie.parcelable.MovieGridObj;
 import com.ericsender.android_nanodegree.popmovie.parcelable.ReviewListObj;
 import com.ericsender.android_nanodegree.popmovie.parcelable.TrailerListObj;
@@ -50,9 +52,11 @@ import com.squareup.picasso.Picasso;
 import org.apache.commons.lang3.SerializationUtils;
 import org.json.JSONObject;
 
+import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -73,7 +77,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     private View mRootView;
     private boolean mIsLoadFinished;
     private Button mFavButton;
-    private Long mMovieId;
+    private Long mMovieId = Long.MIN_VALUE;
     private boolean mIsAlreadyFav = false;
     private static final AtomicBoolean isInit = new AtomicBoolean();
     private static String sIsAlreadyFav;
@@ -89,6 +93,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     private static String sImgUrl;
     private static String sTrailerTitle;
     private static String sYoutubeUrl;
+    private static final UriMatcher sUriMatcher = MovieProvider.buildUriMatcher();
     private static volatile PopMoviesApplication.State appState;
     private ListView mTrailerListView;
     private ListView mReviewListView;
@@ -125,13 +130,15 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         mVolleyRequestQueue = Volley.newRequestQueue(getActivity());
         staticInits();
         setHasOptionsMenu(true);
-        if (savedInstanceState != null) {
+        if (savedInstanceState != null) synchronized (mMovieId) {
             mMovieObj = (MovieGridObj) savedInstanceState.getParcelable(sMovieObjKey);
             mMovieId = savedInstanceState.getLong(sMovieIdKey);
-            runFragment();
-        } else {
-            loaderDetails();
+            try {
+                mMovieId.notifyAll();
+            } catch (IllegalMonitorStateException x) {
+            }
         }
+        runFragment();
     }
 
     // Limit use of getString since seeing a random null pointer crash regarding one of them.
@@ -212,23 +219,59 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     }
 
     private void runFragment() {
-        handleOffThread();
-        mIsLoadFinished = handleLast();
-        getActivity().setProgressBarIndeterminateVisibility(false);
-        mProgress.setVisibility(View.GONE);
+        if (mMovieId == Long.MIN_VALUE) synchronized (mMovieId) {
+            Bundle args = getArguments();
+            mMovieId = args == null ?
+                    getActivity().getIntent().getLongExtra(sMovieIdKey, Long.MIN_VALUE) :
+                    args.getLong(sMovieIdKey, Long.MIN_VALUE);
+            try {
+                mMovieId.notifyAll();
+            } catch (IllegalMonitorStateException x) {
+            }
+        }
+        getMoreMovieDetails();
     }
 
-
-    private void handleFirst() {
-        mMovieObj = getMovieObjFromIntent();
+    private void getMoreMovieDetails() {
+        loaderDetails();
+        loaderVideoData();
+        loaderReviewData();
+        loaderVideoData();
+        loaderMinutesData();
     }
 
-    private MovieGridObj getMovieObjFromIntent() {
-        return mMovieObj == null ?
-                (MovieGridObj) getActivity().getIntent().getParcelableExtra(sMovieObjKey) : mMovieObj;
+    private static enum TYPES {
+        review, trailer, minute, details;
+        public static final String KEY = "type_key";
     }
 
-    private boolean handleLast() {
+    private void loaderDetails() {
+        makeBundleAndLoad(TYPES.details);
+    }
+
+    private void loaderVideoData() {
+        makeBundleAndLoad(TYPES.trailer);
+        // mVolleyRequestQueue.add(getVideoDataAsync());
+    }
+
+    private void loaderReviewData() {
+        makeBundleAndLoad(TYPES.review);
+        // mVolleyRequestQueue.add(getReviewDataAsync());
+    }
+
+    private void loaderMinutesData() {
+        makeBundleAndLoad(TYPES.minute);
+        // mVolleyRequestQueue.add(getMinutesDataAsync());
+    }
+
+    private void makeBundleAndLoad(TYPES type) {
+        Bundle b = new Bundle();
+        b.putLong(sMovieIdKey, mMovieId);
+        getLoaderManager().initLoader(type.ordinal(), b, this);
+    }
+
+    private boolean handleMovieObjData(byte[] data) {
+        mMovieObj = SerializationUtils.deserialize(data);
         // Picasso *should* be caching these poster images, so this call should not require network access
 
         // Picasso.with(getActivity().getApplicationContext()).setIndicatorsEnabled(true);
@@ -252,6 +295,8 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
                 :
                 String.format("%.1f", va);
         ratingTextView.setText(roundRating + "/10");
+        getActivity().setProgressBarIndeterminateVisibility(false);
+        mProgress.setVisibility(View.GONE);
         return true;
     }
 
@@ -287,56 +332,29 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         appState.setIsRefreshGrid(true);
     }
 
-    private void handleOffThread() {
-        getMoreMovieDetails();
+    private void updateTrailerDataOrAskServer(Cursor data) {
+        byte[] bTrailer = data == null ? null : data.getBlob(1);
+        if (bTrailer == null || bTrailer.length == 0) getVideoDataAsync();
+        else
+            handleTrailerResults((List<LinkedHashMap<String, String>>) SerializationUtils.deserialize(bTrailer));
     }
 
-    private void getMoreMovieDetails() {
-        loaderVideoData();
-        loaderReviewData();
-        loaderVideoData();
-        Log.d(getClass().getSimpleName(), String.format("getMoreMovieDetails() - movie %s", mMovieObj.title));// .substring(0, url.length() - 16));
+    private void updateReviewsDataOrAskServer(Cursor data) {
+        byte[] bReview = data == null ? null : data.getBlob(1);
+        if (bReview == null || bReview.length == 0) getReviewDataAsync();
+        else
+            handleReviewResults((List<LinkedHashMap<String, String>>) SerializationUtils.deserialize(bReview));
     }
 
-    private static enum TYPES {
-        review, trailer, minute, details;
-        public static final String KEY = "type_key";
+    private void updateMinutesDataOrAskServer(Cursor data) {
+        int minutes = data == null ? -1 : data.getInt(1);
+        if (minutes <= 0) getMinutesDataAsync();
+        else loaderMinutesData();
     }
 
-    private void loaderDetails() {
-        Bundle args = getArguments();
-        mMovieId = args == null ?
-                getActivity().getIntent().getLongExtra(sMovieIdKey, -1L) :
-                args.getLong(sMovieIdKey, -1L);
-        Bundle b = new Bundle();
-        b.putSerializable(TYPES.KEY, TYPES.details);
-        b.putLong(sMovieIdKey, mMovieId);
-        getLoaderManager().initLoader(0, b, this);
-    }
-
-    private void loaderVideoData() {
-        Bundle b = new Bundle();
-        b.putSerializable(TYPES.KEY, TYPES.trailer);
-        getLoaderManager().initLoader(0, b, this);
-        // mVolleyRequestQueue.add(getVideoDataAsync());
-    }
-
-    private void loaderReviewData() {
-        Bundle b = new Bundle();
-        b.putSerializable(TYPES.KEY, TYPES.review);
-        getLoaderManager().initLoader(0, b, this);
-        // mVolleyRequestQueue.add(getReviewDataAsync());
-    }
-
-    private void loaderMinutesData() {
-        Bundle b = new Bundle();
-        b.putSerializable(TYPES.KEY, TYPES.minute);
-        getLoaderManager().initLoader(0, b, this);
-        // mVolleyRequestQueue.add(getMinutesDataAsync());
-    }
-
-    private JsonObjectRequest getVideoDataAsync() {
-        Uri builtUri = Uri.parse(String.format(sVideoUrl, mMovieObj.id)).buildUpon()
+    private void getVideoDataAsync() {
+        blockUntilMovieIdSet();
+        Uri builtUri = Uri.parse(String.format(sVideoUrl, mMovieId)).buildUpon()
                 .appendQueryParameter(sParamApi, sApiKey)
                 .build();
         String url = "";
@@ -344,7 +362,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
             url = new URL(builtUri.toString()).toString();
         } catch (MalformedURLException e) {
             Log.e(getClass().getSimpleName(), e.getMessage(), e);
-            return null;
+            return;
         }
 
         JsonObjectRequest jsObjRequest = new JsonObjectRequest
@@ -354,20 +372,8 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
                         Log.d("DetailsActivity", "Video Response received.");
                         LinkedTreeMap<String, Object> map = Utils.getGson().fromJson(response.toString(), LinkedTreeMap.class);
                         try {
-                            List<LinkedTreeMap<String, String>> results = (ArrayList<LinkedTreeMap<String, String>>) map.get("results");
-                            int count = 0;
-                            Set<TrailerListObj> th = new LinkedHashSet<>();
-                            for (LinkedTreeMap<String, String> r : results) {
-                                String title = r.get("name");
-                                String youtube_key = r.get("key");
-                                th.add(new TrailerListObj(youtube_key, title));
-                            }
-                            mTrailerList.clear();
-                            mTrailerList.addAll(th);
-                            mTrailerListViewAdapter.setData(mTrailerList);
-                            setFirstTrailer();
-                            if (!mTrailerList.isEmpty() && mMovieDetailsTrailerView.getVisibility() == View.GONE)
-                                showMovieDetailsAsyncView(Section.TRAILER);
+                            List<LinkedHashMap<String, String>> results = (ArrayList<LinkedHashMap<String, String>>) map.get("results");
+                            handleTrailerResults(results);
                         } catch (NumberFormatException | NullPointerException e) {
                             Log.e(LOG_TAG, e.getMessage(), e);
                         }
@@ -380,11 +386,12 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
                         Snackbar.make(mRootView, "Error connecting to server.", Snackbar.LENGTH_SHORT).show();
                     }
                 });
-        return jsObjRequest;
+        mVolleyRequestQueue.add(jsObjRequest);
     }
 
-    private JsonObjectRequest getReviewDataAsync() {
-        Uri builtUri = Uri.parse(String.format(sReviewKey, mMovieObj.id)).buildUpon()
+    private void getReviewDataAsync() {
+        blockUntilMovieIdSet();
+        Uri builtUri = Uri.parse(String.format(sReviewKey, mMovieId)).buildUpon()
                 .appendQueryParameter(sParamApi, sApiKey)
                 .build();
         String url = "";
@@ -392,7 +399,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
             url = new URL(builtUri.toString()).toString();
         } catch (MalformedURLException e) {
             Log.e(getClass().getSimpleName(), e.getMessage(), e);
-            return null;
+            return;
         }
 
         JsonObjectRequest jsObjRequest = new JsonObjectRequest
@@ -402,19 +409,8 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
                         Log.d("DetailsActivity", "Review Response received.");
                         LinkedTreeMap<String, Object> map = Utils.getGson().fromJson(response.toString(), LinkedTreeMap.class);
                         try {
-                            List<LinkedTreeMap<String, String>> results = (ArrayList<LinkedTreeMap<String, String>>) map.get("results");
-                            Set<ReviewListObj> rev = new LinkedHashSet<>();
-                            for (LinkedTreeMap<String, String> r : results) {
-                                String content = r.get("content");
-                                String author = r.get("author");
-                                String url = r.get("url");
-                                rev.add(new ReviewListObj(content, author, url));
-                            }
-                            mReviewList.clear();
-                            mReviewList.addAll(rev);
-                            mReviewListViewAdapter.setData(mReviewList);
-                            if (!mReviewList.isEmpty() && mMovieDetailsReviewView.getVisibility() == View.GONE)
-                                showMovieDetailsAsyncView(Section.REVIEW);
+                            List<LinkedHashMap<String, String>> results = (ArrayList<LinkedHashMap<String, String>>) map.get("results");
+                            handleReviewResults(results);
                         } catch (NumberFormatException | NullPointerException e) {
                             Log.e(LOG_TAG, e.getMessage(), e);
                         }
@@ -427,7 +423,79 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
                         Snackbar.make(mRootView, "Error connecting to server.", Snackbar.LENGTH_SHORT).show();
                     }
                 });
-        return jsObjRequest;
+        mVolleyRequestQueue.add(jsObjRequest);
+    }
+
+    private void blockUntilMovieIdSet() {
+        if (mMovieId == Long.MIN_VALUE)
+            synchronized (mMovieId) {
+                try {
+                    mMovieId.wait();
+                } catch (InterruptedException e) {
+                }
+            }
+    }
+
+    private void handleMinutesResults(String rt) {
+        mDurationProgress.setVisibility(View.GONE);
+        mDurationTextView.setText(Double.valueOf(rt).intValue() + " mins");
+        updateMinutesDataInternal(rt);
+    }
+
+    private void handleTrailerResults(List<LinkedHashMap<String, String>> results) {
+        Set<TrailerListObj> th = new LinkedHashSet<>();
+        for (LinkedHashMap<String, String> r : results) {
+            String title = r.get("name");
+            String youtube_key = r.get("key");
+            th.add(new TrailerListObj(youtube_key, title));
+        }
+        mTrailerList.clear();
+        mTrailerList.addAll(th);
+        mTrailerListViewAdapter.setData(mTrailerList);
+        setFirstTrailer();
+        if (!mTrailerList.isEmpty() && mMovieDetailsTrailerView.getVisibility() == View.GONE)
+            showMovieDetailsAsyncView(Section.TRAILER);
+        updateTrailerDataInternal((Serializable) results);
+    }
+
+    private void handleReviewResults(List<LinkedHashMap<String, String>> results) {
+        Set<ReviewListObj> rev = new LinkedHashSet<>();
+        for (LinkedHashMap<String, String> r : results) {
+            String content = r.get("content");
+            String author = r.get("author");
+            String url = r.get("url");
+            rev.add(new ReviewListObj(content, author, url));
+        }
+        mReviewList.clear();
+        mReviewList.addAll(rev);
+        mReviewListViewAdapter.setData(mReviewList);
+        if (!mReviewList.isEmpty() && mMovieDetailsReviewView.getVisibility() == View.GONE)
+            showMovieDetailsAsyncView(Section.REVIEW);
+        updateReviewDataInternal((Serializable) results);
+    }
+
+    private void updateReviewDataInternal(Serializable results) {
+        String selection = MovieContract.MovieEntry.COLUMN_MOVIE_ID + "=?";
+        String[] selectionArgs = new String[]{mMovieId.toString()};
+        ContentValues cv = new ContentValues();
+        cv.put(MovieContract.MovieEntry.COLUMN_MOVIE_REVIEWS, SerializationUtils.serialize(results));
+        getActivity().getContentResolver().update(MovieContract.MovieEntry.buildUriReviews(mMovieId), cv, selection, selectionArgs);
+    }
+
+    private void updateTrailerDataInternal(Serializable results) {
+        String selection = MovieContract.MovieEntry.COLUMN_MOVIE_ID + "=?";
+        String[] selectionArgs = new String[]{mMovieId.toString()};
+        ContentValues cv = new ContentValues();
+        cv.put(MovieContract.MovieEntry.COLUMN_MOVIE_TRAILERS, SerializationUtils.serialize(results));
+        getActivity().getContentResolver().update(MovieContract.MovieEntry.buildUriTrailers(mMovieId), cv, selection, selectionArgs);
+    }
+
+    private void updateMinutesDataInternal(String minutes) {
+        String selection = MovieContract.MovieEntry.COLUMN_MOVIE_ID + "=?";
+        String[] selectionArgs = new String[]{mMovieId.toString()};
+        ContentValues cv = new ContentValues();
+        cv.put(MovieContract.MovieEntry.COLUMN_MOVIE_MINUTES, Double.valueOf(minutes).intValue());
+        getActivity().getContentResolver().update(MovieContract.MovieEntry.buildUriMinutes(mMovieId), cv, selection, selectionArgs);
     }
 
     // TODO: if only one of the layouts (review xor trailer) show up, alter gravity to reduce white space
@@ -484,8 +552,9 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     }
 
     @NonNull
-    private JsonObjectRequest getMinutesDataAsync() {
-        Uri builtUri = Uri.parse(String.format(sBaseUrl, mMovieObj.id)).buildUpon()
+    private void getMinutesDataAsync() {
+        blockUntilMovieIdSet();
+        Uri builtUri = Uri.parse(String.format(sBaseUrl, mMovieId)).buildUpon()
                 .appendQueryParameter(sParamApi, sApiKey)
                 .build();
         String url = "";
@@ -493,7 +562,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
             url = new URL(builtUri.toString()).toString();
         } catch (MalformedURLException e) {
             Log.e(getClass().getSimpleName(), e.getMessage(), e);
-            return null;
+            return;
         }
 
         JsonObjectRequest jsObjRequest = new JsonObjectRequest
@@ -504,8 +573,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
                         LinkedTreeMap<String, Object> map = Utils.getGson().fromJson(response.toString(), LinkedTreeMap.class);
                         try {
                             String rt = map.get("runtime").toString().trim();
-                            mDurationProgress.setVisibility(View.GONE);
-                            mDurationTextView.setText(Double.valueOf(rt).intValue() + " mins");
+                            handleMinutesResults(rt);
                         } catch (NumberFormatException | NullPointerException e) {
                             Log.e(LOG_TAG, e.getMessage(), e);
                         }
@@ -520,14 +588,14 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
                         Snackbar.make(mRootView, "Error connecting to server.", Snackbar.LENGTH_SHORT).show();
                     }
                 });
-        return jsObjRequest;
+        mVolleyRequestQueue.add(jsObjRequest);
     }
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        TYPES type = (TYPES) args.getSerializable(TYPES.KEY);
+        TYPES type = TYPES.values()[id];
         long mid = args.getLong(sMovieIdKey);
-        if (mid > -1)
+        if (mid > 0L)
             switch (type) {
                 case review:
                     return new CursorLoader(getActivity(), MovieContract.MovieEntry.buildUriReviews(mid),
@@ -550,17 +618,44 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        handleFirst();
-        if (!data.moveToFirst())
-            Snackbar.make(mRootView, "No Data Loaded. Please go back and refresh", Snackbar.LENGTH_LONG).show();
-        else {
-            if (data.getCount() == 2) {
-                mFavButton.setText(sIsAlreadyFav);
-                mIsAlreadyFav = true;
-                data.moveToLast();
-            }
-            mMovieObj = (MovieGridObj) SerializationUtils.deserialize(data.getBlob(0));
-            runFragment();
+        Uri uri = ((CursorLoader) loader).getUri();
+        if (!data.moveToFirst()) data = null;
+        int match = sUriMatcher.match(uri);
+        switch (match) {
+//            case MovieProvider.MOVIE:
+//                break;
+//            case MovieProvider.MOVIE_WITH_ID:
+//                break;
+            case MovieProvider.MOVIE_MINUTES:
+                updateMinutesDataOrAskServer(data);
+                break;
+            case MovieProvider.MOVIE_REVIEWS:
+                updateReviewsDataOrAskServer(data);
+                break;
+            case MovieProvider.MOVIE_TRAILERS:
+                updateTrailerDataOrAskServer(data);
+                break;
+//            case MovieProvider.MOVIE_RATING:
+//                break;
+//            case MovieProvider.MOVIE_FAVORITE:
+//                break;
+//            case MovieProvider.MOVIE_FAVORITE_WITH_ID:
+//                break;
+            case MovieProvider.MOVIE_WITH_ID_AND_MAYBE_FAVORITE:
+                if (data == null || !data.moveToFirst())
+                    Snackbar.make(mRootView, "No Data Loaded. Please go back and refresh", Snackbar.LENGTH_LONG).show();
+                else if (data.getCount() == 2) {
+                    mFavButton.setText(sIsAlreadyFav);
+                    mIsAlreadyFav = true;
+                    data.moveToLast();
+                }
+                mIsLoadFinished = handleMovieObjData(data.getBlob(1));
+                break;
+//            case MovieProvider.MOVIE_POPULAR:
+//                break;
+            default:
+                throw new UnsupportedOperationException(
+                        String.format("Unknown/Unimplemented match (%s) / uri (%s): ", match, uri));
         }
     }
 
