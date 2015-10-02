@@ -10,6 +10,7 @@ import android.widget.ImageView;
 
 import com.ericsender.android_nanodegree.popmovie.R;
 import com.ericsender.android_nanodegree.popmovie.parcelable.MovieGridObj;
+import com.ericsender.android_nanodegree.popmovie.utils.Utils;
 import com.squareup.picasso.Picasso;
 
 import org.apache.commons.lang3.SerializationUtils;
@@ -39,9 +40,9 @@ public class GridViewAdapter extends CursorAdapter {
     private String thumbUrl;
 
     public void setGridData(List<MovieGridObj> gridData) {
+        Utils.log();
         mGridData = gridData;
         notifyDataSetChanged();
-        // mMovieGrid.setAdapter(this);
     }
 
     public GridViewAdapter(Context context, Cursor cursor, int flag) {
@@ -53,7 +54,7 @@ public class GridViewAdapter extends CursorAdapter {
 
     @Override
     public View newView(Context context, Cursor cursor, ViewGroup parent) {
-
+        Utils.log();
         int layoutId = R.layout.movie_cell;
 
         View view = LayoutInflater.from(context).inflate(layoutId, parent, false);
@@ -66,6 +67,7 @@ public class GridViewAdapter extends CursorAdapter {
 
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
+        Utils.log();
         ViewHolder viewHolder = (ViewHolder) view.getTag();
         byte[] bMovieObj = cursor.getBlob(1);
         MovieGridObj movie = (MovieGridObj) SerializationUtils.deserialize(bMovieObj);

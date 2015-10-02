@@ -11,6 +11,7 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -329,7 +330,7 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
     }
 
     @Override
-    public android.support.v4.content.Loader<Cursor> onCreateLoader(int id, Bundle args) {
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         Utils.log();
         final String sort = args.getString("sort");
         Uri uri = determineUri(sort);
@@ -342,7 +343,7 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
     }
 
     @Override
-    public void onLoadFinished(android.support.v4.content.Loader<Cursor> loader, Cursor data) {
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
         Utils.log();
         String sort = getApiSortPref();
 
@@ -362,8 +363,8 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
     }
 
     @Override
-    public void onLoaderReset(android.support.v4.content.Loader<Cursor> loader) {
-
+    public void onLoaderReset(Loader<Cursor> loader) {
+        mGridViewAdapter.swapCursor(null);
     }
 }
 

@@ -4,8 +4,7 @@
     android:name="com.ericsender.android_nanodegree.popmovie.fragments.MovieListFragment"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:layout="@layout/fragment_movie_list" />
-<!--
+    tools:layout="@layout/fragment_movie_list" /><!--
     <Spinner
         android:id="@+id/sort_spinner"
         android:layout_width="0dp"

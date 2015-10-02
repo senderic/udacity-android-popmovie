@@ -56,7 +56,6 @@ import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -74,7 +73,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     private TextView overviewTextView;
     private FrameLayout mProgress;
     private MovieGridObj mMovieObj;
-    private ProgressBar mDurationProgress;
+    private ProgressBar mRuntimeLoadingProgress;
     private View mRootView;
     private boolean mIsLoadFinished;
     private Button mFavButton;
@@ -116,6 +115,10 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     private TrailerListObj oFirstTrailer = null;
     private ShareActionProvider mShareActionProvider;
     private RequestQueue mVolleyRequestQueue;
+    private final AtomicBoolean mRuntimeDataLoaded = new AtomicBoolean();
+    private final AtomicBoolean mTrailerDataLoaded = new AtomicBoolean();
+    private final AtomicBoolean mReviewDataLoaded = new AtomicBoolean();
+    private final AtomicBoolean mMovieDetailsLoaded = new AtomicBoolean();
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
@@ -174,8 +177,8 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         Utils.log();
         mIsLoadFinished = false;
         mRootView = inflater.inflate(R.layout.fragment_movie_details, container, false);
-        mDurationProgress = (ProgressBar) mRootView.findViewById(R.id.movie_duration_progressBar);
-        mDurationProgress.setVisibility(View.VISIBLE);
+        mRuntimeLoadingProgress = (ProgressBar) mRootView.findViewById(R.id.movie_duration_progressBar);
+        mRuntimeLoadingProgress.setVisibility(View.VISIBLE);
         mProgress = (FrameLayout) mRootView.findViewById(R.id.movie_details_progress_bar);
         imageView = (ImageView) mRootView.findViewById(R.id.movie_thumb);
         mDurationTextView = (TextView) mRootView.findViewById(R.id.movie_duration);
@@ -254,25 +257,30 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     }
 
     private void loaderDetails() {
+        Utils.log();
         makeBundleAndLoad(TYPES.details);
     }
 
     private void loaderVideoData() {
+        Utils.log();
         makeBundleAndLoad(TYPES.trailer);
         // mVolleyRequestQueue.add(getVideoDataAsync());
     }
 
     private void loaderReviewData() {
+        Utils.log();
         makeBundleAndLoad(TYPES.review);
         // mVolleyRequestQueue.add(getReviewDataAsync());
     }
 
     private void loaderMinutesData() {
+        Utils.log();
         makeBundleAndLoad(TYPES.minute);
         // mVolleyRequestQueue.add(getMinutesDataAsync());
     }
 
     private void makeBundleAndLoad(TYPES type) {
+        Utils.log();
         Bundle b = new Bundle();
         b.putLong(sMovieIdKey, mMovieId);
         getLoaderManager().initLoader(type.ordinal(), b, this);
@@ -456,9 +464,10 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
 
     private void handleMinutesResults(String rt) {
         Utils.log();
-        mDurationProgress.setVisibility(View.GONE);
+        mRuntimeLoadingProgress.setVisibility(View.GONE);
         mDurationTextView.setText(Double.valueOf(rt).intValue() + " mins");
         updateMinutesDataInternal(rt);
+        mRuntimeDataLoaded.set(true);
     }
 
     private void handleTrailerResults(List<Map<String, String>> results) {
@@ -476,6 +485,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         if (!mTrailerList.isEmpty() && mMovieDetailsTrailerView.getVisibility() == View.GONE)
             showMovieDetailsAsyncView(Section.TRAILER);
         updateTrailerDataInternal((Serializable) results);
+        mTrailerDataLoaded.set(true);
     }
 
     private void handleReviewResults(List<Map<String, String>> results) {
@@ -493,6 +503,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         if (!mReviewList.isEmpty() && mMovieDetailsReviewView.getVisibility() == View.GONE)
             showMovieDetailsAsyncView(Section.REVIEW);
         updateReviewDataInternal((Serializable) results);
+        mReviewDataLoaded.set(true);
     }
 
     private void updateReviewDataInternal(Serializable results) {
@@ -610,7 +621,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         Log.e(getClass().getSimpleName(), error.getMessage(), error);
-                        mDurationProgress.setVisibility(View.GONE);
+                        mRuntimeLoadingProgress.setVisibility(View.GONE);
                         mDurationTextView.setVisibility(View.GONE);
                         Snackbar.make(mRootView, "Error connecting to server.", Snackbar.LENGTH_SHORT).show();
                     }
@@ -641,7 +652,6 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
                     throw new RuntimeException("Invalid type: " + type);
             }
         else return null;
-
     }
 
     @Override
@@ -656,13 +666,16 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
 //            case MovieProvider.MOVIE_WITH_ID:
 //                break;
             case MovieProvider.MOVIE_MINUTES:
-                updateMinutesDataOrAskServer(data);
+                if (!mRuntimeDataLoaded.get())
+                    updateMinutesDataOrAskServer(data);
                 break;
             case MovieProvider.MOVIE_REVIEWS:
-                updateReviewsDataOrAskServer(data);
+                if (!mReviewDataLoaded.get())
+                    updateReviewsDataOrAskServer(data);
                 break;
             case MovieProvider.MOVIE_TRAILERS:
-                updateTrailerDataOrAskServer(data);
+                if (!mTrailerDataLoaded.get())
+                    updateTrailerDataOrAskServer(data);
                 break;
 //            case MovieProvider.MOVIE_RATING:
 //                break;
@@ -671,14 +684,19 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
 //            case MovieProvider.MOVIE_FAVORITE_WITH_ID:
 //                break;
             case MovieProvider.MOVIE_WITH_ID_AND_MAYBE_FAVORITE:
-                if (data == null || !data.moveToFirst())
-                    Snackbar.make(mRootView, "No Data Loaded. Please go back and refresh", Snackbar.LENGTH_LONG).show();
-                else if (data.getCount() == 2) {
-                    mFavButton.setText(sIsAlreadyFav);
-                    mIsAlreadyFav = true;
-                    data.moveToLast();
+                if (!mMovieDetailsLoaded.get()) {
+                    if (data == null || !data.moveToFirst()) {
+                        Snackbar.make(mRootView, "No Data Loaded. Please go back and refresh", Snackbar.LENGTH_LONG).show();
+                        getActivity().onBackPressed();
+                        return;
+                    } else if (data.getCount() == 2) {
+                        mFavButton.setText(sIsAlreadyFav);
+                        mIsAlreadyFav = true;
+                        data.moveToLast();
+                    }
+                    mIsLoadFinished = handleMovieObjData(data.getBlob(1));
+                    mMovieDetailsLoaded.set(true);
                 }
-                mIsLoadFinished = handleMovieObjData(data.getBlob(1));
                 break;
 //            case MovieProvider.MOVIE_POPULAR:
 //                break;
@@ -690,7 +708,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
 
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
-
+        Utils.log();
     }
 
     private enum Section {
@@ -698,8 +716,8 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     }
 
     private void setFirstTrailer() {
-        Utils.log();
         if (!mTrailerList.isEmpty()) {
+            Utils.log();
             oFirstTrailer = mTrailerList.get(0);
             mShareActionProvider.setShareIntent(createShareYoutubeIntent());
         }

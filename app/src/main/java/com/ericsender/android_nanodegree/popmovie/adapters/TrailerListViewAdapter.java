@@ -13,6 +13,7 @@ import android.widget.TextView;
 
 import com.ericsender.android_nanodegree.popmovie.R;
 import com.ericsender.android_nanodegree.popmovie.parcelable.TrailerListObj;
+import com.ericsender.android_nanodegree.popmovie.utils.Utils;
 import com.squareup.picasso.Picasso;
 
 import java.util.List;
@@ -57,9 +58,7 @@ public class TrailerListViewAdapter extends ArrayAdapter<TrailerListObj> {
 
     @Override
     public View getView(int position, View row, ViewGroup parent) {
-//        Log.d(LOG_TAG, String.format("row is being set for position (%d/%d), trailer: (%s)",
-//                position, getCount() - 1, trailer.title));
-        // Log.v(LOG_TAG, String.format("Full movie list: %s", mRowObjs));
+        Utils.log();
         if (checkRowAndObj(row, position)) {
             final TrailerListObj trailer = getItem(position);
             row = ((Activity) mContext).getLayoutInflater().inflate(mTrailerCellRes, parent, false);
