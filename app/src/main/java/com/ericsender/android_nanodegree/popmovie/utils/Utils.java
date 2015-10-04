@@ -10,7 +10,6 @@ import com.ericsender.android_nanodegree.popmovie.data.MovieContract;
 import com.ericsender.android_nanodegree.popmovie.parcelable.MovieGridObj;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.internal.LinkedTreeMap;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -59,9 +58,9 @@ public class Utils {
     }
 
     public static List<MovieGridObj> convertJsonMapToMovieList(Object resultsObj) {
-        List<LinkedTreeMap<String, Object>> results = (List<LinkedTreeMap<String, Object>>) resultsObj;
+        List<Map<String, Object>> results = (List<Map<String, Object>>) resultsObj;
         Set<MovieGridObj> movies = new HashSet<>();
-        for (LinkedTreeMap<String, Object> m : results) {
+        for (Map<String, Object> m : results) {
             MovieGridObj movie = new MovieGridObj();
             for (Map.Entry<String, Object> e : m.entrySet())
                 switch (e.getKey()) {
@@ -108,7 +107,6 @@ public class Utils {
                         movie.vote_count = ((Double) e.getValue()).intValue();
                         break;
                 }
-            // Log.d(getClass().getSimpleName(), "Just received " + movie.title + " from API.");
             movies.add(movie);
         }
         return new ArrayList<>(movies);
@@ -122,7 +120,7 @@ public class Utils {
             }
     }
 
-    public static List<MovieGridObj> covertMapToMovieObjList(LinkedTreeMap<String, Serializable> map) {
+    public static List<MovieGridObj> covertMapToMovieObjList(Map<String, Serializable> map) {
         List<MovieGridObj> movies = null;
         Double page, total_pages, total_results;
         for (Map.Entry<String, Serializable> entry : map.entrySet())

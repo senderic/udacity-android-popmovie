@@ -71,12 +71,10 @@ public class GridViewAdapter extends CursorAdapter {
         String load = String.format(sImgUrl, sImgSize, movie.poster_path);
 
         Picasso.with(mContext.getApplicationContext())
-                .load(load)
-                .placeholder(R.drawable.abc_btn_rating_star_on_mtrl_alpha)
+                .load(load)//.placeholder(R.drawable.abc_btn_rating_star_on_mtrl_alpha)
                 .error(R.drawable.abc_btn_rating_star_off_mtrl_alpha)
                 .resize(550, 775)
                 .into(viewHolder.imageView);
-
     }
 
     public static class ViewHolder {

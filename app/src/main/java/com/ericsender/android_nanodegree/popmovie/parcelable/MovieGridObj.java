@@ -78,7 +78,7 @@ public class MovieGridObj implements Parcelable, Serializable {
 
     @Override
     public String toString() {
-        return "MovieGridObj{" + "title='" + title + "'";
+        return "MovieGridObj{" + "trailer_title='" + title + "'";
     }
 
     @Override

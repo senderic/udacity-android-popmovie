@@ -48,6 +48,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A placeholder fragment containing a simple view.
@@ -287,9 +288,7 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
         }
 
         Log.d(getClass().getSimpleName(), "updateMovieListVolley() - url = " + url);// .substring(0, url.length() - 16));
-        final Toast t = Toast.makeText(getActivity(), "Loading Data...", Toast.LENGTH_LONG);
         final StopWatch sw = new StopWatch();
-        t.show();
         sw.start();
         JsonObjectRequest jsObjRequest = new JsonObjectRequest
                 (Request.Method.GET, url, (String) null, new Response.Listener<JSONObject>() {
@@ -297,10 +296,9 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
                     @Override
                     public void onResponse(JSONObject response) {
                         Log.d(getClass().getSimpleName(), "Response received.");
-                        LinkedTreeMap<String, Serializable> map = Utils.getGson().fromJson(response.toString(), LinkedTreeMap.class);
+                        Map<String, Serializable> map = Utils.getGson().fromJson(response.toString(), LinkedTreeMap.class);
                         handleMap(map, sort);
                         insertMovieListIntoDatabase(sort);
-                        t.setText("Loading Finished in: " + sw);
                         Bundle b = new Bundle();
                         b.putString("sort", sort);
                         getLoaderManager().initLoader(0, b, mThis);
@@ -311,8 +309,7 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         Log.e(getClass().getSimpleName(), error.getMessage(), error);
-                        t.setText(String.format("Error connecting to server (%s) in: %s", error.getMessage(), sw));
-                        //Toast.makeText(getActivity(), "Error connecting to server.", Toast.LENGTH_SHORT).show();
+                        Snackbar.make(mMovieGridView, String.format("Error connecting to server (%s) in: %s", error.getMessage(), sw), Snackbar.LENGTH_SHORT).show();
                     }
                 });
         queue.add(jsObjRequest);
@@ -322,7 +319,7 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
         return getString(R.string.tmdb_arg_favorite).equals(sort);
     }
 
-    private void handleMap(LinkedTreeMap<String, Serializable> map, String sort) {
+    private void handleMap(Map<String, Serializable> map, String sort) {
         Utils.log(getClass().getSimpleName());
         mMovieList = Utils.covertMapToMovieObjList(map);
         Log.d(getClass().getSimpleName(), "Received a set of movies. Registering them.");

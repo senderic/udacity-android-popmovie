@@ -65,7 +65,7 @@ public class TrailerListViewAdapter extends ArrayAdapter<TrailerListObj> {
             holder.playIcon = (ImageView) row.findViewById(R.id.trailer_play);
             holder.youTubeThump = (ImageView) row.findViewById(R.id.youtube_thumb);
             holder.trailerTitle = (TextView) row.findViewById(R.id.trailer_name);
-            holder.trailerTitle.setText(trailer.title);
+            holder.trailerTitle.setText(trailer.trailer_title);
             holder.position = position;
             holder.trailerHashCode = trailer.hashCode();
 

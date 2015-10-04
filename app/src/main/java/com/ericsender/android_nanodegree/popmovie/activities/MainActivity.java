@@ -40,8 +40,8 @@ public class MainActivity extends BaseActivity implements MovieDetailsFragment.C
     protected void onCreate(Bundle savedInstanceState) {
         Utils.log(getClass().getSimpleName());
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
         appState = ((PopMoviesApplication) getApplication()).STATE;
+        setContentView(R.layout.activity_main);
     }
 
     @Override
@@ -53,10 +53,6 @@ public class MainActivity extends BaseActivity implements MovieDetailsFragment.C
         Log.d(LOG_TAG, (mTwoPane ? "two" : "single") + " pane mode");
         if (mTwoPane) {
             appState.setDetailsPaneShown(false);
-//            getSupportFragmentManager()
-//                    .beginTransaction()
-//                    .replace(R.id.fragment_moviedetails_double, new MovieDetailsFragment(), DETAILFRAGMENT_TAG)
-//                    .commit();
         } else {
             getSupportActionBar().setElevation(0f);
         }
@@ -82,7 +78,7 @@ public class MainActivity extends BaseActivity implements MovieDetailsFragment.C
         } else {
             Intent intent = new Intent(this, DetailsActivity.class);
 
-            //Pass the image title and url to DetailsActivity
+            //Pass the image trailer_title and url to DetailsActivity
             // TODO: instead of putting the full movieObj in here, send just the movie_id and use a loader on the fragment to get the rest of the data.
             intent.putExtra(getString(R.string.movie_id_key), item.id.longValue());
 

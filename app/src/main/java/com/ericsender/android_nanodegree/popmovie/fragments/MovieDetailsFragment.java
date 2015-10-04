@@ -129,7 +129,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         super.onSaveInstanceState(outState);
         outState.putParcelable(sMovieObjKey, mMovieObj);
         outState.putLong(sMovieIdKey, mMovieId);
-        outState.putString(sShareYoutubeLinkKey, sYoutubeUrl);
+        outState.putParcelable(sShareYoutubeLinkKey, oFirstTrailer);
     }
 
 
@@ -141,12 +141,11 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         staticInits();
         setHasOptionsMenu(true);
         if (savedInstanceState != null) synchronized (mMovieId) {
-            mMovieObj = (MovieGridObj) savedInstanceState.getParcelable(sMovieObjKey);
+            mMovieObj = savedInstanceState.getParcelable(sMovieObjKey);
             mMovieId = savedInstanceState.getLong(sMovieIdKey);
-            sYoutubeUrl = savedInstanceState.getString(sShareYoutubeLinkKey);
-            if (sYoutubeUrl != null) {
-
-            }
+            oFirstTrailer = savedInstanceState.getParcelable(sShareYoutubeLinkKey);
+            if (oFirstTrailer != null)
+                setFirstTrailer();
             try {
                 mMovieId.notifyAll();
             } catch (IllegalMonitorStateException x) {
@@ -322,7 +321,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
                     }
                 });
 
-        titleTextView.setText(mMovieObj.title);
+        titleTextView.setText(mMovieObj.original_title);
         yearTextView.setText(mMovieObj.release_date.substring(0, 4));
         overviewTextView.setText(mMovieObj.overview);
         // TODO is there a String.format that will do %.1f and strip trailing zeros?
@@ -494,9 +493,10 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         Utils.log(getClass().getSimpleName());
         Set<TrailerListObj> th = new LinkedHashSet<>();
         for (Map<String, String> r : results) {
-            String title = r.get("name");
+            String trailer_title = r.get("name");
             String youtube_key = r.get("key");
-            th.add(new TrailerListObj(youtube_key, title));
+            String movie_title = mMovieObj != null ? mMovieObj.original_title : null;
+            th.add(new TrailerListObj(youtube_key, trailer_title, movie_title));
         }
         mTrailerList.clear();
         mTrailerList.addAll(th);
@@ -736,13 +736,13 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     }
 
     private void setFirstTrailer() {
-        if (!mTrailerList.isEmpty()) {
+        if (!mTrailerList.isEmpty()) oFirstTrailer = mTrailerList.get(0);
+        if (oFirstTrailer != null) {
             Utils.log(getClass().getSimpleName());
-            oFirstTrailer = mTrailerList.get(0);
             if (mShareActionProvider != null) {
                 mShareActionProvider.setShareIntent(createShareYoutubeIntent());
                 mMenu.findItem(R.id.action_share_youtube).setVisible(true);
-            }
+            } else Utils.log("mShareActionProvider not set");
         }
     }
 
@@ -751,7 +751,10 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
         shareIntent.setType("text/plain");
-        shareIntent.putExtra(Intent.EXTRA_TEXT, String.format(sYoutubeUrl, oFirstTrailer.youtube_key));
+        String text = (oFirstTrailer.movie_title == null ? "" : oFirstTrailer.movie_title + " - ")
+                + oFirstTrailer.trailer_title + " - "
+                + String.format(sYoutubeUrl, oFirstTrailer.youtube_key);
+        shareIntent.putExtra(Intent.EXTRA_TEXT, text);
         return shareIntent;
     }
 
@@ -764,7 +767,6 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         mShareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(shareMenuItem);
         shareMenuItem.setVisible(false);
     }
-
 
     /**
      * A callback interface that all activities containing this fragment must
