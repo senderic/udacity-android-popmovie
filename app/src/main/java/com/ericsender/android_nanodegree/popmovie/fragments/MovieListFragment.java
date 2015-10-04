@@ -91,14 +91,14 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         super.onSaveInstanceState(outState);
         outState.putParcelableArrayList(getString(R.string.GRIDVIEW_LIST_KEY), (ArrayList<? extends Parcelable>) mMovieList);
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         super.onCreate(savedInstanceState);
         appState = ((PopMoviesApplication) getActivity().getApplication()).STATE;
         if (savedInstanceState != null)
@@ -114,7 +114,7 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
 
     @Override
     public void onResume() {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         String foo = getCurrentSortPref();
         Log.d(getClass().getSimpleName(), "onResume with Sort =  " + foo);
         // If a change to the sort order is seen, resort the gridview and redistplay
@@ -136,7 +136,7 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         View rootView = inflater.inflate(R.layout.fragment_movie_list, container, false);
         mMovieGridView = (GridView) rootView.findViewById(R.id.movie_grid);
         mGridViewAdapter = new GridViewAdapter(getActivity(), null, 0);
@@ -151,7 +151,7 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
     }
 
     private void createGridItemClickCallbacks() {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         //Grid view click event
         mMovieGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
@@ -169,7 +169,7 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         switch (item.getItemId()) {
             case R.id.action_refresh:
                 Log.d(LOG_TAG, "Refreshing!");
@@ -207,7 +207,7 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
 //    }
 
     private Uri determineUri(String sort) {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         if (StringUtils.containsIgnoreCase(sort, "popular"))
             return MovieContract.PopularEntry.buildUri();
         else if (StringUtils.containsIgnoreCase(sort, "vote"))
@@ -219,7 +219,7 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
     }
 
     private void insertMovieListIntoDatabase(final String sort) {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         MovieDbHelper dbHelper = new MovieDbHelper(getActivity());
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         ContentValues[] movie_ids = new ContentValues[mMovieList.size()];
@@ -252,7 +252,7 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
     }
 
     private void getInternalData(Cursor cursor, String sort) {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         List<MovieGridObj> lMaps = new ArrayList<>();
         while (cursor.moveToNext()) {
             Long movie_id = cursor.getLong(0);
@@ -266,7 +266,7 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
     }
 
     private void getLiveDataAndCallLoader(final String sort) {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         if (isFav(sort))
             Snackbar.make(getView(), "Cannot Refresh When Sorting Preference is Favorites. Please choose '"
                     + getString(R.string.most_popular_title) + "' or '"
@@ -323,7 +323,7 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
     }
 
     private void handleMap(LinkedTreeMap<String, Serializable> map, String sort) {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         mMovieList = Utils.covertMapToMovieObjList(map);
         Log.d(getClass().getSimpleName(), "Received a set of movies. Registering them.");
         mGridViewAdapter.setGridData(mMovieList);
@@ -331,7 +331,7 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         final String sort = args.getString("sort");
         Uri uri = determineUri(sort);
         Boolean isRefresh = args.getBoolean("refresh");
@@ -344,7 +344,7 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         String sort = getApiSortPref();
 
         if (!isFav(sort) && !data.moveToFirst())

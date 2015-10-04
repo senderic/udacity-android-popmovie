@@ -57,7 +57,7 @@ public class TrailerListViewAdapter extends ArrayAdapter<TrailerListObj> {
 
     @Override
     public View getView(int position, View row, ViewGroup parent) {
-        //Utils.log();
+        //Utils.log(getClass().getSimpleName());
         if (checkRowAndObj(row, position)) {
             final TrailerListObj trailer = getItem(position);
             row = ((Activity) mContext).getLayoutInflater().inflate(mTrailerCellRes, parent, false);

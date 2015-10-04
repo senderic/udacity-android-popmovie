@@ -12,7 +12,7 @@
 
         <TextView
             android:id="@+id/movie_details_top_title"
-            android:layout_weight="1.25"
+            android:layout_weight="2.5"
             style="@style/movie_details_top" />
 
         <RelativeLayout
@@ -24,17 +24,6 @@
             <include layout="@layout/movie_thumb_details_section" />
 
             <include layout="@layout/movie_thumb_progressbar_section" />
-
-            <ScrollView
-                android:id="@+id/movie_details_top_scroll"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_below="@+id/movie_thumb"
-                android:fillViewport="true">
-
-                <include layout="@layout/movie_overview_section" />
-
-            </ScrollView>
 
             <include layout="@layout/movie_year_cell_section" />
 
@@ -63,6 +52,17 @@
                 android:background="@drawable/fav_button_selector"
                 android:padding="5dp"
                 android:text="@string/mark_as_favorite" />
+
+            <ScrollView
+                android:id="@+id/movie_details_top_scroll"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/button_mark_fav"
+                android:fillViewport="true">
+
+                <include layout="@layout/movie_overview_section" />
+
+            </ScrollView>
 
         </RelativeLayout>
 

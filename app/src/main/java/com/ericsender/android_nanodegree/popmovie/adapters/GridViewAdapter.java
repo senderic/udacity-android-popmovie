@@ -37,7 +37,7 @@ public class GridViewAdapter extends CursorAdapter {
     private String thumbUrl;
 
     public void setGridData(List<MovieGridObj> gridData) {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         mGridData = gridData;
         notifyDataSetChanged();
     }
@@ -51,7 +51,7 @@ public class GridViewAdapter extends CursorAdapter {
 
     @Override
     public View newView(Context context, Cursor cursor, ViewGroup parent) {
-        //Utils.log();
+        //Utils.log(getClass().getSimpleName());
         int layoutId = R.layout.movie_cell;
 
         View view = LayoutInflater.from(context).inflate(layoutId, parent, false);
@@ -64,7 +64,7 @@ public class GridViewAdapter extends CursorAdapter {
 
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
-        //Utils.log();
+        //Utils.log(getClass().getSimpleName());
         ViewHolder viewHolder = (ViewHolder) view.getTag();
         byte[] bMovieObj = cursor.getBlob(1);
         MovieGridObj movie = (MovieGridObj) SerializationUtils.deserialize(bMovieObj);

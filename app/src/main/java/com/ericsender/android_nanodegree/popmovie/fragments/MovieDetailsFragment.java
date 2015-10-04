@@ -125,7 +125,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         super.onSaveInstanceState(outState);
         outState.putParcelable(sMovieObjKey, mMovieObj);
         outState.putLong(sMovieIdKey, mMovieId);
@@ -135,7 +135,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         super.onCreate(savedInstanceState);
         mVolleyRequestQueue = Volley.newRequestQueue(getActivity());
         staticInits();
@@ -159,7 +159,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     private void staticInits() {
         synchronized (MovieDetailsFragment.class) {
             if (!isInit.get()) {
-                Utils.log();
+                Utils.log(getClass().getSimpleName());
                 appState = ((PopMoviesApplication) getActivity().getApplication()).STATE;
                 sIsAlreadyFav = getString(R.string.is_already_fav);
                 sMovieObjKey = getString(R.string.movie_obj_key);
@@ -183,7 +183,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         mIsLoadFinished = false;
         mRootView = inflater.inflate(R.layout.fragment_movie_details, container, false);
         mRuntimeLoadingProgress = (ProgressBar) mRootView.findViewById(R.id.movie_duration_progressBar);
@@ -215,7 +215,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         super.onActivityCreated(savedInstanceState);
         mMovieDetailsAsyncView.setVisibility(View.GONE);
         mMovieDetailsTrailerView.setVisibility(View.GONE);
@@ -237,7 +237,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     }
 
     private void runFragment() {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         if (mMovieId == Long.MIN_VALUE) synchronized (mMovieId) {
             Bundle args = getArguments();
             mMovieId = args == null ?
@@ -252,7 +252,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     }
 
     private void getMoreMovieDetails() {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         loaderDetails();
         loaderVideoData();
         loaderReviewData();
@@ -266,37 +266,37 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     }
 
     private void loaderDetails() {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         makeBundleAndLoad(TYPES.details);
     }
 
     private void loaderVideoData() {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         makeBundleAndLoad(TYPES.trailer);
         // mVolleyRequestQueue.add(getVideoDataAsync());
     }
 
     private void loaderReviewData() {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         makeBundleAndLoad(TYPES.review);
         // mVolleyRequestQueue.add(getReviewDataAsync());
     }
 
     private void loaderMinutesData() {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         makeBundleAndLoad(TYPES.minute);
         // mVolleyRequestQueue.add(getMinutesDataAsync());
     }
 
     private void makeBundleAndLoad(TYPES type) {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         Bundle b = new Bundle();
         b.putLong(sMovieIdKey, mMovieId);
         getLoaderManager().initLoader(type.ordinal(), b, this);
     }
 
     private boolean handleMovieObjData(byte[] data) {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         mMovieObj = SerializationUtils.deserialize(data);
         // Picasso *should* be caching these poster images, so this call should not require network access
 
@@ -307,7 +307,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         Picasso.with(getActivity().getApplicationContext())
                 .load(String.format(sImgUrl, sImgSize, mMovieObj.poster_path))
                 .error(R.drawable.blank)
-                .resize(366, 516)
+                .fit()// .resize(366, 516)
                 .into(mMovieThumb, new com.squareup.picasso.Callback() {
                     @Override
                     public void onSuccess() {
@@ -338,7 +338,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     }
 
     public void handleFavoriteClick(View view) {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         if (mIsLoadFinished) {
             // check if its already pressed
             Cursor c = getActivity().getContentResolver().query(MovieContract.FavoriteEntry.buildUri(mMovieObj.id),
@@ -371,7 +371,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     }
 
     private void updateTrailerDataOrAskServer(Cursor data) {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         byte[] bTrailer = data == null ? null : data.getBlob(1);
         if (bTrailer == null || bTrailer.length == 0) getVideoDataAsync();
         else
@@ -379,7 +379,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     }
 
     private void updateReviewsDataOrAskServer(Cursor data) {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         byte[] bReview = data == null ? null : data.getBlob(1);
         if (bReview == null || bReview.length == 0) getReviewDataAsync();
         else
@@ -387,14 +387,14 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     }
 
     private void updateMinutesDataOrAskServer(Cursor data) {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         Integer minutes = data == null ? -1 : data.getInt(1);
         if (minutes <= 0) getMinutesDataAsync();
         else handleMinutesResults(minutes.toString());
     }
 
     private void getVideoDataAsync() {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         blockUntilMovieIdSet();
         Uri builtUri = Uri.parse(String.format(sVideoUrl, mMovieId)).buildUpon()
                 .appendQueryParameter(sParamApi, sApiKey)
@@ -411,7 +411,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
                 (Request.Method.GET, url, (String) null, new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
-                        Utils.log();
+                        Utils.log(getClass().getSimpleName());
                         Log.d("DetailsActivity", "Video Response received.");
                         Map<String, Object> map = Utils.getGson().fromJson(response.toString(), LinkedTreeMap.class);
                         try {
@@ -433,7 +433,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     }
 
     private void getReviewDataAsync() {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         blockUntilMovieIdSet();
         Uri builtUri = Uri.parse(String.format(sReviewKey, mMovieId)).buildUpon()
                 .appendQueryParameter(sParamApi, sApiKey)
@@ -450,7 +450,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
                 (Request.Method.GET, url, (String) null, new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
-                        Utils.log();
+                        Utils.log(getClass().getSimpleName());
                         Log.d("DetailsActivity", "Review Response received.");
                         Map<String, Object> map = Utils.getGson().fromJson(response.toString(), LinkedTreeMap.class);
                         try {
@@ -472,7 +472,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     }
 
     private void blockUntilMovieIdSet() {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         if (mMovieId == Long.MIN_VALUE)
             synchronized (mMovieId) {
                 try {
@@ -483,7 +483,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     }
 
     private void handleMinutesResults(String rt) {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         mRuntimeLoadingProgress.setVisibility(View.GONE);
         mDurationTextView.setText(Double.valueOf(rt).intValue() + " mins");
         updateMinutesDataInternal(rt);
@@ -491,7 +491,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     }
 
     private void handleTrailerResults(List<Map<String, String>> results) {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         Set<TrailerListObj> th = new LinkedHashSet<>();
         for (Map<String, String> r : results) {
             String title = r.get("name");
@@ -509,7 +509,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     }
 
     private void handleReviewResults(List<Map<String, String>> results) {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         Set<ReviewListObj> rev = new LinkedHashSet<>();
         for (Map<String, String> r : results) {
             String content = r.get("content");
@@ -527,7 +527,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     }
 
     private void updateReviewDataInternal(Serializable results) {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         String selection = MovieContract.MovieEntry.COLUMN_MOVIE_ID + "=?";
         String[] selectionArgs = new String[]{mMovieId.toString()};
         ContentValues cv = new ContentValues();
@@ -536,7 +536,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     }
 
     private void updateTrailerDataInternal(Serializable results) {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         String selection = MovieContract.MovieEntry.COLUMN_MOVIE_ID + "=?";
         String[] selectionArgs = new String[]{mMovieId.toString()};
         ContentValues cv = new ContentValues();
@@ -545,7 +545,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     }
 
     private void updateMinutesDataInternal(String minutes) {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         String selection = MovieContract.MovieEntry.COLUMN_MOVIE_ID + "=?";
         String[] selectionArgs = new String[]{mMovieId.toString()};
         ContentValues cv = new ContentValues();
@@ -561,7 +561,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
      * @param section - Review or Trailer section
      */
     private synchronized void showMovieDetailsAsyncView(Section section) {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         if (mMovieDetailsAsyncView.getVisibility() == View.GONE) {
             mMovieDetailsAsyncView.setVisibility(View.VISIBLE);
             mMovieDetailsBodyView.setLayoutParams(mMovieDetailsBodyViewDefaultLayout);
@@ -609,7 +609,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
 
     @NonNull
     private void getMinutesDataAsync() {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         blockUntilMovieIdSet();
         Uri builtUri = Uri.parse(String.format(sBaseUrl, mMovieId)).buildUpon()
                 .appendQueryParameter(sParamApi, sApiKey)
@@ -626,7 +626,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
                 (Request.Method.GET, url, (String) null, new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
-                        Utils.log();
+                        Utils.log(getClass().getSimpleName());
                         Log.d("DetailsActivity", "Minutes Response received.");
                         Map<String, Object> map = Utils.getGson().fromJson(response.toString(), LinkedTreeMap.class);
                         try {
@@ -651,7 +651,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         TYPES type = TYPES.values()[id];
         long mid = args.getLong(sMovieIdKey);
         if (mid > 0L)
@@ -676,7 +676,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         Uri uri = ((CursorLoader) loader).getUri();
         if (!data.moveToFirst()) data = null;
         int match = sUriMatcher.match(uri);
@@ -728,7 +728,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
 
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
     }
 
     private enum Section {
@@ -737,7 +737,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
 
     private void setFirstTrailer() {
         if (!mTrailerList.isEmpty()) {
-            Utils.log();
+            Utils.log(getClass().getSimpleName());
             oFirstTrailer = mTrailerList.get(0);
             if (mShareActionProvider != null) {
                 mShareActionProvider.setShareIntent(createShareYoutubeIntent());
@@ -747,7 +747,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     }
 
     private Intent createShareYoutubeIntent() {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
         shareIntent.setType("test/plain");
@@ -757,7 +757,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        Utils.log();
+        Utils.log(getClass().getSimpleName());
         mMenu = menu;
         inflater.inflate(R.menu.menu_details, menu);
         shareMenuItem = menu.findItem(R.id.action_share_youtube);
