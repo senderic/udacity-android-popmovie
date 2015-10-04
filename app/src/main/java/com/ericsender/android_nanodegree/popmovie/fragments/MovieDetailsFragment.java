@@ -750,7 +750,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         Utils.log(getClass().getSimpleName());
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
-        shareIntent.setType("test/plain");
+        shareIntent.setType("text/plain");
         shareIntent.putExtra(Intent.EXTRA_TEXT, String.format(sYoutubeUrl, oFirstTrailer.youtube_key));
         return shareIntent;
     }

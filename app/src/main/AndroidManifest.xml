@@ -24,7 +24,12 @@
             android:label="Movie Details" />
         <activity
             android:name=".activities.SettingsActivity"
-            android:label="@string/title_activity_settings" />
+            android:label="@string/title_activity_settings"
+            android:parentActivityName=".activities.BaseActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".activities.BaseActivity" />
+        </activity>
 
         <provider
             android:name=".data.MovieProvider"
