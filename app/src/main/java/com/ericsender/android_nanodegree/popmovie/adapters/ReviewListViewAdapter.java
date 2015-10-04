@@ -49,7 +49,7 @@ public class ReviewListViewAdapter extends ArrayAdapter<ReviewListObj> {
 
     @Override
     public View getView(int position, View row, ViewGroup parent) {
-        // Utils.log();
+        //Utils.log();
         if (checkRowAndObj(row, position)) {
             final ReviewListObj rev = getItem(position);
             ViewHolder holder = new ViewHolder();

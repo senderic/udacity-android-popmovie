@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/movie_duration"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignLeft="@+id/movie_year"
+    android:layout_alignStart="@+id/movie_year"
+    android:layout_below="@+id/movie_year"
+    android:text="@string/space"
+    android:textAppearance="?android:attr/textAppearanceMedium"
+    tools:showIn="@layout/fragment_movie_details" />

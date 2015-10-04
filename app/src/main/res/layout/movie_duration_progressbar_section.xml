@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ProgressBar xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/movie_duration_progressBar"
+    style="?android:attr/progressBarStyleSmall"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_above="@+id/movie_rating"
+    android:layout_alignLeft="@+id/movie_year"
+    android:layout_alignStart="@+id/movie_year"
+    android:visibility="visible"
+    tools:showIn="@layout/fragment_movie_details" />

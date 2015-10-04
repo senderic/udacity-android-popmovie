@@ -20,10 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class GridViewAdapter extends CursorAdapter {
 
-    //    private final GridView mMovieGrid;
     private final String sImgSize;
-    //    private final Context mContext;
-//    private final int movieCellResource;
     private final String sImgUrl;
     private List<MovieGridObj> mGridData;
     private static final String LOG_TAG = GridViewAdapter.class.getSimpleName();
@@ -67,7 +64,7 @@ public class GridViewAdapter extends CursorAdapter {
 
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
-        // Utils.log();
+        //Utils.log();
         ViewHolder viewHolder = (ViewHolder) view.getTag();
         byte[] bMovieObj = cursor.getBlob(1);
         MovieGridObj movie = (MovieGridObj) SerializationUtils.deserialize(bMovieObj);
