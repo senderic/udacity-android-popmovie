@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/movie_rating"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignLeft="@+id/movie_duration"
+    android:layout_alignStart="@+id/movie_duration"
+    android:layout_below="@+id/movie_duration"
+    android:text="@string/generic_rating"
+    android:textAppearance="?android:attr/textAppearanceSmall"
+    tools:showIn="@layout/fragment_movie_details" />

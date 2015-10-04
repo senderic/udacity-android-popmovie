@@ -22,7 +22,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -50,6 +49,7 @@ import com.google.gson.internal.LinkedTreeMap;
 import com.squareup.picasso.Picasso;
 
 import org.apache.commons.lang3.SerializationUtils;
+import org.apache.commons.lang3.time.StopWatch;
 import org.json.JSONObject;
 
 import java.io.Serializable;
@@ -66,12 +66,12 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     private static final String LOG_TAG = MovieDetailsFragment.class.getSimpleName();
     public static final String MOVIE_ID_KEY = "movie_id_key";
     private TextView titleTextView;
-    private ImageView imageView;
+    private ImageView mMovieThumb;
+    private ProgressBar mMovieThumbProgress;
     private TextView yearTextView;
     private TextView mDurationTextView;
     private TextView ratingTextView;
     private TextView overviewTextView;
-    private FrameLayout mProgress;
     private MovieGridObj mMovieObj;
     private ProgressBar mRuntimeLoadingProgress;
     private View mRootView;
@@ -93,6 +93,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     private static String sImgUrl;
     private static String sTrailerTitle;
     private static String sYoutubeUrl;
+    private static String sShareYoutubeLinkKey;
     private static final UriMatcher sUriMatcher = MovieProvider.buildUriMatcher();
     private static volatile PopMoviesApplication.State appState;
     private ListView mTrailerListView;
@@ -119,6 +120,8 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     private final AtomicBoolean mTrailerDataLoaded = new AtomicBoolean();
     private final AtomicBoolean mReviewDataLoaded = new AtomicBoolean();
     private final AtomicBoolean mMovieDetailsLoaded = new AtomicBoolean();
+    private Menu mMenu;
+    private MenuItem shareMenuItem;
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
@@ -126,6 +129,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         super.onSaveInstanceState(outState);
         outState.putParcelable(sMovieObjKey, mMovieObj);
         outState.putLong(sMovieIdKey, mMovieId);
+        outState.putString(sShareYoutubeLinkKey, sYoutubeUrl);
     }
 
 
@@ -139,6 +143,10 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         if (savedInstanceState != null) synchronized (mMovieId) {
             mMovieObj = (MovieGridObj) savedInstanceState.getParcelable(sMovieObjKey);
             mMovieId = savedInstanceState.getLong(sMovieIdKey);
+            sYoutubeUrl = savedInstanceState.getString(sShareYoutubeLinkKey);
+            if (sYoutubeUrl != null) {
+
+            }
             try {
                 mMovieId.notifyAll();
             } catch (IllegalMonitorStateException x) {
@@ -166,6 +174,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
                 sNoLongerFav = getString(R.string.is_no_longer_fav);
                 sTrailerTitle = getString(R.string.trailer_title_iter);
                 sYoutubeUrl = getString(R.string.youtube_url);
+                sShareYoutubeLinkKey = getString(R.string.shareYoutubeKey);
                 isInit.set(true);
             }
         }
@@ -179,8 +188,8 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         mRootView = inflater.inflate(R.layout.fragment_movie_details, container, false);
         mRuntimeLoadingProgress = (ProgressBar) mRootView.findViewById(R.id.movie_duration_progressBar);
         mRuntimeLoadingProgress.setVisibility(View.VISIBLE);
-        mProgress = (FrameLayout) mRootView.findViewById(R.id.movie_details_progress_bar);
-        imageView = (ImageView) mRootView.findViewById(R.id.movie_thumb);
+        mMovieThumb = (ImageView) mRootView.findViewById(R.id.movie_thumb);
+        mMovieThumbProgress = (ProgressBar) mRootView.findViewById(R.id.movie_thumb_progressBar);
         mDurationTextView = (TextView) mRootView.findViewById(R.id.movie_duration);
         titleTextView = (TextView) mRootView.findViewById(R.id.movie_details_top_title);
         yearTextView = (TextView) mRootView.findViewById(R.id.movie_year);
@@ -224,7 +233,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
             }
         });
 
-        if (Utils.isTablet(getActivity())) imageView.setAdjustViewBounds(true);
+        if (Utils.isTablet(getActivity())) mMovieThumb.setAdjustViewBounds(true);
     }
 
     private void runFragment() {
@@ -293,13 +302,25 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
 
         // Picasso.with(getActivity().getApplicationContext()).setIndicatorsEnabled(true);
         // Picasso.with(getActivity().getApplicationContext()).setLoggingEnabled(true);
-
+        final StopWatch sw = new StopWatch();
+        sw.start();
         Picasso.with(getActivity().getApplicationContext())
                 .load(String.format(sImgUrl, sImgSize, mMovieObj.poster_path))
-                .placeholder(R.drawable.blank)
                 .error(R.drawable.blank)
                 .resize(366, 516)
-                .into(imageView);
+                .into(mMovieThumb, new com.squareup.picasso.Callback() {
+                    @Override
+                    public void onSuccess() {
+                        Utils.log(sw.toString());
+                        Utils.hideViewSafe(mMovieThumbProgress);
+                    }
+
+                    @Override
+                    public void onError() {
+                        Utils.log(sw.toString());
+                        Utils.hideViewSafe(mMovieThumbProgress);
+                    }
+                });
 
         titleTextView.setText(mMovieObj.title);
         yearTextView.setText(mMovieObj.release_date.substring(0, 4));
@@ -313,7 +334,6 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
                 String.format("%.1f", va);
         ratingTextView.setText(roundRating + "/10");
         getActivity().setProgressBarIndeterminateVisibility(false);
-        mProgress.setVisibility(View.GONE);
         return true;
     }
 
@@ -719,7 +739,10 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         if (!mTrailerList.isEmpty()) {
             Utils.log();
             oFirstTrailer = mTrailerList.get(0);
-            mShareActionProvider.setShareIntent(createShareYoutubeIntent());
+            if (mShareActionProvider != null) {
+                mShareActionProvider.setShareIntent(createShareYoutubeIntent());
+                mMenu.findItem(R.id.action_share_youtube).setVisible(true);
+            }
         }
     }
 
@@ -735,10 +758,13 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         Utils.log();
+        mMenu = menu;
         inflater.inflate(R.menu.menu_details, menu);
-        MenuItem menuItem = menu.findItem(R.id.action_share_youtube);
-        mShareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(menuItem);
+        shareMenuItem = menu.findItem(R.id.action_share_youtube);
+        mShareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(shareMenuItem);
+        shareMenuItem.setVisible(false);
     }
+
 
     /**
      * A callback interface that all activities containing this fragment must
@@ -749,6 +775,6 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         /**
          * DetailFragmentCallback for when an item has been selected.
          */
-        public void onItemSelected(MovieGridObj movieObj);
+        void onItemSelected(MovieGridObj movieObj);
     }
 }

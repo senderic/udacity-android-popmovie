@@ -4,12 +4,15 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.util.Log;
+import android.view.View;
 
 import com.ericsender.android_nanodegree.popmovie.data.MovieContract;
 import com.ericsender.android_nanodegree.popmovie.parcelable.MovieGridObj;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.internal.LinkedTreeMap;
+
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.BufferedReader;
 import java.io.Closeable;
@@ -164,6 +167,15 @@ public class Utils {
     }
 
     public static void log() {
-        Log.d("UTILS", getMethodName(4));
+        log(null);
+    }
+
+    public static void log(String append) {
+        boolean isAppend = StringUtils.isNotEmpty(append);
+        Log.d("UTILS", String.format("%s%s%s", getMethodName(4 + 1), isAppend ? " - " : "", isAppend ? append : ""));
+    }
+
+    public static void hideViewSafe(View v) {
+        if (v != null) v.setVisibility(View.GONE);
     }
 }

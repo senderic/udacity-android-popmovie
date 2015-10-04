@@ -12,7 +12,6 @@ import android.widget.TextView;
 
 import com.ericsender.android_nanodegree.popmovie.R;
 import com.ericsender.android_nanodegree.popmovie.parcelable.ReviewListObj;
-import com.ericsender.android_nanodegree.popmovie.utils.Utils;
 
 import java.util.List;
 
@@ -50,7 +49,7 @@ public class ReviewListViewAdapter extends ArrayAdapter<ReviewListObj> {
 
     @Override
     public View getView(int position, View row, ViewGroup parent) {
-        Utils.log();
+        //Utils.log();
         if (checkRowAndObj(row, position)) {
             final ReviewListObj rev = getItem(position);
             ViewHolder holder = new ViewHolder();

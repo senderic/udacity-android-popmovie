@@ -12,20 +12,8 @@
 
         <TextView
             android:id="@+id/movie_details_top_title"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="2"
-            android:background="#009788"
-            android:gravity="center|start"
-            android:paddingBottom="10dp"
-            android:paddingLeft="30dp"
-            android:paddingRight="30dp"
-            android:paddingTop="10dp"
-            android:text="@string/default_movie_title"
-            android:textAppearance="?android:attr/textAppearanceLarge"
-            android:textColor="#ffffff"
-            android:textStyle="bold"
-            android:typeface="sans" />
+            android:layout_weight="1.25"
+            style="@style/movie_details_top" />
 
         <RelativeLayout
             android:id="@+id/movie_details_body"
@@ -33,17 +21,9 @@
             android:layout_height="0dp"
             android:layout_weight="5">
 
-            <ImageView
-                android:id="@+id/movie_thumb"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentLeft="true"
-                android:layout_alignParentStart="true"
-                android:layout_marginLeft="30dp"
-                android:layout_marginStart="33dp"
-                android:layout_marginTop="10dp"
-                android:contentDescription="@string/movie_description_blind"
-                android:src="@drawable/blank" />
+            <include layout="@layout/movie_thumb_details_section" />
+
+            <include layout="@layout/movie_thumb_progressbar_section" />
 
             <ScrollView
                 android:id="@+id/movie_details_top_scroll"
@@ -52,27 +32,11 @@
                 android:layout_below="@+id/movie_thumb"
                 android:fillViewport="true">
 
-                <TextView
-                    android:id="@+id/movie_overview"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingLeft="30dp"
-                    android:paddingRight="30dp"
-                    android:paddingTop="5dp"
-                    android:text="@string/generic_long_text"
-                    android:textAppearance="?android:attr/textAppearanceMedium" />
+                <include layout="@layout/movie_overview_section" />
 
             </ScrollView>
 
-            <TextView
-                android:id="@+id/movie_year"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignTop="@+id/movie_thumb"
-                android:layout_centerHorizontal="true"
-                android:layout_marginTop="10dp"
-                android:text="@string/generic_year"
-                android:textAppearance="?android:attr/textAppearanceMedium" />
+            <include layout="@layout/movie_year_cell_section" />
 
             <TextView
                 android:id="@+id/movie_duration"
@@ -84,25 +48,9 @@
                 android:text="@string/space"
                 android:textAppearance="?android:attr/textAppearanceMedium" />
 
-            <ProgressBar
-                android:id="@+id/movie_duration_progressBar"
-                style="?android:attr/progressBarStyleSmall"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_above="@+id/movie_rating"
-                android:layout_alignLeft="@+id/movie_year"
-                android:layout_alignStart="@+id/movie_year"
-                android:visibility="visible" />
+            <include layout="@layout/movie_duration_progressbar_section" />
 
-            <TextView
-                android:id="@+id/movie_rating"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignLeft="@+id/movie_duration"
-                android:layout_alignStart="@+id/movie_duration"
-                android:layout_below="@+id/movie_duration"
-                android:text="@string/generic_rating"
-                android:textAppearance="?android:attr/textAppearanceSmall" />
+            <include layout="@layout/movie_rating_section" />
 
             <Button
                 android:id="@+id/button_mark_fav"
@@ -162,20 +110,4 @@
 
     </LinearLayout>
 
-    <FrameLayout
-        android:id="@+id/movie_details_progress_bar"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_gravity="center|start"
-        android:background="#9e010101"
-        android:orientation="vertical"
-        android:visibility="gone">
-
-        <ProgressBar
-            style="?android:attr/progressBarStyleLarge"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_gravity="center|start" />
-
-    </FrameLayout>
 </FrameLayout>
