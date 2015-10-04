@@ -8,9 +8,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Created by Eric on 9/11/2015.
  */
 public class PopMoviesApplication extends Application {
-    public final State STATE = State.getInstance();
-
-    // TODO: can the constructor be private...?
+    public static final State STATE = State.getInstance();
 
     public static class State {
         private final AtomicBoolean isRefreshGrid = new AtomicBoolean();
@@ -47,6 +45,9 @@ public class PopMoviesApplication extends Application {
 
         public static State getInstance() {
             return SingletonHolder.INSTANCE;
+        }
+
+        private State() {
         }
     }
 

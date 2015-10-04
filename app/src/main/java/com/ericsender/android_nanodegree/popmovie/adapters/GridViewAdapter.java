@@ -54,7 +54,7 @@ public class GridViewAdapter extends CursorAdapter {
 
     @Override
     public View newView(Context context, Cursor cursor, ViewGroup parent) {
-        Utils.log();
+        //Utils.log();
         int layoutId = R.layout.movie_cell;
 
         View view = LayoutInflater.from(context).inflate(layoutId, parent, false);
@@ -67,7 +67,7 @@ public class GridViewAdapter extends CursorAdapter {
 
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
-        Utils.log();
+        // Utils.log();
         ViewHolder viewHolder = (ViewHolder) view.getTag();
         byte[] bMovieObj = cursor.getBlob(1);
         MovieGridObj movie = (MovieGridObj) SerializationUtils.deserialize(bMovieObj);

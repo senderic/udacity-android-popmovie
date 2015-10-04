@@ -114,6 +114,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     private LinearLayout.LayoutParams mMovieDetailsTitleViewDefaultLayout;
     private TrailerListObj oFirstTrailer = null;
     private ShareActionProvider mShareActionProvider;
+    private Boolean mShareActionProviderWaiter = Boolean.FALSE;
     private RequestQueue mVolleyRequestQueue;
     private final AtomicBoolean mRuntimeDataLoaded = new AtomicBoolean();
     private final AtomicBoolean mTrailerDataLoaded = new AtomicBoolean();
@@ -137,13 +138,19 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         staticInits();
         setHasOptionsMenu(true);
         if (savedInstanceState != null) synchronized (mMovieId) {
-            mMovieObj = (MovieGridObj) savedInstanceState.getParcelable(sMovieObjKey);
+            mMovieObj = savedInstanceState.getParcelable(sMovieObjKey);
             mMovieId = savedInstanceState.getLong(sMovieIdKey);
             try {
                 mMovieId.notifyAll();
             } catch (IllegalMonitorStateException x) {
             }
         }
+    }
+
+    @Override
+    public void onResume() {
+        Utils.log();
+        super.onResume();
         runFragment();
     }
 
@@ -251,7 +258,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         loaderMinutesData();
     }
 
-    private static enum TYPES {
+    private enum TYPES {
         review, trailer, minute, details;
         public static final String KEY = "type_key";
     }
@@ -375,7 +382,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
 
     private void getVideoDataAsync() {
         Utils.log();
-        blockUntilMovieIdSet();
+        blockUntilObjSet(mMovieId, Long.MIN_VALUE);
         Uri builtUri = Uri.parse(String.format(sVideoUrl, mMovieId)).buildUpon()
                 .appendQueryParameter(sParamApi, sApiKey)
                 .build();
@@ -414,7 +421,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
 
     private void getReviewDataAsync() {
         Utils.log();
-        blockUntilMovieIdSet();
+        blockUntilObjSet(mMovieId, Long.MIN_VALUE);
         Uri builtUri = Uri.parse(String.format(sReviewKey, mMovieId)).buildUpon()
                 .appendQueryParameter(sParamApi, sApiKey)
                 .build();
@@ -451,15 +458,16 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         mVolleyRequestQueue.add(jsObjRequest);
     }
 
-    private void blockUntilMovieIdSet() {
+    private static boolean blockUntilObjSet(final Object o, final Object val) {
         Utils.log();
-        if (mMovieId == Long.MIN_VALUE)
-            synchronized (mMovieId) {
-                try {
-                    mMovieId.wait();
+        synchronized (o) {
+            if (o.equals(val))
+                try { // TODO I think this is overkill and the previous blocking worked fine. Need to figure out a better/the right way to handle the share menu!!
+                    o.wait(1L);
                 } catch (InterruptedException e) {
                 }
-            }
+        }
+        return true;
     }
 
     private void handleMinutesResults(String rt) {
@@ -590,7 +598,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     @NonNull
     private void getMinutesDataAsync() {
         Utils.log();
-        blockUntilMovieIdSet();
+        blockUntilObjSet(mMovieId, Long.MIN_VALUE);
         Uri builtUri = Uri.parse(String.format(sBaseUrl, mMovieId)).buildUpon()
                 .appendQueryParameter(sParamApi, sApiKey)
                 .build();
@@ -661,10 +669,6 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         if (!data.moveToFirst()) data = null;
         int match = sUriMatcher.match(uri);
         switch (match) {
-//            case MovieProvider.MOVIE:
-//                break;
-//            case MovieProvider.MOVIE_WITH_ID:
-//                break;
             case MovieProvider.MOVIE_MINUTES:
                 if (!mRuntimeDataLoaded.get())
                     updateMinutesDataOrAskServer(data);
@@ -677,12 +681,6 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
                 if (!mTrailerDataLoaded.get())
                     updateTrailerDataOrAskServer(data);
                 break;
-//            case MovieProvider.MOVIE_RATING:
-//                break;
-//            case MovieProvider.MOVIE_FAVORITE:
-//                break;
-//            case MovieProvider.MOVIE_FAVORITE_WITH_ID:
-//                break;
             case MovieProvider.MOVIE_WITH_ID_AND_MAYBE_FAVORITE:
                 if (!mMovieDetailsLoaded.get()) {
                     if (data == null || !data.moveToFirst()) {
@@ -719,16 +717,18 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         if (!mTrailerList.isEmpty()) {
             Utils.log();
             oFirstTrailer = mTrailerList.get(0);
-            mShareActionProvider.setShareIntent(createShareYoutubeIntent());
+            // Some defensive code.
+            blockUntilObjSet(mShareActionProviderWaiter, Boolean.FALSE);
+            mShareActionProvider.setShareIntent(createShareYoutubeIntent(oFirstTrailer.youtube_key));
         }
     }
 
-    private Intent createShareYoutubeIntent() {
+    private Intent createShareYoutubeIntent(String youtube_key) {
         Utils.log();
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
         shareIntent.setType("test/plain");
-        shareIntent.putExtra(Intent.EXTRA_TEXT, String.format(sYoutubeUrl, oFirstTrailer.youtube_key));
+        shareIntent.putExtra(Intent.EXTRA_TEXT, String.format(sYoutubeUrl, youtube_key));
         return shareIntent;
     }
 
@@ -738,6 +738,11 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         inflater.inflate(R.menu.menu_details, menu);
         MenuItem menuItem = menu.findItem(R.id.action_share_youtube);
         mShareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(menuItem);
+        try {
+            mShareActionProviderWaiter = true;
+            mShareActionProviderWaiter.notify();
+        } catch (IllegalMonitorStateException x) {
+        }
     }
 
     /**
