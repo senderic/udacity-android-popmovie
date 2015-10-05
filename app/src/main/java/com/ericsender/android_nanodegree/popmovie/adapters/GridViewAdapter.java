@@ -3,6 +3,7 @@ package com.ericsender.android_nanodegree.popmovie.adapters;
 import android.content.Context;
 import android.database.Cursor;
 import android.support.v4.widget.CursorAdapter;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -39,7 +40,11 @@ public class GridViewAdapter extends CursorAdapter {
     public void setGridData(List<MovieGridObj> gridData) {
         Utils.log(getClass().getSimpleName());
         mGridData = gridData;
-        notifyDataSetChanged();
+        try {
+            notifyDataSetChanged();
+        } catch (IllegalStateException x) {
+            Log.e(LOG_TAG, x.getMessage(), x);
+        }
     }
 
     public GridViewAdapter(Context context, Cursor cursor, int flag) {
@@ -67,7 +72,7 @@ public class GridViewAdapter extends CursorAdapter {
         //Utils.log(getClass().getSimpleName());
         ViewHolder viewHolder = (ViewHolder) view.getTag();
         byte[] bMovieObj = cursor.getBlob(1);
-        MovieGridObj movie = (MovieGridObj) SerializationUtils.deserialize(bMovieObj);
+        MovieGridObj movie = SerializationUtils.deserialize(bMovieObj);
         String load = String.format(sImgUrl, sImgSize, movie.poster_path);
 
         Picasso.with(mContext.getApplicationContext())

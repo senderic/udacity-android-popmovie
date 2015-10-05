@@ -51,11 +51,10 @@ public class MainActivity extends BaseActivity implements MovieDetailsFragment.C
         mTwoPane = (mMovieDetailsContainer = findViewById(R.id.fragment_moviedetails_double)) != null;
         appState.setTwoPane(mTwoPane);
         Log.d(LOG_TAG, (mTwoPane ? "two" : "single") + " pane mode");
-        if (mTwoPane) {
+        if (mTwoPane)
             appState.setDetailsPaneShown(false);
-        } else {
+        else
             getSupportActionBar().setElevation(0f);
-        }
     }
 
     @Override

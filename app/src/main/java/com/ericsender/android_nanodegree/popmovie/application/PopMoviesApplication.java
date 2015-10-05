@@ -14,9 +14,18 @@ public class PopMoviesApplication extends Application {
         private final AtomicBoolean isRefreshGrid = new AtomicBoolean();
         private final AtomicBoolean isTwoPane = new AtomicBoolean();
         private final AtomicBoolean detailsPaneShown = new AtomicBoolean();
+        private String currSortState;
 
         public void setTwoPane(boolean b) {
             isTwoPane.set(b);
+        }
+
+        public void setCurrSortState(String s) {
+            currSortState = s;
+        }
+
+        public String getCurrSortState() {
+            return currSortState;
         }
 
         public boolean getTwoPane() {

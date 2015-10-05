@@ -11,16 +11,17 @@
         android:id="@+id/action_refresh"
         android:orderInCategory="101"
         android:title="@string/action_refresh"
+        android:icon="@android:drawable/ic_menu_rotate"
         app:showAsAction="ifRoom" />
     <item
         android:id="@+id/action_delete_db"
         android:title="@string/action_delete_db"
         app:showAsAction="never" />
-    <!--
     <item
         android:id="@+id/action_sort"
         android:title="@string/spinner_title_sort"
+        android:icon="@android:drawable/ic_menu_sort_by_size"
+        app:actionViewClass="android.widget.Spinner"
         app:showAsAction="ifRoom" />
-        -->
 
 </menu>

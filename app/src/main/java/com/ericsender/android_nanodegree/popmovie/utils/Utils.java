@@ -4,8 +4,11 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 
+import com.ericsender.android_nanodegree.popmovie.R;
 import com.ericsender.android_nanodegree.popmovie.data.MovieContract;
 import com.ericsender.android_nanodegree.popmovie.parcelable.MovieGridObj;
 import com.google.gson.Gson;
@@ -175,5 +178,12 @@ public class Utils {
 
     public static void hideViewSafe(View v) {
         if (v != null) v.setVisibility(View.GONE);
+    }
+
+    public static void makeMenuItemInvisible(Menu menu, int... ids) {
+        for (int id : ids) {
+            MenuItem mi = menu.findItem(id);
+            if (mi != null) mi.setVisible(false);
+        }
     }
 }

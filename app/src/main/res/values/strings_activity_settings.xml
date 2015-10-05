@@ -3,17 +3,28 @@
 
     <string name="pref_title_sort_order">Sort Order</string>
     <string name="spinner_title_sort">Sort</string>
-    <string-array name="pref_sort_order_entries">
+    <string-array name="pref_sort_order_menu_entries">
         <item>@string/most_popular_title</item>
         <item>@string/highest_rated_title</item>
         <item>@string/favorite_title</item>
     </string-array>
-    <string-array name="pref_sort_order_values">
+    <string-array name="pref_sort_order_menu_values">
         <item>@string/most_popular_val</item>
         <item>@string/highest_rated_val</item>
         <item>@string/favorite_val</item>
     </string-array>
-
+    <string-array name="pref_sort_order_spinner_entries">
+        <item>@string/sort_title</item>
+        <item>@string/most_popular_title</item>
+        <item>@string/highest_rated_title</item>
+        <item>@string/favorite_title</item>
+    </string-array>
+    <string-array name="pref_sort_order_spinner_values">
+        <item>@string/sort_null</item>
+        <item>@string/most_popular_val</item>
+        <item>@string/highest_rated_val</item>
+        <item>@string/favorite_val</item>
+    </string-array>
     <string name="most_popular_title">Most Popular</string>
     <string name="highest_rated_title">Highest Rated</string>
     <string name="favorite_title">Favorite</string>
@@ -23,5 +34,7 @@
 
     <string name="pref_sort_order_key">sort_order_list</string>
     <string name="action_refresh">Refresh</string>
+    <string name="sort_title">Sort</string>
+    <string name="sort_null">sort_null</string>
 
 </resources>

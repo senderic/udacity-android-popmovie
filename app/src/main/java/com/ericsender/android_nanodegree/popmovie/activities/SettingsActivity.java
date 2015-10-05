@@ -12,6 +12,7 @@ import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 
 import com.ericsender.android_nanodegree.popmovie.R;
+import com.ericsender.android_nanodegree.popmovie.application.PopMoviesApplication;
 
 import java.util.List;
 
@@ -34,12 +35,12 @@ public class SettingsActivity extends PreferenceActivity {
      * shown on tablets.
      */
     private static final boolean ALWAYS_SIMPLE_PREFS = false;
-
+    private static PopMoviesApplication.State appState;
 
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
-
+        appState = ((PopMoviesApplication) getApplication()).STATE;
         setupSimplePreferencesScreen();
     }
 
@@ -120,12 +121,12 @@ public class SettingsActivity extends PreferenceActivity {
                 // the preference's 'entries' list.
                 ListPreference listPreference = (ListPreference) preference;
                 int index = listPreference.findIndexOfValue(stringValue);
-
+                String sort = index >= 0
+                        ? listPreference.getEntries()[index].toString()
+                        : null;
                 // Set the summary to reflect the new value.
-                preference.setSummary(
-                        index >= 0
-                                ? listPreference.getEntries()[index]
-                                : null);
+                preference.setSummary(sort);
+                appState.setCurrSortState(sort);
             } else {
                 // For all other preferences, set the summary to the value's
                 // simple string representation.
@@ -134,6 +135,7 @@ public class SettingsActivity extends PreferenceActivity {
             return true;
         }
     };
+
 
     /**
      * Binds a preference's summary to its value. More specifically, when the

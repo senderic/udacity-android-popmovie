@@ -12,14 +12,19 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.support.v4.view.MenuItemCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
+import android.widget.Spinner;
+import android.widget.SpinnerAdapter;
 import android.widget.Toast;
 
 import com.android.volley.Request;
@@ -63,16 +68,16 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
     private String mCurrSortOrder;
     private MovieListFragment mThis;
     private PopMoviesApplication.State appState;
-
-    private String getCurrentSortPref() {
-        return PreferenceManager
-                .getDefaultSharedPreferences(getActivity())
-                .getString(getString(R.string.pref_sort_order_key),
-                        getString(R.string.most_popular_val));
-    }
+    private int mPosition;
+    private RequestQueue mVollRequestQueue;
 
     private String getApiSortPref() {
-        String sort = getCurrentSortPref();
+        String sort = appState.getCurrSortState();
+        if (sort == null)
+            appState.setCurrSortState(sort = PreferenceManager
+                    .getDefaultSharedPreferences(getActivity())
+                    .getString(getString(R.string.pref_sort_order_key),
+                            getString(R.string.most_popular_val)));
 
         if (sort.equals(getString(R.string.most_popular_val)))
             return getString(R.string.tmdb_arg_popularity);
@@ -83,13 +88,6 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
         // else throw new RuntimeException("Sort order value is not known: " + sort);
     }
 
-    private void setTitle() {
-        // getActivity().setTitle(getString(R.string.title_activity_main) + " - " + getCurrentSortPref());
-    }
-
-    public MovieListFragment() {
-    }
-
     @Override
     public void onSaveInstanceState(Bundle outState) {
         Utils.log(getClass().getSimpleName());
@@ -98,9 +96,39 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
     }
 
     @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        MenuItem item = menu.findItem(R.id.action_sort);
+        Spinner s = (Spinner) MenuItemCompat.getActionView(item);
+        SpinnerAdapter adapter = ArrayAdapter.createFromResource(getActivity(),
+                R.array.pref_sort_order_spinner_entries, android.R.layout.simple_spinner_dropdown_item);
+        s.setAdapter(adapter);
+
+        s.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                                        final String[] values = getResources().getStringArray(R.array.pref_sort_order_spinner_values);
+
+                                        @Override
+                                        public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                                            Utils.log(String.format("position %d and id %d", position, id));
+                                            if (position > 0) {
+                                                appState.setCurrSortState(mCurrSortOrder = values[position]);
+                                                handleSort();
+                                            }
+                                        }
+
+                                        @Override
+                                        public void onNothingSelected(AdapterView<?> parent) {
+                                            Utils.log();
+                                        }
+                                    }
+        );
+    }
+
+    @Override
     public void onCreate(Bundle savedInstanceState) {
         Utils.log(getClass().getSimpleName());
         super.onCreate(savedInstanceState);
+        mVollRequestQueue = Volley.newRequestQueue(getActivity());
         appState = ((PopMoviesApplication) getActivity().getApplication()).STATE;
         if (savedInstanceState != null)
             mMovieList = (List<MovieGridObj>) savedInstanceState.get(getString(R.string.GRIDVIEW_LIST_KEY));
@@ -116,21 +144,24 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
     @Override
     public void onResume() {
         Utils.log(getClass().getSimpleName());
-        String foo = getCurrentSortPref();
+        String foo = getApiSortPref();
         Log.d(getClass().getSimpleName(), "onResume with Sort =  " + foo);
         // If a change to the sort order is seen, resort the gridview and redistplay
         boolean refreshGrid = appState.getIsRefreshGrid();
         Log.d(LOG_TAG, "Forced RefreshGrid status is: " + refreshGrid);
-        if (refreshGrid || !foo.equals(mCurrSortOrder)) { // This will also be true on inital loading.
+        if (refreshGrid || !foo.equals(mCurrSortOrder)) { // This will also be true on initial loading.
             mCurrSortOrder = foo;
-            Log.d(getClass().getSimpleName(), "Sorting on: " + mCurrSortOrder);
-            Bundle b = new Bundle();
-            b.putString("sort", foo);
-            getLoaderManager().initLoader(0, b, this);
-            setTitle();
-            appState.setIsRefreshGrid(false);
+            handleSort();
         }
         super.onResume();
+    }
+
+    private void handleSort() {
+        Log.d(getClass().getSimpleName(), "Sorting on: " + mCurrSortOrder);
+        Bundle b = new Bundle();
+        b.putString("sort", mCurrSortOrder);
+        getLoaderManager().restartLoader(0, b, this);
+        appState.setIsRefreshGrid(false);
     }
 
 
@@ -142,11 +173,7 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
         mMovieGridView = (GridView) rootView.findViewById(R.id.movie_grid);
         mGridViewAdapter = new GridViewAdapter(getActivity(), null, 0);
         mMovieGridView.setAdapter(mGridViewAdapter);
-        // mMovieAdapter = new ArrayAdapter<String>(getActivity(), R.layout.grid_movie_posters,
         createGridItemClickCallbacks();
-        Bundle b = new Bundle();
-        b.putString("sort", getApiSortPref());
-        getLoaderManager().initLoader(0, b, this);
         mThis = this;
         return rootView;
     }
@@ -177,41 +204,17 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
                 Bundle b = new Bundle();
                 b.putString("sort", getApiSortPref());
                 b.putBoolean("refresh", true);
-                getLoaderManager().initLoader(0, b, this);
+                getLoaderManager().restartLoader(0, b, this);
                 return true;
-//            case R.id.action_sort:
-//                Log.d(LOG_TAG, "Sort Spinner");
-//                handleSortSpinner();
-//                return true;
         }
         return super.onOptionsItemSelected(item);
     }
-
-//      TODO: implement as an optional bonus.
-//    private void handleSortSpinner() {
-//        final Spinner spinner = (Spinner) getActivity().findViewById(R.id.sort_spinner);
-//        final ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(getActivity(),
-//                R.array.pref_sort_order_entries, android.R.layout.simple_spinner_item);
-//        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-//        spinner.setAdapter(adapter);
-//        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-//            @Override
-//            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-//                Log.d(LOG_TAG, Utils.f("onItemSelected parent (%s), view (%s), position (%s), id (%s)", parent, view, position, id));
-//                // parent.removeView(spinner);
-//            }
-//
-//            @Override
-//            public void onNothingSelected(AdapterView<?> parent) {
-//            }
-//        });
-//    }
 
     private Uri determineUri(String sort) {
         Utils.log(getClass().getSimpleName());
         if (StringUtils.containsIgnoreCase(sort, "popular"))
             return MovieContract.PopularEntry.buildUri();
-        else if (StringUtils.containsIgnoreCase(sort, "vote"))
+        else if (StringUtils.containsIgnoreCase(sort, "vote") || StringUtils.containsIgnoreCase(sort, "rate"))
             return MovieContract.RatingEntry.buildUri();
         else if (StringUtils.containsIgnoreCase(sort, "fav"))
             return MovieContract.FavoriteEntry.buildUri();
@@ -240,8 +243,8 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
             }
             getActivity().getContentResolver().bulkInsert(MovieContract.MovieEntry.buildUri(), cvs);
             // Deleted whatever is in rating/poppular
-            if (StringUtils.containsIgnoreCase(sort, "rate") ||
-                    StringUtils.containsIgnoreCase(sort, "popular")) {
+            if (getString(R.string.tmdb_arg_highestrating).equals(sort) ||
+                    getString(R.string.tmdb_arg_popularity).equals(sort)) {
                 Uri uri = determineUri(sort);
                 getActivity().getContentResolver().delete(uri, null, null);
                 getActivity().getContentResolver().bulkInsert(uri, movie_ids);
@@ -256,9 +259,8 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
         Utils.log(getClass().getSimpleName());
         List<MovieGridObj> lMaps = new ArrayList<>();
         while (cursor.moveToNext()) {
-            Long movie_id = cursor.getLong(0);
             byte[] bMovieObj = cursor.getBlob(1);
-            MovieGridObj movieObj = (MovieGridObj) SerializationUtils.deserialize(bMovieObj);
+            MovieGridObj movieObj = SerializationUtils.deserialize(bMovieObj);
             lMaps.add(movieObj);
         }
         mMovieList.clear();
@@ -273,7 +275,6 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
                     + getString(R.string.most_popular_title) + "' or '"
                     + getString(R.string.highest_rated_title)
                     + "'", Snackbar.LENGTH_SHORT).show();
-        RequestQueue queue = Volley.newRequestQueue(getActivity());
         Uri builtUri = Uri.parse(getString(R.string.tmdb_api_base_discover_url)).buildUpon()
                 .appendQueryParameter(getString(R.string.tmdb_param_sortby), sort)
                 .appendQueryParameter(getString(R.string.tmdb_param_api), getString(R.string.private_tmdb_api))
@@ -292,7 +293,6 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
         sw.start();
         JsonObjectRequest jsObjRequest = new JsonObjectRequest
                 (Request.Method.GET, url, (String) null, new Response.Listener<JSONObject>() {
-
                     @Override
                     public void onResponse(JSONObject response) {
                         Log.d(getClass().getSimpleName(), "Response received.");
@@ -301,18 +301,16 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
                         insertMovieListIntoDatabase(sort);
                         Bundle b = new Bundle();
                         b.putString("sort", sort);
-                        getLoaderManager().initLoader(0, b, mThis);
+                        getLoaderManager().restartLoader(0, b, mThis);
                     }
-
                 }, new Response.ErrorListener() {
-
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         Log.e(getClass().getSimpleName(), error.getMessage(), error);
                         Snackbar.make(mMovieGridView, String.format("Error connecting to server (%s) in: %s", error.getMessage(), sw), Snackbar.LENGTH_SHORT).show();
                     }
                 });
-        queue.add(jsObjRequest);
+        mVollRequestQueue.add(jsObjRequest);
     }
 
     private boolean isFav(String sort) {
@@ -344,19 +342,21 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
         Utils.log(getClass().getSimpleName());
         String sort = getApiSortPref();
 
-        if (!isFav(sort) && !data.moveToFirst())
-            getLiveDataAndCallLoader(sort);
-        if (isFav(sort) && !data.moveToFirst())
-            Snackbar.make(getView(), "Cannot Refresh When Sorting Preference is Favorites. Please choose '"
-                    + getString(R.string.most_popular_title) + "' or '"
-                    + getString(R.string.highest_rated_title)
-                    + "'", Snackbar.LENGTH_SHORT).show();
-        else
+        if (!data.moveToFirst()) {
+            if (!isFav(sort))
+                getLiveDataAndCallLoader(sort);
+
+            else
+                Snackbar.make(getView(), "Cannot Refresh When Sorting Preference is Favorites. Please choose '"
+                        + getString(R.string.most_popular_title) + "' or '"
+                        + getString(R.string.highest_rated_title)
+                        + "'", Snackbar.LENGTH_SHORT).show();
+        } else {
             mGridViewAdapter.swapCursor(data);
-        // TODO: Implement position
-//        if (mPosition != GridView.INVALID_POSITION) {
-//            mMovieGridView.smoothScrollToPosition(mPosition);
-//        }
+            mPosition = data.getPosition();
+            if (mPosition != GridView.INVALID_POSITION)
+                mMovieGridView.smoothScrollToPosition(mPosition);
+        }
     }
 
     @Override

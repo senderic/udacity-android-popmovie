@@ -20,12 +20,6 @@ public class DetailsActivity extends BaseActivity {
         setProgressBarIndeterminateVisibility(true);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_details);
-        // getSupportActionBar().hide();
-//        if (savedInstanceState == null) {
-//            getSupportFragmentManager().beginTransaction()
-//                    .add(R.id.details_activity_container, new MovieDetailsFragment())
-//                    .commit();
-//        }
     }
 
 

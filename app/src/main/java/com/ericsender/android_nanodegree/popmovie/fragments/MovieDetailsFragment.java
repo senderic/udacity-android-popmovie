@@ -65,7 +65,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class MovieDetailsFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
     private static final String LOG_TAG = MovieDetailsFragment.class.getSimpleName();
     public static final String MOVIE_ID_KEY = "movie_id_key";
-    private TextView titleTextView;
     private ImageView mMovieThumb;
     private ProgressBar mMovieThumbProgress;
     private TextView yearTextView;
@@ -190,7 +189,6 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         mMovieThumb = (ImageView) mRootView.findViewById(R.id.movie_thumb);
         mMovieThumbProgress = (ProgressBar) mRootView.findViewById(R.id.movie_thumb_progressBar);
         mDurationTextView = (TextView) mRootView.findViewById(R.id.movie_duration);
-        titleTextView = (TextView) mRootView.findViewById(R.id.movie_details_top_title);
         yearTextView = (TextView) mRootView.findViewById(R.id.movie_year);
         //yearTextView.setText("");
         ratingTextView = (TextView) mRootView.findViewById(R.id.movie_rating);
@@ -259,7 +257,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         loaderMinutesData();
     }
 
-    private static enum TYPES {
+    private enum TYPES {
         review, trailer, minute, details;
         public static final String KEY = "type_key";
     }
@@ -299,8 +297,6 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         mMovieObj = SerializationUtils.deserialize(data);
         // Picasso *should* be caching these poster images, so this call should not require network access
 
-        // Picasso.with(getActivity().getApplicationContext()).setIndicatorsEnabled(true);
-        // Picasso.with(getActivity().getApplicationContext()).setLoggingEnabled(true);
         final StopWatch sw = new StopWatch();
         sw.start();
         Picasso.with(getActivity().getApplicationContext())
@@ -321,7 +317,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
                     }
                 });
 
-        titleTextView.setText(mMovieObj.original_title);
+        mMovieDetailsTitleView.setText(mMovieObj.original_title);
         yearTextView.setText(mMovieObj.release_date.substring(0, 4));
         overviewTextView.setText(mMovieObj.overview);
         // TODO is there a String.format that will do %.1f and strip trailing zeros?
@@ -681,10 +677,6 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         if (!data.moveToFirst()) data = null;
         int match = sUriMatcher.match(uri);
         switch (match) {
-//            case MovieProvider.MOVIE:
-//                break;
-//            case MovieProvider.MOVIE_WITH_ID:
-//                break;
             case MovieProvider.MOVIE_MINUTES:
                 if (!mRuntimeDataLoaded.get())
                     updateMinutesDataOrAskServer(data);
@@ -697,12 +689,6 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
                 if (!mTrailerDataLoaded.get())
                     updateTrailerDataOrAskServer(data);
                 break;
-//            case MovieProvider.MOVIE_RATING:
-//                break;
-//            case MovieProvider.MOVIE_FAVORITE:
-//                break;
-//            case MovieProvider.MOVIE_FAVORITE_WITH_ID:
-//                break;
             case MovieProvider.MOVIE_WITH_ID_AND_MAYBE_FAVORITE:
                 if (!mMovieDetailsLoaded.get()) {
                     if (data == null || !data.moveToFirst()) {
@@ -718,8 +704,6 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
                     mMovieDetailsLoaded.set(true);
                 }
                 break;
-//            case MovieProvider.MOVIE_POPULAR:
-//                break;
             default:
                 throw new UnsupportedOperationException(
                         String.format("Unknown/Unimplemented match (%s) / uri (%s): ", match, uri));
@@ -732,7 +716,7 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     }
 
     private enum Section {
-        REVIEW, TRAILER, DETAILS;
+        REVIEW, TRAILER;// DETAILS;
     }
 
     private void setFirstTrailer() {
@@ -766,6 +750,8 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         shareMenuItem = menu.findItem(R.id.action_share_youtube);
         mShareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(shareMenuItem);
         shareMenuItem.setVisible(false);
+
+        Utils.makeMenuItemInvisible(menu, R.id.action_sort, R.id.action_refresh);
     }
 
     /**
