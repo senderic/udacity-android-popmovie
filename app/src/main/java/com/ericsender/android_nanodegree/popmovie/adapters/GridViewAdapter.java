@@ -3,7 +3,6 @@ package com.ericsender.android_nanodegree.popmovie.adapters;
 import android.content.Context;
 import android.database.Cursor;
 import android.support.v4.widget.CursorAdapter;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,41 +10,15 @@ import android.widget.ImageView;
 
 import com.ericsender.android_nanodegree.popmovie.R;
 import com.ericsender.android_nanodegree.popmovie.parcelable.MovieGridObj;
-import com.ericsender.android_nanodegree.popmovie.utils.Utils;
 import com.squareup.picasso.Picasso;
 
 import org.apache.commons.lang3.SerializationUtils;
-
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class GridViewAdapter extends CursorAdapter {
 
     private final String sImgSize;
     private final String sImgUrl;
-    private List<MovieGridObj> mGridData;
     private static final String LOG_TAG = GridViewAdapter.class.getSimpleName();
-    private static final AtomicInteger count = new AtomicInteger();
-
-    public String getThumbUrl() {
-        return thumbUrl;
-    }
-
-    public void setThumbUrl(String thumbUrl) {
-        this.thumbUrl = thumbUrl;
-    }
-
-    private String thumbUrl;
-
-    public void setGridData(List<MovieGridObj> gridData) {
-        Utils.log(getClass().getSimpleName());
-        mGridData = gridData;
-        try {
-            notifyDataSetChanged();
-        } catch (IllegalStateException x) {
-            Log.e(LOG_TAG, x.getMessage(), x);
-        }
-    }
 
     public GridViewAdapter(Context context, Cursor cursor, int flag) {
         super(context, cursor, flag);

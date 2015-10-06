@@ -44,5 +44,7 @@
     <string name="action_settings">Settings</string>
     <string name="share_youtube_menu">SHARE</string>
     <string name="shareYoutubeKey">share-action-provider-key</string>
+    <string name="movie_grid_image_desc_generic">Movie Thumbnail</string>
+    <string name="play_trailer">Play Trailer</string>
 
 </resources>

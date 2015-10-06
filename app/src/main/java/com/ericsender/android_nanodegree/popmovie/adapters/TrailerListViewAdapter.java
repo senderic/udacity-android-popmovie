@@ -18,35 +18,28 @@ import com.squareup.picasso.Picasso;
 import java.util.List;
 
 /**
- * Created by g56147 on 9/15/2015.
+ * Created by Eric K. Sender on 9/15/2015.
  */
 public class TrailerListViewAdapter extends ArrayAdapter<TrailerListObj> {
 
     private static final String LOG_TAG = TrailerListViewAdapter.class.getSimpleName();
     private final Context mContext;
     private final int mTrailerCellRes;
-    private final ListView mTrailerListView;
-    private final String strYouTubeUrl;
-    private List<TrailerListObj> mRowObjs;
-    private final String strTrailerTitleItr;
-    private final String strYouTubeImg;
+    private final List<TrailerListObj> mRowObjs;
+    private static String strYouTubeUrl;
+    private static String strYouTubeImg;
 
-
-    public TrailerListViewAdapter(Context context, int trailerCellRes, List<TrailerListObj> rowObjs, ListView trailerListView) {
+    public TrailerListViewAdapter(Context context, int trailerCellRes, List<TrailerListObj> rowObjs) {
         super(context, trailerCellRes, rowObjs);
         mContext = context;
         mTrailerCellRes = trailerCellRes;
         mRowObjs = rowObjs;
-        mTrailerListView = trailerListView;
-        strTrailerTitleItr = mContext.getString(R.string.trailer_title_iter);
-        strYouTubeUrl = mContext.getString(R.string.youtube_url);
-        strYouTubeImg = mContext.getString(R.string.youtube_img);
+        strYouTubeUrl = strYouTubeUrl == null ? mContext.getString(R.string.youtube_url) : strYouTubeUrl;
+        strYouTubeImg = strYouTubeImg == null ? mContext.getString(R.string.youtube_img) : strYouTubeImg;
     }
 
-    public void setData(List<TrailerListObj> data) {
-        int v = data.isEmpty() ? View.GONE : View.VISIBLE;
-        mTrailerListView.setVisibility(v);
-        this.mRowObjs = data;
+    public void setData() {
+        //this.mRowObjs = data;
         notifyDataSetChanged();
     }
 

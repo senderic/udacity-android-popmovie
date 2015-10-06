@@ -68,7 +68,6 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
     private String mCurrSortOrder;
     private MovieListFragment mThis;
     private PopMoviesApplication.State appState;
-    private int mPosition;
     private RequestQueue mVollRequestQueue;
 
     private String getApiSortPref() {
@@ -164,7 +163,6 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
         appState.setIsRefreshGrid(false);
     }
 
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -255,19 +253,6 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
         }
     }
 
-    private void getInternalData(Cursor cursor, String sort) {
-        Utils.log(getClass().getSimpleName());
-        List<MovieGridObj> lMaps = new ArrayList<>();
-        while (cursor.moveToNext()) {
-            byte[] bMovieObj = cursor.getBlob(1);
-            MovieGridObj movieObj = SerializationUtils.deserialize(bMovieObj);
-            lMaps.add(movieObj);
-        }
-        mMovieList.clear();
-        mMovieList = lMaps;
-        mGridViewAdapter.setGridData(mMovieList);
-    }
-
     private void getLiveDataAndCallLoader(final String sort) {
         Utils.log(getClass().getSimpleName());
         if (isFav(sort))
@@ -321,7 +306,7 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
         Utils.log(getClass().getSimpleName());
         mMovieList = Utils.covertMapToMovieObjList(map);
         Log.d(getClass().getSimpleName(), "Received a set of movies. Registering them.");
-        mGridViewAdapter.setGridData(mMovieList);
+        // mGridViewAdapter.setGridData();
     }
 
     @Override
@@ -353,9 +338,9 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
                         + "'", Snackbar.LENGTH_SHORT).show();
         } else {
             mGridViewAdapter.swapCursor(data);
-            mPosition = data.getPosition();
-            if (mPosition != GridView.INVALID_POSITION)
-                mMovieGridView.smoothScrollToPosition(mPosition);
+            int pos = data.getPosition();
+            if (pos != GridView.INVALID_POSITION)
+                mMovieGridView.smoothScrollToPosition(pos);
         }
     }
 

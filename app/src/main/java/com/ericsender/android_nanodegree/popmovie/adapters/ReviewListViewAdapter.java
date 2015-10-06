@@ -16,20 +16,18 @@ import com.ericsender.android_nanodegree.popmovie.parcelable.ReviewListObj;
 import java.util.List;
 
 /**
- * Created by g56147 on 9/17/2015.
+ * Created by Eric K. Sender on 9/17/2015.
  */
 public class ReviewListViewAdapter extends ArrayAdapter<ReviewListObj> {
     private final Context mContext;
     private final int mReviewCellRes;
-    private final ListView mReviewListView;
-    private List<ReviewListObj> mRowObjs;
+    private final List<ReviewListObj> mRowObjs;
 
-    public ReviewListViewAdapter(Context context, int reviewCellRes, List<ReviewListObj> rowObjs, ListView reviewListView) {
+    public ReviewListViewAdapter(Context context, int reviewCellRes, List<ReviewListObj> rowObjs) {
         super(context, reviewCellRes, rowObjs);
         mContext = context;
         mReviewCellRes = reviewCellRes;
         mRowObjs = rowObjs;
-        mReviewListView = reviewListView;
     }
 
     @Override
@@ -79,8 +77,8 @@ public class ReviewListViewAdapter extends ArrayAdapter<ReviewListObj> {
             return true;
     }
 
-    public void setData(List<ReviewListObj> data) {
-        mRowObjs = data;
+    public void setData() {
+       // mRowObjs = data;
         notifyDataSetChanged();
     }
 

@@ -6,7 +6,7 @@ import android.os.Parcelable;
 import java.io.Serializable;
 
 /**
- * Created by g56147 on 9/17/2015.
+ * Created by Eric K. Sender on 9/17/2015.
  */
 public class ReviewListObj implements Parcelable, Serializable {
 

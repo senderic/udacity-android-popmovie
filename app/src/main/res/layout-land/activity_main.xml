@@ -20,5 +20,6 @@
         android:id="@+id/fragment_moviedetails_double"
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:layout_weight="0" />
+        android:layout_weight="0"
+        tools:ignore="InconsistentLayout" />
 </LinearLayout>

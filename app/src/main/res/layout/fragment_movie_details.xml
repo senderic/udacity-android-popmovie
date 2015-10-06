@@ -27,15 +27,7 @@
 
             <include layout="@layout/movie_year_cell_section" />
 
-            <TextView
-                android:id="@+id/movie_duration"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignLeft="@+id/movie_year"
-                android:layout_alignStart="@+id/movie_year"
-                android:layout_below="@+id/movie_year"
-                android:text="@string/space"
-                android:textAppearance="?android:attr/textAppearanceMedium" />
+            <include layout="@layout/movie_duration_section" />
 
             <include layout="@layout/movie_duration_progressbar_section" />
 
@@ -51,7 +43,8 @@
                 android:layout_below="@+id/movie_rating"
                 android:background="@drawable/fav_button_selector"
                 android:padding="5dp"
-                android:text="@string/mark_as_favorite" />
+                android:text="@string/mark_as_favorite"
+                tools:ignore="UnknownIdInLayout" />
 
             <ScrollView
                 android:id="@+id/movie_details_top_scroll"

@@ -53,8 +53,8 @@ public class MainActivity extends BaseActivity implements MovieDetailsFragment.C
         Log.d(LOG_TAG, (mTwoPane ? "two" : "single") + " pane mode");
         if (mTwoPane)
             appState.setDetailsPaneShown(false);
-        else
-            getSupportActionBar().setElevation(0f);
+//        else
+//            getSupportActionBar().setElevation(0f);
     }
 
     @Override

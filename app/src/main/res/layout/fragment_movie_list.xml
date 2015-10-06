@@ -20,7 +20,6 @@
         android:layout_gravity="center"
         android:background="#000"
         android:cacheColorHint="#000"
-        android:descendantFocusability="afterDescendants"
-        android:layout_alignParentTop="true" />
+        android:descendantFocusability="afterDescendants" />
 
 </FrameLayout>

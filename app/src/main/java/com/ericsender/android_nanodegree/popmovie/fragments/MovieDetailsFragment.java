@@ -77,7 +77,6 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     private boolean mIsLoadFinished;
     private Button mFavButton;
     private Long mMovieId = Long.MIN_VALUE;
-    private boolean mIsAlreadyFav = false;
     private static final AtomicBoolean isInit = new AtomicBoolean();
     private static String sIsAlreadyFav;
     private static String sMovieObjKey;
@@ -90,15 +89,14 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
     private static String sImgSize;
     private static String sNoLongerFav;
     private static String sImgUrl;
-    private static String sTrailerTitle;
     private static String sYoutubeUrl;
     private static String sShareYoutubeLinkKey;
     private static final UriMatcher sUriMatcher = MovieProvider.buildUriMatcher();
     private static volatile PopMoviesApplication.State appState;
     private ListView mTrailerListView;
     private ListView mReviewListView;
-    private List<TrailerListObj> mTrailerList = new ArrayList<>();
-    private List<ReviewListObj> mReviewList = new ArrayList<>();
+    private final List<TrailerListObj> mTrailerList = new ArrayList<>();
+    private final List<ReviewListObj> mReviewList = new ArrayList<>();
     private TrailerListViewAdapter mTrailerListViewAdapter;
     private ReviewListViewAdapter mReviewListViewAdapter;
     private LinearLayout mMovieDetailsAsyncView;
@@ -170,7 +168,6 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
                 sImgUrl = getString(R.string.tmdb_image_base_url);
                 sImgSize = getString(R.string.tmdb_image_size);
                 sNoLongerFav = getString(R.string.is_no_longer_fav);
-                sTrailerTitle = getString(R.string.trailer_title_iter);
                 sYoutubeUrl = getString(R.string.youtube_url);
                 sShareYoutubeLinkKey = getString(R.string.shareYoutubeKey);
                 isInit.set(true);
@@ -190,15 +187,15 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         mMovieThumbProgress = (ProgressBar) mRootView.findViewById(R.id.movie_thumb_progressBar);
         mDurationTextView = (TextView) mRootView.findViewById(R.id.movie_duration);
         yearTextView = (TextView) mRootView.findViewById(R.id.movie_year);
-        //yearTextView.setText("");
+        yearTextView.setText("");
         ratingTextView = (TextView) mRootView.findViewById(R.id.movie_rating);
         overviewTextView = (TextView) mRootView.findViewById(R.id.movie_overview);
-        //overviewTextView.setText("");
+        overviewTextView.setText("");
         mTrailerListView = (ListView) mRootView.findViewById(R.id.list_trailers);
         mReviewListView = (ListView) mRootView.findViewById(R.id.list_reviews);
         mMovieDetailsBodyView = (RelativeLayout) mRootView.findViewById(R.id.movie_details_body);
-        mTrailerListViewAdapter = new TrailerListViewAdapter(getActivity(), R.layout.trailer_cell, mTrailerList, mTrailerListView);
-        mReviewListViewAdapter = new ReviewListViewAdapter(getActivity(), R.layout.review_cell, mReviewList, mReviewListView);
+        mTrailerListViewAdapter = new TrailerListViewAdapter(getActivity(), R.layout.trailer_cell, mTrailerList);
+        mReviewListViewAdapter = new ReviewListViewAdapter(getActivity(), R.layout.review_cell, mReviewList);
         mTrailerListView.setAdapter(mTrailerListViewAdapter);
         mReviewListView.setAdapter(mReviewListViewAdapter);
         // TODO: when code is more hardened, maybe move this to the XML?
@@ -322,12 +319,12 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         overviewTextView.setText(mMovieObj.overview);
         // TODO is there a String.format that will do %.1f and strip trailing zeros?
         double va = mMovieObj.vote_average.doubleValue();
-        String roundRating = va == (long) va
+        String roundRating = (va == (long) va
                 ?
                 String.format("%d", (long) va)
                 :
-                String.format("%.1f", va);
-        ratingTextView.setText(roundRating + "/10");
+                String.format("%.1f", va)) + "/10";
+        ratingTextView.setText(roundRating);
         getActivity().setProgressBarIndeterminateVisibility(false);
         return true;
     }
@@ -343,7 +340,6 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
                 ContentValues cv = new ContentValues();
                 cv.put(MovieContract.FavoriteEntry.COLUMN_MOVIE_ID, mMovieObj.id);
                 Uri u = getActivity().getContentResolver().insert(MovieContract.FavoriteEntry.buildUri(), cv);
-                mIsAlreadyFav = true;
                 mFavButton.setText(sIsAlreadyFav);
                 Snackbar.make(mRootView, String.format("%s %s to Favorites", "Added", mMovieObj.title),
                         Snackbar.LENGTH_SHORT).show();
@@ -352,7 +348,6 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
                 getActivity().getContentResolver().delete(MovieContract.FavoriteEntry.buildUri(),
                         MovieContract.FavoriteEntry.COLUMN_MOVIE_ID + "=?",
                         new String[]{mMovieObj.id.toString()});
-                mIsAlreadyFav = false;
                 mFavButton.setText(sNoLongerFav);
                 Snackbar.make(mRootView, String.format("%s %s from Favorites", "Removed", mMovieObj.title),
                         Snackbar.LENGTH_SHORT).show();
@@ -496,11 +491,13 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         }
         mTrailerList.clear();
         mTrailerList.addAll(th);
-        mTrailerListViewAdapter.setData(mTrailerList);
-        setFirstTrailer();
-        if (!mTrailerList.isEmpty() && mMovieDetailsTrailerView.getVisibility() == View.GONE)
-            showMovieDetailsAsyncView(Section.TRAILER);
-        updateTrailerDataInternal((Serializable) results);
+        if (!mTrailerList.isEmpty()) {
+            mTrailerListViewAdapter.setData();
+            setFirstTrailer();
+            if (mMovieDetailsTrailerView.getVisibility() == View.GONE)
+                showMovieDetailsAsyncView(Section.TRAILER);
+            updateTrailerDataInternal((Serializable) results);
+        }
         mTrailerDataLoaded.set(true);
     }
 
@@ -515,10 +512,13 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
         }
         mReviewList.clear();
         mReviewList.addAll(rev);
-        mReviewListViewAdapter.setData(mReviewList);
-        if (!mReviewList.isEmpty() && mMovieDetailsReviewView.getVisibility() == View.GONE)
-            showMovieDetailsAsyncView(Section.REVIEW);
-        updateReviewDataInternal((Serializable) results);
+        if (!mReviewList.isEmpty()) {
+            mReviewListViewAdapter.setData();
+            if (mMovieDetailsReviewView.getVisibility() == View.GONE)
+                showMovieDetailsAsyncView(Section.REVIEW);
+            updateReviewDataInternal((Serializable) results);
+        }
+
         mReviewDataLoaded.set(true);
     }
 
@@ -697,7 +697,6 @@ public class MovieDetailsFragment extends Fragment implements LoaderManager.Load
                         return;
                     } else if (data.getCount() == 2) {
                         mFavButton.setText(sIsAlreadyFav);
-                        mIsAlreadyFav = true;
                         data.moveToLast();
                     }
                     mIsLoadFinished = handleMovieObjData(data.getBlob(1));

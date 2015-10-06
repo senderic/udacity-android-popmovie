@@ -14,6 +14,7 @@
             android:id="@+id/trailer_play"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:contentDescription="@string/play_trailer"
             android:src="@android:drawable/ic_media_play" />
 
         <TextView
@@ -30,6 +31,7 @@
         android:id="@+id/youtube_thumb"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:contentDescription="@string/play_trailer"
         android:layout_alignParentRight="true"
         android:baselineAlignBottom="false"
         android:src="@android:drawable/ic_media_next" />

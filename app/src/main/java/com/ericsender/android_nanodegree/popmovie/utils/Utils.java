@@ -44,11 +44,11 @@ public class Utils {
                 >= Configuration.SCREENLAYOUT_SIZE_LARGE;
     }
 
-    public static final Gson getGson() {
+    public static Gson getGson() {
         return gson;
     }
 
-    public static final String readStreamToString(InputStream is) {
+    public static String readStreamToString(InputStream is) {
         BufferedReader bis = new BufferedReader(new InputStreamReader(is));
         StringBuilder sb = new StringBuilder();
         String line;
@@ -162,7 +162,7 @@ public class Utils {
      * @param depth depth in the call stack (0 means current method, 1 means call method, ...)
      * @return method name
      */
-    public static final String getMethodName(final int depth) {
+    public static String getMethodName(final int depth) {
         final StackTraceElement[] ste = Thread.currentThread().getStackTrace();
         return ste[depth].getMethodName();
     }
